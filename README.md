@@ -23,6 +23,9 @@ iPhone and iPad Home Screens and the Mac's Dock, and works with no signal once i
 - **New exercise** (or press N) makes a fresh 16 measures. The current one is remembered on the device.
 - **Play** (or space) counts in one measure, then plays it at guitar pitch and highlights each note.
 - Tap any note to hear it.
+- **Customize** limits the notes to one or more positions (1st, 5th, 9th, 12th), so every note can be played
+  without leaving them. 1st position is open strings to fret 4; the others are 4 frets starting at that fret.
+  Choosing several combines their ranges. Positions can reach up to written G6 (15th fret).
 
 ## Publishing a change
 
@@ -33,4 +36,4 @@ iPhone and iPad Home Screens and the Mac's Dock, and works with no signal once i
 
 ## Ideas for later
 
-Choose keys, positions, rhythms, double and triple stops.
+Choose keys, rhythms, double and triple stops; more positions.

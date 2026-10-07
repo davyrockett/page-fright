@@ -89,9 +89,10 @@ p{margin:0}
 <body>
 <div class="wrap">
   <header class="top">
-    <div class="brand"><h1>Sight Reading</h1><p>Guitar · Key of C · Quarter notes</p></div>
+    <div class="brand"><h1>Sight Reading</h1><p id="subtitle">Guitar · Key of C · Quarter notes</p></div>
     <div class="row">
       <button type="button" class="btn" id="new" title="New exercise (N)">New exercise</button>
+      <button type="button" class="btn" id="custom-open">Customize</button>
       <button type="button" class="btn icon" id="settings-open" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.5 7.5 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.5 7.5 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.5 7.5 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7.5 7.5 0 0 0 1.7-1l2.5 1 2-3.5zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg></button>
     </div>
   </header>
@@ -106,7 +107,8 @@ p{margin:0}
   <div class="score card" id="score" aria-label="Sight-reading exercise, 16 measures"></div>
 
   <div class="notes cap">
-    <p>Range: low E (open 6th string) up to high D (22nd fret, 1st string). Guitar music is written an octave higher than it sounds, so the playback is at real guitar pitch.</p>
+    <p id="range-note"></p>
+    <p>Guitar music is written an octave higher than it sounds, so the playback is at real guitar pitch.</p>
     <p>Tap any note to hear it. Play counts you in for one measure. Keys: <b>space</b> plays or stops, <b>N</b> makes a new exercise.</p>
   </div>
 </div>
@@ -122,25 +124,42 @@ const h=html=>{const t=document.createElement('template');t.innerHTML=html.trim(
 
 /* ---------- pitches ----------
    Written pitch (treble clef), C4 = middle C = MIDI 60. The guitar sounds an octave lower.
-   Range: E3 (open low E) to D6 (high E string, 22nd fret). */
+   Whole neck: E3 (open low E) to D6 (high E string, 22nd fret). Positions reach up to G6. */
 const LETTERS=['c','d','e','f','g','a','b'], STEPS=[0,2,4,5,7,9,11];
 const RANGE=[];
 for(let oct=3;oct<=6;oct++)LETTERS.forEach((l,i)=>{
   const midi=12*(oct+1)+STEPS[i];
-  if(midi>=52&&midi<=86)RANGE.push({key:`${l}/${oct}`,midi,name:l.toUpperCase()+oct});
+  if(midi>=52&&midi<=91)RANGE.push({key:`${l}/${oct}`,midi,name:l.toUpperCase()+oct});
 });
 const freqOf=midi=>440*Math.pow(2,(midi-12-69)/12);
+const midiOf=key=>RANGE.find(p=>p.key===key).midi;
+
+/* ---------- positions ----------
+   A position is named for its lowest fret and covers 4 frets (1st position also gets the open strings).
+   Lowest note = low E string at that fret, highest = high E string 3 frets up. */
+const OPEN_LOW=52, OPEN_HIGH=76;
+const POSITIONS=[1,5,9,12];
+const posRange=p=>p===1?[OPEN_LOW,OPEN_HIGH+4]:[OPEN_LOW+p,OPEN_HIGH+p+3];
+const WHOLE=[52,86];
 
 /* ---------- exercise generator ----------
    A walk that heads toward a random target somewhere in the range, mostly by step with some
-   skips and leaps. When it gets there it picks a new target, so 16 bars cover the whole neck.
-   Starts and ends on a C. */
+   skips and leaps. When it gets there it picks a new target, so the exercise covers the range.
+   With positions chosen, every note can be played without leaving them. Starts and ends on a C. */
 const MEASURES=16, BEATS=4;
 function pickWeighted(pairs){let t=Math.random()*pairs.reduce((s,p)=>s+p[1],0);for(const [v,w] of pairs){if((t-=w)<=0)return v;}return pairs[0][0];}
-function generate(){
-  const top=RANGE.length-1, cs=RANGE.map((p,i)=>p.key[0]==='c'?i:-1).filter(i=>i>=0);
+// Lowest and highest written MIDI note allowed. The positions' ranges overlap, so together they make one span.
+function span(sel){
+  if(!sel.length)return WHOLE;
+  const rs=sel.map(posRange);
+  return [Math.min(...rs.map(r=>r[0])),Math.max(...rs.map(r=>r[1]))];
+}
+function generate(sel=store.get('positions',[])){
+  const [loM,hiM]=span(sel);
+  const idx=RANGE.map((n,i)=>n.midi>=loM&&n.midi<=hiM?i:-1).filter(i=>i>=0), lo=idx[0], hi=idx.at(-1);
+  const cs=idx.filter(i=>RANGE[i].key[0]==='c');
   let pos=cs[Math.floor(Math.random()*cs.length)], target=pos, last=null;
-  const newTarget=()=>{let t;do t=Math.floor(Math.random()*(top+1));while(Math.abs(t-pos)<5);return t;};
+  const newTarget=()=>{let t,tries=0;do t=lo+Math.floor(Math.random()*(hi-lo+1));while(Math.abs(t-pos)<5&&++tries<50);return t;};
   target=newTarget();
   const out=[pos];
   for(let n=1;n<MEASURES*BEATS-1;n++){
@@ -150,17 +169,16 @@ function generate(){
     if(Math.random()<.05&&last!==0)move=0;                       // an occasional repeated note
     else if(Math.random()<.18)move=-dir*pickWeighted([[1,3],[2,2]]); // a little turn back
     else move=dir*Math.min(Math.abs(target-pos),pickWeighted([[1,40],[2,28],[3,14],[4,9],[5,5],[7,4]]));
-    pos=Math.max(0,Math.min(top,pos+move));last=move;out.push(pos);
+    pos=Math.max(lo,Math.min(hi,pos+move));last=move;out.push(pos);
   }
   const end=cs.reduce((b,c)=>Math.abs(c-pos)<Math.abs(b-pos)?c:b);
-  out.push(end===pos&&out.length>1?(cs.find(c=>c!==end&&Math.abs(c-pos)===7)??end):end);
+  out.push(end===pos?(cs.find(c=>c!==end&&Math.abs(c-pos)===7)??end):end);
   return out.map(i=>RANGE[i].key);
 }
 
 let exercise=store.get('exercise',null);
 if(!Array.isArray(exercise)||exercise.length!==MEASURES*BEATS||!exercise.every(k=>RANGE.some(p=>p.key===k)))exercise=generate();
 store.set('exercise',exercise);
-const midiOf=key=>RANGE.find(p=>p.key===key).midi;
 
 /* ---------- drawing ---------- */
 const scoreEl=document.getElementById('score');
@@ -169,7 +187,9 @@ function render(){
   const W=scoreEl.clientWidth-16; if(W<=0)return; lastWidth=scoreEl.clientWidth;
   const scale=W>=1000?1.4:W>=760?1.25:W>=560?1.1:1;
   const per=W/scale>=560?4:2;
-  const w=Math.floor(W/scale)-10, rowH=128, rows=Math.ceil(MEASURES/per);
+  // Notes in the higher positions go 4 ledger lines up, so give those lines more headroom.
+  const above=exercise.some(k=>midiOf(k)>86)?5.5:4;
+  const w=Math.floor(W/scale)-10, rowH=88+above*10, rows=Math.ceil(MEASURES/per);
   scoreEl.replaceChildren();
   const r=new VF.Renderer(scoreEl,VF.Renderer.Backends.SVG);
   r.resize(W,Math.ceil((rows*rowH+10)*scale));
@@ -186,7 +206,7 @@ function render(){
     for(let k=0;k<per;k++){
       const m=row*per+k;if(m>=MEASURES)break;
       const sw=k===0?mw+extra:mw;
-      const stave=new VF.Stave(x,row*rowH,sw);
+      const stave=new VF.Stave(x,row*rowH,sw,{space_above_staff_ln:above});
       if(k===0){stave.addClef('treble');if(row===0)stave.addTimeSignature('4/4');if(row>0)stave.setMeasure(m+1);}
       if(m===MEASURES-1)stave.setEndBarType(VF.Barline.type.END);
       stave.setContext(ctx).draw();
@@ -309,7 +329,7 @@ scoreEl.addEventListener('click',e=>{
 
 function newExercise(){
   const was=player.on;if(was)stop();
-  exercise=generate();store.set('exercise',exercise);render();window.scrollTo({top:0,behavior:'smooth'});
+  exercise=generate();store.set('exercise',exercise);describe();render();window.scrollTo({top:0,behavior:'smooth'});
 }
 document.getElementById('new').onclick=newExercise;
 document.addEventListener('keydown',e=>{
@@ -359,13 +379,45 @@ const settingsPop=Popup('Settings',()=>{
   mark();return el;
 });
 document.getElementById('settings-open').onclick=()=>settingsPop.open();
+
+/* ---------- customize (what the exercises contain) ---------- */
+const ORD=n=>n===1?'1st':n+'th';
+function describe(){
+  const sel=store.get('positions',[]);
+  document.getElementById('subtitle').textContent=`Guitar · Key of C · Quarter notes · ${sel.length?sel.map(ORD).join(' + ')+(sel.length>1?' positions':' position'):'Whole neck'}`;
+  document.getElementById('range-note').textContent=sel.length
+    ?`Every note fits in ${sel.length>1?'these positions':'this position'}: ${sel.map(p=>`${ORD(p)} (${p===1?'open strings to fret 4':`frets ${p}–${p+3}`})`).join(', ')}.`
+    :'Range: low E (open 6th string) up to high D (22nd fret, 1st string).';
+}
+describe();
+const customPop=Popup('Customize',()=>{
+  const el=h(`<div class="settings">
+    <div class="set-row"><div><b>Positions</b><p class="cap">Only use notes you can play without leaving the positions you choose. A position is named for its lowest fret and covers four frets; 1st position also uses the open strings. Choose several to combine them, or Whole neck for everything.</p></div></div>
+    <div class="seg" role="group" aria-label="Positions">
+      <button type="button" class="btn" data-whole>Whole neck</button>
+      ${POSITIONS.map(p=>`<button type="button" class="btn" data-pos="${p}">${ORD(p)}</button>`).join('')}
+    </div>
+    <p class="cap">Changes make a new exercise right away.</p></div>`);
+  const mark=()=>{const sel=store.get('positions',[]);
+    el.querySelector('[data-whole]').setAttribute('aria-pressed',sel.length===0);
+    el.querySelectorAll('[data-pos]').forEach(b=>b.setAttribute('aria-pressed',sel.includes(+b.dataset.pos)));};
+  el.addEventListener('click',e=>{
+    const b=e.target.closest('[data-pos],[data-whole]');if(!b)return;
+    let sel=store.get('positions',[]);
+    if(b.dataset.whole!==undefined)sel=[];
+    else{const p=+b.dataset.pos;sel=sel.includes(p)?sel.filter(x=>x!==p):[...sel,p].sort((a,b)=>a-b);}
+    store.set('positions',sel);mark();newExercise();
+  });
+  mark();return el;
+});
+document.getElementById('custom-open').onclick=()=>customPop.open();
 </script>
 
 <div class="update" id="update-banner" role="status" hidden><span>A new version is ready.</span><button type="button" class="btn primary" id="update-btn">Update</button></div>
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v1';
+window.APP_VERSION = 'v2';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
