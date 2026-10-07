@@ -74,7 +74,11 @@ p{margin:0}
 .score svg,.score svg [fill]:not([fill="none"]){fill:var(--ink)}
 .score svg,.score svg [stroke]:not([stroke="none"]){stroke:var(--ink)}
 .score svg text{fill:var(--muted)}
-.score .vf-stavenote{cursor:pointer}
+.score .vf-stavenote,.score .vf-tabnote{cursor:pointer}
+.score .vf-tabnote.on text{fill:var(--accent)}
+/* Fret numbers: a patch of page color behind each one hides the tab line under it. */
+.score svg .vf-tabnote rect[fill]{fill:var(--surface)}
+.score .vf-tabnote text{font-family:var(--f-body);font-weight:700;font-size:11px}
 .score .vf-stavenote.on,.score .vf-stavenote.on [fill]:not([fill="none"]){fill:var(--accent)}
 .score .vf-stavenote.on,.score .vf-stavenote.on [stroke]:not([stroke="none"]){stroke:var(--accent)}
 .notes{display:flex;flex-direction:column;gap:4px;max-width:75ch}
@@ -104,6 +108,7 @@ p{margin:0}
   <div class="controls card">
     <button type="button" class="btn primary play" id="play" title="Play / stop (space)"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M3 1.5v13l11-6.5z"/></svg><span>Play</span></button>
     <button type="button" class="btn" id="click" aria-pressed="true">Metronome</button>
+    <button type="button" class="btn" id="tab-toggle" aria-pressed="false" title="Show or hide tab (T)">Tab</button>
     <label class="tempo"><span class="cap">Tempo</span><input type="range" id="tempo" min="40" max="200" step="2"><output id="tempo-val"></output></label>
     <span class="cap status" id="status" aria-live="polite"></span>
   </div>
@@ -113,7 +118,7 @@ p{margin:0}
   <div class="notes cap">
     <p id="range-note"></p>
     <p>Guitar music is written an octave higher than it sounds, so the playback is at real guitar pitch.</p>
-    <p>Tap any note or chord to hear it. Play counts you in for one measure. Keys: <b>space</b> plays or stops, <b>N</b> makes a new exercise.</p>
+    <p>Tap any note or chord to hear it. Play counts you in for one measure. Keys: <b>space</b> plays or stops, <b>N</b> makes a new exercise, <b>T</b> shows or hides the tab.</p>
   </div>
 </div>
 
@@ -274,7 +279,7 @@ function generate(sel=store.get('positions',[]),tex=store.get('textures',['singl
     last=pick.at(-1)-pos;pos=pick.at(-1);out.push(pick);
   }
   sounding.forEach((e,i)=>{e.keys=out[i].map(j=>SC[j].key);});
-  return {key,events};
+  return {key,events,sel};
 }
 
 let exercise=store.get('exercise',null);
@@ -283,12 +288,64 @@ if(!validEx(exercise))exercise=generate();
 store.set('exercise',exercise);
 // Where each event starts (in 16ths from the top) and which measure it's in.
 let onsets=[], measureOf=[];
-function index(){let t=0;onsets=[];measureOf=[];exercise.events.forEach(e=>{onsets.push(t);measureOf.push(Math.floor(t/BAR));t+=e.d;});}
+function index(){let t=0;onsets=[];measureOf=[];exercise.events.forEach(e=>{onsets.push(t);measureOf.push(Math.floor(t/BAR));t+=e.d;});fing=fingering(exercise);}
+
+/* ---------- tab: where to play each note ----------
+   Most notes can be played in several places, so the whole exercise is fingered at once: the hand sits at a
+   fret ("hand position", covering 4 frets) and we pick the route with the fewest and smallest shifts.
+   With positions chosen, the hand stays in them. Chords stay on neighboring strings, as generated. */
+let fing=[];
+function fingering(x){
+  const sel=x.sel||[];
+  // The ways to play these notes: each note on its own string, neighboring strings, low note on the lower string.
+  const ways=midis=>{const out=[];
+    for(let s0=0;s0+midis.length<=6;s0++){
+      const f=midis.map((m,i)=>m-STRINGS[s0+i]);
+      if(f.some(v=>v<0||v>22))continue;
+      const fr=f.filter(v=>v>0);
+      if(fr.length&&Math.max(...fr)-Math.min(...fr)>4)continue;
+      out.push({strs:midis.map((_,i)=>s0+i),frets:f,lo:fr.length?Math.min(...fr):null,hi:fr.length?Math.max(...fr):null,open:fr.length<f.length});
+    }
+    return out;};
+  // Hand positions to choose from, and what each costs for a given way of playing the notes.
+  const hands=sel.length?sel:Array.from({length:19},(_,i)=>i+1);
+  const fit=(w,p)=>{
+    if(sel.length){const [a,b]=frets(p);
+      if(w.open&&a!==0)return Infinity;
+      return w.lo===null||(w.lo>=Math.max(a,1)&&w.hi<=b)?0:Infinity;}
+    let c=p*.12;                                  // lower on the neck is easier, so shift up only when needed
+    if(w.open&&p>5)c+=1.2;                        // open strings are awkward high up
+    w.strs.forEach((st,j)=>{const f=w.frets[j];if(st<=2&&f>12)c+=1.5;if(st===3&&f>15)c+=1;}); // high frets on the thick strings
+    if(w.lo===null)return c;
+    if(w.lo>=p&&w.hi<=p+3)return c;
+    if(w.lo>=p&&w.hi<=p+4)return c+1.5;           // a stretch
+    return Infinity;};
+  const move=(a,b)=>a===b?0:1+.15*Math.abs(a-b);
+  const idx=x.events.map((e,i)=>e.rest?-1:i).filter(i=>i>=0);
+  // Viterbi over (note, hand position).
+  let prev=hands.map(()=>0);const back=[];
+  idx.forEach((i,n)=>{
+    const ws=ways(x.events[i].keys.map(midiOf));
+    const cur=[],bk=[];
+    hands.forEach((p,hi)=>{
+      let best=Infinity,bw=null;
+      ws.forEach(w=>{const c=fit(w,p);if(c<best){best=c;bw=w;}});
+      let bp=0,bc=Infinity;
+      if(n===0)bc=0;else hands.forEach((q,qi)=>{const c=prev[qi]+move(q,p);if(c<bc){bc=c;bp=qi;}});
+      cur.push(best+bc);bk.push({from:bp,way:bw});
+    });
+    prev=cur;back.push(bk);
+  });
+  const out=x.events.map(()=>null);
+  let h=prev.indexOf(Math.min(...prev));
+  for(let n=idx.length-1;n>=0;n--){const b=back[n][h];out[idx[n]]=b.way;h=b.from;}
+  return out;
+}
 index();
 
 /* ---------- drawing ---------- */
 const scoreEl=document.getElementById('score');
-let noteEls=[], lineOf=[], lastWidth=0;
+let noteEls=[], tabEls={}, lineOf=[], lastWidth=0, tabOn=store.get('tab',false);
 const VF_DUR={16:['w',0],12:['h',1],8:['h',0],6:['q',1],4:['q',0],3:['8',1],2:['8',0],1:['16',0]};
 function render(){
   const W=scoreEl.clientWidth-16; if(W<=0)return; lastWidth=scoreEl.clientWidth;
@@ -302,7 +359,8 @@ function render(){
   const steps=k=>{const [,l,,o]=/^([a-g])(#|b)?\/(\d)$/.exec(k);return 7*(+o)+LETTERS.indexOf(l);};
   const topStep=Math.max(...ev.filter(e=>!e.rest).flatMap(e=>e.keys.map(steps)));
   const above=Math.max(4,(topStep-steps('f/5'))/2+1.5);
-  const w=Math.floor(lw)-10, rowH=88+above*10, rows=Math.ceil(MEASURES/per);
+  const tab=tabOn, TAB_GAP=48, TAB_H=65;
+  const w=Math.floor(lw)-10, rowH=(above+4)*10+48+(tab?TAB_GAP-48+TAB_H+40:0), rows=Math.ceil(MEASURES/per);
   scoreEl.replaceChildren();
   const r=new VF.Renderer(scoreEl,VF.Renderer.Backends.SVG);
   r.resize(W,Math.ceil((rows*rowH+10)*scale));
@@ -322,8 +380,18 @@ function render(){
       const stave=new VF.Stave(x,row*rowH,sw,{space_above_staff_ln:above});
       if(k===0){stave.addClef('treble').addKeySignature(key);if(row===0)stave.addTimeSignature('4/4');if(row>0)stave.setMeasure(m+1);}
       if(m===MEASURES-1)stave.setEndBarType(VF.Barline.type.END);
+      const inM=ev.map((e,i)=>i).filter(i=>measureOf[i]===m);
+      let ts=null;
+      if(tab){ // tab staff under the notes, with the notes lined up between the two
+        ts=new VF.TabStave(x,row*rowH+(above+4)*10+TAB_GAP,sw,{space_above_staff_ln:0,space_below_staff_ln:0});
+        if(k===0)ts.addClef('tab');
+        if(m===MEASURES-1)ts.setEndBarType(VF.Barline.type.END);
+        const nx=Math.max(stave.getNoteStartX(),ts.getNoteStartX());stave.setNoteStartX(nx);ts.setNoteStartX(nx);
+        ts.setContext(ctx).draw();
+        if(k===0)new VF.StaveConnector(stave,ts).setType(VF.StaveConnector.type.SINGLE_LEFT).setContext(ctx).draw();
+      }
       stave.setContext(ctx).draw();
-      const notes=ev.filter((e,i)=>measureOf[i]===m).map(e=>{
+      const notes=inM.map(i=>ev[i]).map(e=>{
         const [base,dots]=VF_DUR[e.d];
         const n=e.rest
           ?new VF.StaveNote({keys:[e.d===16?'d/5':'b/4'],duration:base+(dots?'d':'')+'r'})
@@ -332,14 +400,27 @@ function render(){
         return n;});
       const beams=VF.Beam.generateBeams(notes,{groups:[new VF.Fraction(1,4)]});
       const voice=new VF.Voice({num_beats:BEATS,beat_value:4}).addTickables(notes);
-      new VF.Formatter().joinVoices([voice]).format([voice],stave.getNoteEndX()-stave.getNoteStartX()-12);
+      let tv=null;
+      if(tab){
+        const tnotes=inM.map(i=>{const e=ev[i],[base,dots]=VF_DUR[e.d],dur=base+(dots?'d':'');
+          if(e.rest||!fing[i])return new VF.GhostNote({duration:dur});
+          return new VF.TabNote({positions:fing[i].strs.map((s,j)=>({str:6-s,fret:fing[i].frets[j]})),duration:dur});});
+        tv=new VF.Voice({num_beats:BEATS,beat_value:4}).addTickables(tnotes);
+      }
+      const fmt=new VF.Formatter().joinVoices([voice]);if(tv)fmt.joinVoices([tv]);
+      fmt.format(tv?[voice,tv]:[voice],stave.getNoteEndX()-stave.getNoteStartX()-12);
       voice.draw(ctx,stave);
       beams.forEach(b=>b.setContext(ctx).draw());
+      if(tv)tv.draw(ctx,ts);
       notes.forEach(()=>lineOf.push(row));
       x+=sw;
     }
   }
   noteEls=[...scoreEl.querySelectorAll('.vf-stavenote')];
+  // Tab numbers are drawn in the same order as the notes, skipping rests.
+  tabEls={};const sounding=ev.map((e,i)=>e.rest?-1:i).filter(i=>i>=0);
+  scoreEl.querySelectorAll('.vf-tabnote').forEach((el,n)=>{const i=sounding[n];el.dataset.i=i;tabEls[i]=el;
+    el.setAttribute('role','img');el.setAttribute('aria-label',`Tab: ${fing[i].strs.map((s,j)=>`string ${6-s} fret ${fing[i].frets[j]}`).join(', ')}`);});
   noteEls.forEach((el,i)=>{el.dataset.i=i;const e=ev[i];
     el.setAttribute('role','img');el.setAttribute('aria-label',`${e.rest?'Rest':nameOf(e.keys)}, measure ${measureOf[i]+1}`);});
 }
@@ -393,9 +474,9 @@ const player={on:false,start:0,spb:1,next:0,cur:-1,timer:0,raf:0,queue:[]};
 const COUNT=BEATS, TOTAL=COUNT+MEASURES*BEATS;
 
 function mark(i,scroll=true){
-  noteEls.forEach(el=>el.classList.remove('on'));
+  scoreEl.querySelectorAll('.on').forEach(el=>el.classList.remove('on'));
   const el=noteEls[i];if(!el)return;
-  el.classList.add('on');
+  el.classList.add('on');tabEls[i]?.classList.add('on');
   if(scroll&&(i===0||lineOf[i]!==lineOf[i-1])){
     const r=el.getBoundingClientRect();
     if(r.top<80||r.bottom>innerHeight-60)el.scrollIntoView({block:'center',behavior:'smooth'});
@@ -439,7 +520,7 @@ function play(){
 function stop(cut=true){
   player.on=false;clearInterval(player.timer);cancelAnimationFrame(player.raf);
   if(cut)hush();
-  noteEls.forEach(el=>el.classList.remove('on'));statusEl.textContent='';
+  scoreEl.querySelectorAll('.on').forEach(el=>el.classList.remove('on'));statusEl.textContent='';
   playBtn.querySelector('span').textContent='Play';
   playBtn.querySelector('path').setAttribute('d','M3 1.5v13l11-6.5z');
 }
@@ -456,9 +537,9 @@ clickBtn.onclick=()=>{metro=!metro;store.set('metronome',metro);clickBtn.setAttr
 
 // Tap a note to hear it.
 scoreEl.addEventListener('click',e=>{
-  const el=e.target.closest('.vf-stavenote');if(!el)return;
-  const ev=exercise.events[+el.dataset.i];if(!ev.rest)strike(ev.keys,0,1.8);
-  if(!player.on){el.classList.add('on');setTimeout(()=>el.classList.remove('on'),450);}
+  const el=e.target.closest('.vf-stavenote,.vf-tabnote');if(!el)return;
+  const i=+el.dataset.i,ev=exercise.events[i];if(!ev.rest)strike(ev.keys,0,1.8);
+  if(!player.on){const els=[noteEls[i],tabEls[i]].filter(Boolean);els.forEach(x=>x.classList.add('on'));setTimeout(()=>els.forEach(x=>x.classList.remove('on')),450);}
 });
 
 function newExercise(){
@@ -466,11 +547,15 @@ function newExercise(){
   exercise=generate();store.set('exercise',exercise);index();describe();render();window.scrollTo({top:0,behavior:'smooth'});
 }
 document.getElementById('new').onclick=newExercise;
+const tabBtn=document.getElementById('tab-toggle');tabBtn.setAttribute('aria-pressed',tabOn);
+function toggleTab(){tabOn=!tabOn;store.set('tab',tabOn);tabBtn.setAttribute('aria-pressed',tabOn);render();if(player.on&&player.cur>=0)mark(player.cur,false);}
+tabBtn.onclick=toggleTab;
 document.addEventListener('keydown',e=>{
   if(e.metaKey||e.ctrlKey||e.altKey||document.querySelector('.tmodal:not([hidden])'))return;
   if(e.target.closest('input,select,textarea'))return;
   if(e.key===' '){e.preventDefault();player.on?stop():play();}
   else if(e.key==='n'||e.key==='N'){newExercise();}
+  else if(e.key==='t'||e.key==='T'){toggleTab();}
 });
 
 /* ---------- settings ---------- */
@@ -579,7 +664,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v6';
+window.APP_VERSION = 'v7';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
