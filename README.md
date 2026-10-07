@@ -1,11 +1,13 @@
-# Sight Reading
+# Page Fright
+
+*How do you get a guitar player to be quiet? Put sheet music in front of them.*
 
 Endless guitar sight-reading exercises. Each one is 16 measures in 4/4 (quarter notes in C major to start),
 covering the whole guitar range: low E (open 6th string) up to C on the 1st string's 20th fret
 (written C7, above the 5th ledger line).
 Written in treble clef, which sounds an octave lower on guitar.
 
-**Live app:** https://davyrockett.github.io/sight-reading/ It runs as an app on
+**Live app:** https://davyrockett.github.io/page-fright/ It runs as an app on
 iPhone and iPad Home Screens and the Mac's Dock, and works with no signal once installed.
 
 ## What's in here
@@ -17,7 +19,7 @@ iPhone and iPad Home Screens and the Mac's Dock, and works with no signal once i
 | `sw.js` | The "service worker": saves the app on the device so it works offline |
 | `manifest.webmanifest` | Tells the device the app's name, icon, and to open full-screen |
 | `icons/` | App icons (redraw with `python3 tools/make-icons.py`) |
-| `Start Sight Reading.command` | Double-click to run a local test copy on this Mac (port 8769) |
+| `Start Page Fright.command` | Double-click to run a local test copy on this Mac (port 8769) |
 
 ## Using it
 
@@ -48,6 +50,12 @@ iPhone and iPad Home Screens and the Mac's Dock, and works with no signal once i
 2. **Run `tools/bump.sh`** to bump the version (it updates `sw.js` and the version shown in Settings). Without this, devices keep the old copy.
 3. Commit and push (`git add -A && git commit -m "…" && git push`).
 4. GitHub Pages updates within a minute or two. Settings → **Check for updates** forces it on a device.
+
+## Old address
+
+The app used to be called Sight Reading, at https://davyrockett.github.io/sight-reading/. That address now
+forwards here (repo `davyrockett/sight-reading`, local folder `../sight-reading-redirect`). Settings carry over
+because both addresses are on the same site (localStorage keys start with `sr.`).
 
 ## Ideas for later
 

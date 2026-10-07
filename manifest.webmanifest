@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "Sight Reading",
-  "short_name": "Sight Reading",
-  "description": "Endless guitar sight-reading exercises.",
+  "name": "Page Fright",
+  "short_name": "Page Fright",
+  "description": "Endless guitar sight-reading exercises, for guitarists who go quiet in front of sheet music.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

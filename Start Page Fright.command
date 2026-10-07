@@ -1,5 +1,5 @@
 #!/bin/bash
-# Double-click this file to run a local test copy of Sight Reading on this Mac.
+# Double-click this file to run a local test copy of Page Fright on this Mac.
 # Keep this window open while you use it; close it to stop.
 cd "$(dirname "$0")"
 PORT=8769
@@ -8,6 +8,6 @@ if ! lsof -i :$PORT >/dev/null 2>&1; then
   sleep 1
 fi
 open -a Safari "http://localhost:$PORT/"
-echo "Sight Reading is running at http://localhost:$PORT"
+echo "Page Fright is running at http://localhost:$PORT"
 echo "Close this window when you're done."
 wait

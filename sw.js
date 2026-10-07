@@ -2,9 +2,9 @@
 //
 // IMPORTANT: whenever any file below changes, bump VERSION (run tools/bump.sh).
 // That is how phones and iPads learn there's an update to download.
-const VERSION = 'v10';
-const CACHE = `sightreading-${VERSION}`;
-const FONTS = 'sightreading-fonts';
+const VERSION = 'v11';
+const CACHE = `pagefright-${VERSION}`;
+const FONTS = 'pagefright-fonts';
 
 const ASSETS = [
   './',
@@ -28,7 +28,7 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
       .then((keys) => Promise.all(
-        keys.filter((key) => key.startsWith('sightreading-v') && key !== CACHE)
+        keys.filter((key) => key.startsWith('pagefright-v') && key !== CACHE)
           .map((key) => caches.delete(key))
       ))
       .then(() => self.clients.claim())
