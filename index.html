@@ -159,16 +159,16 @@ const freqOf=midi=>440*Math.pow(2,(midi-12-69)/12);
 
 /* ---------- positions and the fretboard ----------
    A position is named for its lowest fret and covers 4 frets (1st position also gets the open strings).
-   Lowest note = low E string at that fret, highest = high E string 3 frets up.
-   Above 1st position the index finger can also reach back one fret (e.g. the B on the G string's 4th fret
-   in 5th position); that fills gaps inside the range but doesn't add lower notes.
+   Above 1st position the index finger can also reach back one fret (e.g. the B on the G string's 4th fret,
+   or the low G# on the low E string's 4th fret, in 5th position).
+   Lowest note = low E string at the reach-back fret (open E in 1st position), highest = high E string at the top fret.
    Whole neck runs from open low E to the high E string's 20th fret (written C7), so it covers every position. */
 const STRINGS=[52,57,62,67,71,76]; // open strings, written pitch, low E first
 const OPEN_LOW=52, OPEN_HIGH=76;
 const POSITIONS=[1,5,9,12];
 const frets=p=>p===1?[0,4]:[p,p+3];
-const posRange=p=>[OPEN_LOW+frets(p)[0],OPEN_HIGH+frets(p)[1]];
 const reach=p=>p===1?[0,4]:[p-1,p+3]; // frets the hand can play in that position, including the reach back
+const posRange=p=>[OPEN_LOW+reach(p)[0],OPEN_HIGH+reach(p)[1]];
 const WHOLE=[52,96];
 // Can these notes (ascending MIDI) be played at once on neighboring strings, low note on the lower string?
 // With positions chosen, all fretted notes must fit in one of them; on the whole neck, within a 5-fret stretch.
@@ -618,7 +618,7 @@ function describe(){
   const rhName=cap(rh.map(r=>RHYTHMS[r]).join(' + ')+' notes')+(store.get('dotted',false)?', dotted':'')+(store.get('rests',false)?', rests':'');
   document.getElementById('subtitle').textContent=`Guitar · ${keyLabel(exercise.key)} major · ${rhName} · ${texName} · ${sel.length?sel.map(ORD).join(' + ')+(sel.length>1?' positions':' position'):'Whole neck'}`;
   document.getElementById('range-note').textContent=sel.length
-    ?`Everything fits in ${sel.length>1?'these positions':'this position'}: ${sel.map(p=>`${ORD(p)} (${p===1?'open strings to fret 4':`frets ${p}–${p+3}`})`).join(', ')}.`
+    ?`Everything fits in ${sel.length>1?'these positions':'this position'}: ${sel.map(p=>`${ORD(p)} (${p===1?'open strings to fret 4':`frets ${p}–${p+3}, reaching back to ${p-1}`})`).join(', ')}.`
     :'Range: low E (open 6th string) up to the 20th fret on the 1st string.';
 }
 describe();
@@ -673,7 +673,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v9';
+window.APP_VERSION = 'v10';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');

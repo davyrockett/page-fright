@@ -30,7 +30,8 @@ iPhone and iPad Home Screens and the Mac's Dock, and works with no signal once i
   avoids high frets on the thick strings). See `fingering()` in index.html.
 - **Customize** limits the notes to one or more positions (1st, 5th, 9th, 12th), so every note can be played
   without leaving them. 1st position is open strings to fret 4; the others are 4 frets starting at that fret, plus the
-  index finger's reach back one fret (e.g. B on the G string's 4th fret in 5th position).
+  index finger's reach back one fret (e.g. in 5th position: B on the G string's 4th fret, and the low G♯ on
+  the low E string's 4th fret).
   Choosing several combines their ranges.
 - **Key** (in Customize): C, G, D, A, E, F, B♭, E♭, A♭ major. Choose several and each exercise picks one.
   Only notes in the key are used; it starts and ends on the home note.
