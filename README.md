@@ -26,7 +26,8 @@ iPhone and iPad Home Screens and the Mac's Dock, and works with no signal once i
 - Tap any note to hear it.
 - **Tab** (button by Play, or press T) shows or hides guitar tab under the staff, any time, even while playing.
   Fingerings are worked out for the whole exercise at once (fewest, smallest hand shifts; stays in the chosen
-  positions; avoids high frets on the thick strings). See `fingering()` in index.html.
+  positions; on the whole neck it settles around 5th position and prefers fretted notes to open strings;
+  avoids high frets on the thick strings). See `fingering()` in index.html.
 - **Customize** limits the notes to one or more positions (1st, 5th, 9th, 12th), so every note can be played
   without leaving them. 1st position is open strings to fret 4; the others are 4 frets starting at that fret.
   Choosing several combines their ranges.

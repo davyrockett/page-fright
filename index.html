@@ -293,7 +293,9 @@ function index(){let t=0;onsets=[];measureOf=[];exercise.events.forEach(e=>{onse
 /* ---------- tab: where to play each note ----------
    Most notes can be played in several places, so the whole exercise is fingered at once: the hand sits at a
    fret ("hand position", covering 4 frets) and we pick the route with the fewest and smallest shifts.
-   With positions chosen, the hand stays in them. Chords stay on neighboring strings, as generated. */
+   With positions chosen, the hand stays in them. On the whole neck it stays near 5th position (HOME) when it can.
+   Chords stay on neighboring strings, as generated. */
+const HOME=5;
 let fing=[];
 function fingering(x){
   const sel=x.sel||[];
@@ -313,7 +315,8 @@ function fingering(x){
     if(sel.length){const [a,b]=frets(p);
       if(w.open&&a!==0)return Infinity;
       return w.lo===null||(w.lo>=Math.max(a,1)&&w.hi<=b)?0:Infinity;}
-    let c=p*.12;                                  // lower on the neck is easier, so shift up only when needed
+    let c=.12*Math.abs(p-HOME);                   // settle around 5th position; leave it only when the notes need to
+    if(w.open)c+=.6*w.frets.filter(f=>f===0).length; // prefer fretted notes to open strings
     if(w.open&&p>5)c+=1.2;                        // open strings are awkward high up
     w.strs.forEach((st,j)=>{const f=w.frets[j];if(st<=2&&f>12)c+=1.5;if(st===3&&f>15)c+=1;}); // high frets on the thick strings
     if(w.lo===null)return c;
@@ -664,7 +667,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v7';
+window.APP_VERSION = 'v8';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
