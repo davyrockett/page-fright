@@ -53,7 +53,7 @@ p{margin:0}
 .top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
 .brand h1{font-size:clamp(38px,6vw,52px)}
 .title-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 14px}
-.tagline{font-style:italic;color:var(--muted);font-size:clamp(15px,2vw,18px)}
+.tagline{color:var(--muted);font-size:clamp(15px,2vw,18px)}
 .brand p{font-size:13px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-top:6px}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .btn{border:1.5px solid var(--line);background:var(--surface);padding:9px 14px;border-radius:8px;cursor:pointer;font-weight:700;font-size:15px;line-height:1.2;touch-action:manipulation}
@@ -99,7 +99,7 @@ p{margin:0}
 <body>
 <div class="wrap">
   <header class="top">
-    <div class="brand"><div class="title-row"><h1>Page Fright</h1><span class="tagline">Sight reading for the suddenly speechless</span></div><p id="subtitle">Guitar · Key of C · Quarter notes</p></div>
+    <div class="brand"><div class="title-row"><h1>Page Fright</h1><span class="tagline">Guitar Sight-Reading Generator</span></div><p id="subtitle">C major · Quarter notes</p></div>
     <div class="row">
       <button type="button" class="btn" id="new" title="New exercise (N)">New exercise</button>
       <button type="button" class="btn" id="custom-open">Customize</button>
@@ -619,7 +619,7 @@ function describe(){
   const texName=cap(tex.map(t=>TEXTURES[t]).join(' + '));
   const rh=store.get('rhythms',['quarter']);
   const rhName=cap(rh.map(r=>RHYTHMS[r]).join(' + ')+' notes')+(store.get('dotted',false)?', dotted':'')+(store.get('rests',false)?', rests':'');
-  document.getElementById('subtitle').textContent=`Guitar · ${keyLabel(exercise.key)} major · ${rhName} · ${texName} · ${sel.length?sel.map(ORD).join(' + ')+(sel.length>1?' positions':' position'):'Whole neck'}`;
+  document.getElementById('subtitle').textContent=`${keyLabel(exercise.key)} major · ${rhName} · ${texName} · ${sel.length?sel.map(ORD).join(' + ')+(sel.length>1?' positions':' position'):'Whole neck'}`;
   document.getElementById('range-note').textContent=sel.length
     ?`Everything fits in ${sel.length>1?'these positions':'this position'}: ${sel.map(p=>`${ORD(p)} (${p===1?'open strings to fret 4':`frets ${p}–${p+3}, reaching back to ${p-1}`})`).join(', ')}.`
     :'Range: low E (open 6th string) up to the 20th fret on the 1st string.';
@@ -676,7 +676,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v12';
+window.APP_VERSION = 'v13';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
