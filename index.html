@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sight Reading</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Sight Reading">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#F1F0EC" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#151310" media="(prefers-color-scheme: dark)">
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+[hidden]{display:none!important}
+.update{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:20;display:flex;gap:12px;align-items:center;background:var(--ink);color:var(--bg);padding:10px 10px 10px 16px;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.25);font-size:15px;max-width:calc(100% - 32px)}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+/* One page: a toolbar, then the exercise on a paper-like card. Same look as First Frets. */
+:root{
+  --bg:#F1F0EC; --surface:#FFFFFF; --sunk:#E7E5DF; --ink:#1E1B18; --muted:#635D55; --line:#D8D4CC;
+  --accent:#D47B22; --accent-ink:#8C4A0A; --accent-soft:#F6E3CC;
+  --f-display:"Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --f-body:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#151310; --surface:#201C18; --sunk:#2A2520; --ink:#F0EBE3; --muted:#A79E92; --line:#3B342D;
+  --accent:#EE9A45; --accent-ink:#F5BE85; --accent-soft:#3B2A19;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#151310; --surface:#201C18; --sunk:#2A2520; --ink:#F0EBE3; --muted:#A79E92; --line:#3B342D;
+  --accent:#EE9A45; --accent-ink:#F5BE85; --accent-soft:#3B2A19;
+  color-scheme:dark}
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:var(--f-body);font-size:17px;line-height:1.55;margin:0}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:4px}
+h1,h2{font-family:var(--f-display);font-weight:800;letter-spacing:.01em;line-height:1.02;margin:0;text-transform:uppercase}
+p{margin:0}
+.wrap{max-width:1240px;margin:0 auto;padding:24px clamp(16px,3vw,40px) 64px;display:flex;flex-direction:column;gap:16px}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.brand h1{font-size:clamp(38px,6vw,52px)}
+.brand p{font-size:13px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-top:6px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{border:1.5px solid var(--line);background:var(--surface);padding:9px 14px;border-radius:8px;cursor:pointer;font-weight:700;font-size:15px;line-height:1.2;touch-action:manipulation}
+.btn:hover{border-color:var(--accent)}
+.btn:disabled{opacity:.55;cursor:default}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#1E1B18}
+.btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink)}
+.btn.icon{padding:7px 9px;display:inline-flex;align-items:center}
+.btn.play{min-width:96px;display:inline-flex;gap:8px;align-items:center;justify-content:center}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.controls{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;padding:12px 14px}
+.tempo{display:flex;align-items:center;gap:10px}
+.tempo input{width:160px;accent-color:var(--accent)}
+.tempo output{font-variant-numeric:tabular-nums;min-width:4.5em;font-weight:700}
+.cap{font-size:13px;color:var(--muted)}
+.status{margin-left:auto}
+/* The score. VexFlow draws in black; these rules recolor it to the theme. */
+.score{padding:12px 8px 4px;overflow:hidden}
+.score svg{display:block;max-width:100%;height:auto}
+.score svg,.score svg [fill]:not([fill="none"]){fill:var(--ink)}
+.score svg,.score svg [stroke]:not([stroke="none"]){stroke:var(--ink)}
+.score svg text{fill:var(--muted)}
+.score .vf-stavenote{cursor:pointer}
+.score .vf-stavenote.on,.score .vf-stavenote.on [fill]:not([fill="none"]){fill:var(--accent)}
+.score .vf-stavenote.on,.score .vf-stavenote.on [stroke]:not([stroke="none"]){stroke:var(--accent)}
+.notes{display:flex;flex-direction:column;gap:4px;max-width:75ch}
+/* Pop-up (settings) */
+.tmodal{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.55);display:flex;align-items:flex-start;justify-content:center;padding:calc(24px + env(safe-area-inset-top,0px)) 16px 24px;overflow:auto}
+.tmodal-card{background:var(--bg);border-radius:16px;padding:18px;width:100%;max-width:560px;display:flex;flex-direction:column;gap:12px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.tmodal-card h2{font-size:34px}
+.settings{display:flex;flex-direction:column;gap:16px}
+.set-row{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.set-row>div:first-child{flex:1 1 220px;min-width:0}
+.settings .set-row+.set-row{border-top:1px solid var(--line);padding-top:14px}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+@media (max-width:560px){.status{margin-left:0;flex-basis:100%}.tempo input{width:120px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><h1>Sight Reading</h1><p>Guitar · Key of C · Quarter notes</p></div>
+    <div class="row">
+      <button type="button" class="btn" id="new" title="New exercise (N)">New exercise</button>
+      <button type="button" class="btn icon" id="settings-open" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.5 7.5 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.5 7.5 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.5 7.5 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7.5 7.5 0 0 0 1.7-1l2.5 1 2-3.5zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg></button>
+    </div>
+  </header>
+
+  <div class="controls card">
+    <button type="button" class="btn primary play" id="play" title="Play / stop (space)"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M3 1.5v13l11-6.5z"/></svg><span>Play</span></button>
+    <button type="button" class="btn" id="click" aria-pressed="true">Metronome</button>
+    <label class="tempo"><span class="cap">Tempo</span><input type="range" id="tempo" min="40" max="200" step="2"><output id="tempo-val"></output></label>
+    <span class="cap status" id="status" aria-live="polite"></span>
+  </div>
+
+  <div class="score card" id="score" aria-label="Sight-reading exercise, 16 measures"></div>
+
+  <div class="notes cap">
+    <p>Range: low E (open 6th string) up to high D (22nd fret, 1st string). Guitar music is written an octave higher than it sounds, so the playback is at real guitar pitch.</p>
+    <p>Tap any note to hear it. Play counts you in for one measure. Keys: <b>space</b> plays or stops, <b>N</b> makes a new exercise.</p>
+  </div>
+</div>
+
+<script src="vendor/vexflow-bravura.js"></script>
+<script>
+const VF = Vex.Flow;
+
+/* ---------- storage (this device only) ---------- */
+const store={get(k,d){try{const v=localStorage.getItem('sr.'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},
+             set(k,v){try{localStorage.setItem('sr.'+k,JSON.stringify(v))}catch(e){}}};
+const h=html=>{const t=document.createElement('template');t.innerHTML=html.trim();return t.content.firstElementChild;};
+
+/* ---------- pitches ----------
+   Written pitch (treble clef), C4 = middle C = MIDI 60. The guitar sounds an octave lower.
+   Range: E3 (open low E) to D6 (high E string, 22nd fret). */
+const LETTERS=['c','d','e','f','g','a','b'], STEPS=[0,2,4,5,7,9,11];
+const RANGE=[];
+for(let oct=3;oct<=6;oct++)LETTERS.forEach((l,i)=>{
+  const midi=12*(oct+1)+STEPS[i];
+  if(midi>=52&&midi<=86)RANGE.push({key:`${l}/${oct}`,midi,name:l.toUpperCase()+oct});
+});
+const freqOf=midi=>440*Math.pow(2,(midi-12-69)/12);
+
+/* ---------- exercise generator ----------
+   A walk that heads toward a random target somewhere in the range, mostly by step with some
+   skips and leaps. When it gets there it picks a new target, so 16 bars cover the whole neck.
+   Starts and ends on a C. */
+const MEASURES=16, BEATS=4;
+function pickWeighted(pairs){let t=Math.random()*pairs.reduce((s,p)=>s+p[1],0);for(const [v,w] of pairs){if((t-=w)<=0)return v;}return pairs[0][0];}
+function generate(){
+  const top=RANGE.length-1, cs=RANGE.map((p,i)=>p.key[0]==='c'?i:-1).filter(i=>i>=0);
+  let pos=cs[Math.floor(Math.random()*cs.length)], target=pos, last=null;
+  const newTarget=()=>{let t;do t=Math.floor(Math.random()*(top+1));while(Math.abs(t-pos)<5);return t;};
+  target=newTarget();
+  const out=[pos];
+  for(let n=1;n<MEASURES*BEATS-1;n++){
+    if(pos===target)target=newTarget();
+    const dir=Math.sign(target-pos);
+    let move;
+    if(Math.random()<.05&&last!==0)move=0;                       // an occasional repeated note
+    else if(Math.random()<.18)move=-dir*pickWeighted([[1,3],[2,2]]); // a little turn back
+    else move=dir*Math.min(Math.abs(target-pos),pickWeighted([[1,40],[2,28],[3,14],[4,9],[5,5],[7,4]]));
+    pos=Math.max(0,Math.min(top,pos+move));last=move;out.push(pos);
+  }
+  const end=cs.reduce((b,c)=>Math.abs(c-pos)<Math.abs(b-pos)?c:b);
+  out.push(end===pos&&out.length>1?(cs.find(c=>c!==end&&Math.abs(c-pos)===7)??end):end);
+  return out.map(i=>RANGE[i].key);
+}
+
+let exercise=store.get('exercise',null);
+if(!Array.isArray(exercise)||exercise.length!==MEASURES*BEATS||!exercise.every(k=>RANGE.some(p=>p.key===k)))exercise=generate();
+store.set('exercise',exercise);
+const midiOf=key=>RANGE.find(p=>p.key===key).midi;
+
+/* ---------- drawing ---------- */
+const scoreEl=document.getElementById('score');
+let noteEls=[], lineOf=[], lastWidth=0;
+function render(){
+  const W=scoreEl.clientWidth-16; if(W<=0)return; lastWidth=scoreEl.clientWidth;
+  const scale=W>=1000?1.4:W>=760?1.25:W>=560?1.1:1;
+  const per=W/scale>=560?4:2;
+  const w=Math.floor(W/scale)-10, rowH=128, rows=Math.ceil(MEASURES/per);
+  scoreEl.replaceChildren();
+  const r=new VF.Renderer(scoreEl,VF.Renderer.Backends.SVG);
+  r.resize(W,Math.ceil((rows*rowH+10)*scale));
+  const ctx=r.getContext();ctx.scale(scale,scale);
+  // Extra room the clef (and the time signature on line 1) takes at the start of a line.
+  const startX=s=>s.getNoteStartX()-s.getX();
+  const plain=startX(new VF.Stave(0,0,200));
+  const clefX=startX(new VF.Stave(0,0,200).addClef('treble'))-plain;
+  const timeX=startX(new VF.Stave(0,0,200).addClef('treble').addTimeSignature('4/4'))-plain;
+  noteEls=[];lineOf=[];
+  for(let row=0;row<rows;row++){
+    const extra=row===0?timeX:clefX, mw=(w-extra)/per;
+    let x=8; // room for the measure number
+    for(let k=0;k<per;k++){
+      const m=row*per+k;if(m>=MEASURES)break;
+      const sw=k===0?mw+extra:mw;
+      const stave=new VF.Stave(x,row*rowH,sw);
+      if(k===0){stave.addClef('treble');if(row===0)stave.addTimeSignature('4/4');if(row>0)stave.setMeasure(m+1);}
+      if(m===MEASURES-1)stave.setEndBarType(VF.Barline.type.END);
+      stave.setContext(ctx).draw();
+      const notes=exercise.slice(m*BEATS,m*BEATS+BEATS).map(k=>new VF.StaveNote({keys:[k],duration:'q',auto_stem:true}));
+      const voice=new VF.Voice({num_beats:BEATS,beat_value:4}).addTickables(notes);
+      new VF.Formatter().joinVoices([voice]).format([voice],stave.getNoteEndX()-stave.getNoteStartX()-12);
+      voice.draw(ctx,stave);
+      notes.forEach(()=>lineOf.push(row));
+      x+=sw;
+    }
+  }
+  noteEls=[...scoreEl.querySelectorAll('.vf-stavenote')];
+  noteEls.forEach((el,i)=>{el.dataset.i=i;
+    const p=RANGE.find(p=>p.key===exercise[i]);
+    el.setAttribute('role','img');el.setAttribute('aria-label',`${p.name}, measure ${Math.floor(i/BEATS)+1}`);});
+}
+let rt=0;
+new ResizeObserver(()=>{if(scoreEl.clientWidth!==lastWidth){clearTimeout(rt);rt=setTimeout(()=>{render();if(player.on)mark(player.cur,false);},80);}}).observe(scoreEl);
+render();
+
+/* ---------- audio: Karplus-Strong plucked string (same sound as First Frets) ---------- */
+let AC=null,OUT=null;
+function audio(){
+  if(!AC){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;AC=new C();
+    const comp=AC.createDynamicsCompressor();OUT=AC.createGain();OUT.gain.value=.9;OUT.connect(comp);comp.connect(AC.destination);}
+  if(AC.state==='suspended')AC.resume();
+  return AC;
+}
+const live=new Set();
+function pluck(freq,{at=0,dur=2.6,vol=.55}={}){
+  const c=audio();if(!c)return;
+  const sr=c.sampleRate,len=Math.floor(sr*dur);
+  const buf=c.createBuffer(1,len,sr),d=buf.getChannelData(0);
+  const P=Math.max(2,Math.round(sr/freq-.5)),ring=new Float32Array(P);
+  for(let i=0;i<P;i++)ring[i]=Math.random()*2-1;
+  for(let k=0;k<3;k++)for(let i=1;i<P;i++)ring[i]=(ring[i]+ring[i-1])*.5; // soft thumb attack
+  let m=0;for(let i=0;i<P;i++)m+=ring[i];m/=P;for(let i=0;i<P;i++)ring[i]-=m;
+  let idx=0;
+  for(let i=0;i<len;i++){const nx=idx+1===P?0:idx+1,v=ring[idx];d[i]=v;ring[idx]=.997*.5*(v+ring[nx]);idx=nx;}
+  let pk=0;for(let i=0;i<len;i++)pk=Math.max(pk,Math.abs(d[i]));if(pk)for(let i=0;i<len;i++)d[i]/=pk;
+  const src=c.createBufferSource(),g=c.createGain(),t=Math.max(at,c.currentTime)+.01;
+  src.buffer=buf;g.gain.setValueAtTime(vol,t);g.gain.setTargetAtTime(0,t+dur*.75,.12);
+  src.connect(g);g.connect(OUT);src.start(t);src.stop(t+len/sr+.6);
+  live.add(g);src.onended=()=>live.delete(g);
+}
+function tick(at,strong){
+  const c=audio();if(!c)return;
+  const o=c.createOscillator(),g=c.createGain();
+  o.frequency.value=strong?1760:1175;o.type='sine';
+  g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(strong?.35:.22,at+.002);g.gain.exponentialRampToValueAtTime(.0001,at+.06);
+  o.connect(g);g.connect(OUT);o.start(at);o.stop(at+.08);
+}
+function hush(){const c=AC;if(!c)return;live.forEach(g=>{g.gain.cancelScheduledValues(c.currentTime);g.gain.setTargetAtTime(0,c.currentTime,.03);});}
+
+/* ---------- playback ---------- */
+const playBtn=document.getElementById('play'),statusEl=document.getElementById('status');
+const tempoEl=document.getElementById('tempo'),tempoVal=document.getElementById('tempo-val'),clickBtn=document.getElementById('click');
+let bpm=store.get('tempo',72),metro=store.get('metronome',true);
+tempoEl.value=bpm;tempoVal.textContent=bpm+' bpm';clickBtn.setAttribute('aria-pressed',metro);
+const player={on:false,start:0,spb:1,next:0,cur:-1,timer:0,raf:0};
+const COUNT=BEATS, TOTAL=COUNT+MEASURES*BEATS;
+
+function mark(i,scroll=true){
+  noteEls.forEach(el=>el.classList.remove('on'));
+  const el=noteEls[i];if(!el)return;
+  el.classList.add('on');
+  if(scroll&&(i===0||lineOf[i]!==lineOf[i-1])){
+    const r=el.getBoundingClientRect();
+    if(r.top<80||r.bottom>innerHeight-60)el.scrollIntoView({block:'center',behavior:'smooth'});
+  }
+}
+function schedule(){
+  const c=AC;
+  while(player.next<TOTAL&&player.start+player.next*player.spb<c.currentTime+.2){
+    const b=player.next,at=player.start+b*player.spb;
+    if(b<COUNT||metro)tick(at,b%BEATS===0);
+    if(b>=COUNT)pluck(freqOf(midiOf(exercise[b-COUNT])),{at,dur:Math.min(2.4,Math.max(.6,player.spb*1.5)),vol:.6});
+    player.next++;
+  }
+}
+function frame(){
+  if(!player.on)return;
+  const beat=Math.floor((AC.currentTime-player.start)/player.spb);
+  if(beat<COUNT){statusEl.textContent=beat>=0?`Count-in: ${beat+1}`:'';}
+  else if(beat<TOTAL){const i=beat-COUNT;if(i!==player.cur){player.cur=i;mark(i);statusEl.textContent=`Measure ${Math.floor(i/BEATS)+1} of ${MEASURES}`;}}
+  else{stop(false);statusEl.textContent='Done. Try it again, or make a new one.';return;}
+  player.raf=requestAnimationFrame(frame);
+}
+function play(){
+  const c=audio();if(!c)return;
+  player.on=true;player.spb=60/bpm;player.start=c.currentTime+.15;player.next=0;player.cur=-1;
+  schedule();player.timer=setInterval(schedule,40);player.raf=requestAnimationFrame(frame);
+  playBtn.querySelector('span').textContent='Stop';
+  playBtn.querySelector('path').setAttribute('d','M3 3h10v10H3z');
+}
+function stop(cut=true){
+  player.on=false;clearInterval(player.timer);cancelAnimationFrame(player.raf);
+  if(cut)hush();
+  noteEls.forEach(el=>el.classList.remove('on'));statusEl.textContent='';
+  playBtn.querySelector('span').textContent='Play';
+  playBtn.querySelector('path').setAttribute('d','M3 1.5v13l11-6.5z');
+}
+playBtn.onclick=()=>player.on?stop():play();
+tempoEl.oninput=()=>{
+  const nb=+tempoEl.value;tempoVal.textContent=nb+' bpm';
+  if(player.on){ // keep going from the same spot at the new speed
+    const now=AC.currentTime,pos=(now-player.start)/player.spb,spb=60/nb;
+    player.start=now-pos*spb;player.spb=spb; // beats already queued keep their old timing
+  }
+  bpm=nb;store.set('tempo',bpm);
+};
+clickBtn.onclick=()=>{metro=!metro;store.set('metronome',metro);clickBtn.setAttribute('aria-pressed',metro);};
+
+// Tap a note to hear it.
+scoreEl.addEventListener('click',e=>{
+  const el=e.target.closest('.vf-stavenote');if(!el)return;
+  const i=+el.dataset.i;pluck(freqOf(midiOf(exercise[i])),{dur:1.8});
+  if(!player.on){el.classList.add('on');setTimeout(()=>el.classList.remove('on'),450);}
+});
+
+function newExercise(){
+  const was=player.on;if(was)stop();
+  exercise=generate();store.set('exercise',exercise);render();window.scrollTo({top:0,behavior:'smooth'});
+}
+document.getElementById('new').onclick=newExercise;
+document.addEventListener('keydown',e=>{
+  if(e.metaKey||e.ctrlKey||e.altKey||document.querySelector('.tmodal:not([hidden])'))return;
+  if(e.target.closest('input,select,textarea'))return;
+  if(e.key===' '){e.preventDefault();player.on?stop():play();}
+  else if(e.key==='n'||e.key==='N'){newExercise();}
+});
+
+/* ---------- settings ---------- */
+function Popup(title,build){
+  const m=h(`<div class="tmodal" role="dialog" aria-modal="true" aria-label="${title}" hidden><div class="tmodal-card"><div class="row" style="justify-content:space-between"><h2>${title}</h2><button type="button" class="btn tmodal-x">Close</button></div><div class="tmodal-slot"></div></div></div>`);
+  document.body.append(m);let built=false;
+  const close=()=>{m.hidden=true;};
+  m.querySelector('.tmodal-x').onclick=close;
+  m.addEventListener('click',e=>{if(e.target===m)close();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!m.hidden)close();});
+  return {open(){if(!built){m.querySelector('.tmodal-slot').append(build());built=true;}m.hidden=false;m.querySelector('.tmodal-x').focus();}};
+}
+const THEME_BG={light:'#F1F0EC',dark:'#151310'};
+function applyTheme(t){
+  const r=document.documentElement;
+  if(t==='light'||t==='dark'){r.setAttribute('data-theme',t);document.querySelectorAll('meta[name="theme-color"]').forEach(m=>m.setAttribute('content',THEME_BG[t]));}
+  else{r.removeAttribute('data-theme');document.querySelectorAll('meta[name="theme-color"]').forEach(m=>m.setAttribute('content',m.media.includes('dark')?THEME_BG.dark:THEME_BG.light));}
+}
+applyTheme(store.get('theme','auto'));
+const settingsPop=Popup('Settings',()=>{
+  const seg=(key,label,opts,def)=>`<div class="seg" role="group" aria-label="${label}" data-key="${key}" data-def="${def}">${opts.map(([v,t])=>`<button type="button" class="btn" data-v="${v}">${t}</button>`).join('')}</div>`;
+  const el=h(`<div class="settings">
+    <div class="set-row"><div><b>Appearance</b><p class="cap">Auto follows your device's light or dark setting.</p></div>${seg('theme','Appearance',[['auto','Auto'],['light','Light'],['dark','Dark']],'auto')}</div>
+    <div class="set-row"><div><b>App version</b><p class="cap ver-line"></p></div><button type="button" class="btn" id="set-update">Check for updates</button></div>
+    <p class="cap">Settings are saved on this device only.</p></div>`);
+  const mark=()=>el.querySelectorAll('.seg').forEach(g=>{const cur=store.get(g.dataset.key,g.dataset.def);g.querySelectorAll('[data-v]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===cur));});
+  el.addEventListener('click',e=>{const b=e.target.closest('.seg [data-v]');if(!b)return;const key=b.closest('.seg').dataset.key,v=b.dataset.v;store.set(key,v);
+    if(key==='theme')applyTheme(v);
+    mark();});
+  const ver=el.querySelector('.ver-line'),ub=el.querySelector('#set-update');
+  ver.textContent=`You're on ${window.APP_VERSION||'unknown'}.`;
+  ub.onclick=async()=>{
+    const reg=window.SW_REG;if(!reg||!navigator.onLine){ver.textContent='Connect to the internet, then try again.';return;}
+    ub.disabled=true;ver.textContent='Checking…';
+    try{await reg.update();}catch(e){}
+    const w=reg.waiting||reg.installing;
+    if(w){ver.textContent='Updating now…';const go=()=>w.postMessage('skipWaiting');if(w.state==='installed')go();else w.addEventListener('statechange',()=>{if(w.state==='installed')go();});}
+    else{ver.textContent=`You're on the latest version (${window.APP_VERSION}).`;ub.disabled=false;}
+  };
+  mark();return el;
+});
+document.getElementById('settings-open').onclick=()=>settingsPop.open();
+</script>
+
+<div class="update" id="update-banner" role="status" hidden><span>A new version is ready.</span><button type="button" class="btn primary" id="update-btn">Update</button></div>
+<script>
+// Offline support + updates. See sw.js.
+// The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
+window.APP_VERSION = 'v1';
+(async () => {
+  if (!('serviceWorker' in navigator)) return;
+  const reg = await navigator.serviceWorker.register('sw.js');
+  window.SW_REG = reg;
+  const banner = document.getElementById('update-banner');
+  const hadController = Boolean(navigator.serviceWorker.controller);
+  const apply = (worker) => worker.postMessage('skipWaiting');
+  // Right after the app opens there's nothing to lose, so updates apply on their own.
+  // Later on, offer a banner instead of reloading in the middle of practice.
+  const justOpened = () => performance.now() < 20000;
+  const handle = (worker) => {
+    if (!worker || !navigator.serviceWorker.controller) return;
+    if (justOpened()) apply(worker);
+    else {
+      banner.hidden = false;
+      document.getElementById('update-btn').onclick = () => apply(worker);
+    }
+  };
+  const watch = (worker) => {
+    if (!worker) return;
+    if (worker.state === 'installed') return handle(worker);
+    worker.addEventListener('statechange', () => { if (worker.state === 'installed') handle(worker); });
+  };
+  handle(reg.waiting);
+  watch(reg.installing);
+  reg.addEventListener('updatefound', () => watch(reg.installing));
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (hadController && !reloaded) { reloaded = true; location.reload(); }
+  });
+  // Check now, and again whenever the Home Screen app comes back to the front.
+  const check = () => { if (navigator.onLine) reg.update().catch(() => {}).then(() => handle(reg.waiting)); };
+  check();
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') check(); });
+})();
+</script>
+</body>
+</html>
