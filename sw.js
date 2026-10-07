@@ -2,7 +2,7 @@
 //
 // IMPORTANT: whenever any file below changes, bump VERSION (run tools/bump.sh).
 // That is how phones and iPads learn there's an update to download.
-const VERSION = 'v4';
+const VERSION = 'v5';
 const CACHE = `sightreading-${VERSION}`;
 const FONTS = 'sightreading-fonts';
 

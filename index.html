@@ -128,12 +128,12 @@ const h=html=>{const t=document.createElement('template');t.innerHTML=html.trim(
 
 /* ---------- pitches ----------
    Written pitch (treble clef), C4 = middle C = MIDI 60. The guitar sounds an octave lower.
-   Whole neck: E3 (open low E) to D6 (high E string, 22nd fret). Positions reach up to G6. */
+   Whole neck: E3 (open low E) to C7 (high E string, 20th fret). */
 const LETTERS=['c','d','e','f','g','a','b'], STEPS=[0,2,4,5,7,9,11];
 const RANGE=[];
-for(let oct=3;oct<=6;oct++)LETTERS.forEach((l,i)=>{
+for(let oct=3;oct<=7;oct++)LETTERS.forEach((l,i)=>{
   const midi=12*(oct+1)+STEPS[i];
-  if(midi>=52&&midi<=91)RANGE.push({key:`${l}/${oct}`,midi,name:l.toUpperCase()+oct});
+  if(midi>=52&&midi<=96)RANGE.push({key:`${l}/${oct}`,midi,name:l.toUpperCase()+oct});
 });
 const freqOf=midi=>440*Math.pow(2,(midi-12-69)/12);
 const midiOf=key=>RANGE.find(p=>p.key===key).midi;
@@ -141,13 +141,13 @@ const midiOf=key=>RANGE.find(p=>p.key===key).midi;
 /* ---------- positions and the fretboard ----------
    A position is named for its lowest fret and covers 4 frets (1st position also gets the open strings).
    Lowest note = low E string at that fret, highest = high E string 3 frets up.
-   Whole neck runs from open low E to the high E string's 15th fret (written G6), so it covers every position. */
+   Whole neck runs from open low E to the high E string's 20th fret (written C7), so it covers every position. */
 const STRINGS=[52,57,62,67,71,76]; // open strings, written pitch, low E first
 const OPEN_LOW=52, OPEN_HIGH=76;
 const POSITIONS=[1,5,9,12];
 const frets=p=>p===1?[0,4]:[p,p+3];
 const posRange=p=>[OPEN_LOW+frets(p)[0],OPEN_HIGH+frets(p)[1]];
-const WHOLE=[52,91];
+const WHOLE=[52,96];
 // Can these notes (ascending MIDI) be played at once on neighboring strings, low note on the lower string?
 // With positions chosen, all fretted notes must fit in one of them; on the whole neck, within a 5-fret stretch.
 function playable(midis,sel){
@@ -243,8 +243,9 @@ function render(){
   const W=scoreEl.clientWidth-16; if(W<=0)return; lastWidth=scoreEl.clientWidth;
   const scale=W>=1000?1.4:W>=760?1.25:W>=560?1.1:1;
   const per=W/scale>=560?4:2;
-  // Notes in the higher positions go 4 ledger lines up, so give those lines more headroom.
-  const above=exercise.some(c=>c.some(k=>midiOf(k)>86))?5.5:4;
+  // High notes go up to 5 ledger lines, so give each line headroom for the highest note in the exercise.
+  const topIdx=Math.max(...exercise.flat().map(k=>RANGE.findIndex(p=>p.key===k)));
+  const above=Math.max(4,(topIdx-RANGE.findIndex(p=>p.key==='f/5'))/2+1.5);
   const w=Math.floor(W/scale)-10, rowH=88+above*10, rows=Math.ceil(MEASURES/per);
   scoreEl.replaceChildren();
   const r=new VF.Renderer(scoreEl,VF.Renderer.Backends.SVG);
@@ -446,7 +447,7 @@ function describe(){
   document.getElementById('subtitle').textContent=`Guitar · Key of C · ${texName} · ${sel.length?sel.map(ORD).join(' + ')+(sel.length>1?' positions':' position'):'Whole neck'}`;
   document.getElementById('range-note').textContent=sel.length
     ?`Everything fits in ${sel.length>1?'these positions':'this position'}: ${sel.map(p=>`${ORD(p)} (${p===1?'open strings to fret 4':`frets ${p}–${p+3}`})`).join(', ')}.`
-    :'Range: low E (open 6th string) up to G on the 1st string, 15th fret.';
+    :'Range: low E (open 6th string) up to C on the 1st string, 20th fret.';
 }
 describe();
 const customPop=Popup('Customize',()=>{
@@ -489,7 +490,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v4';
+window.APP_VERSION = 'v5';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
