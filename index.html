@@ -160,17 +160,20 @@ const freqOf=midi=>440*Math.pow(2,(midi-12-69)/12);
 /* ---------- positions and the fretboard ----------
    A position is named for its lowest fret and covers 4 frets (1st position also gets the open strings).
    Lowest note = low E string at that fret, highest = high E string 3 frets up.
+   Above 1st position the index finger can also reach back one fret (e.g. the B on the G string's 4th fret
+   in 5th position); that fills gaps inside the range but doesn't add lower notes.
    Whole neck runs from open low E to the high E string's 20th fret (written C7), so it covers every position. */
 const STRINGS=[52,57,62,67,71,76]; // open strings, written pitch, low E first
 const OPEN_LOW=52, OPEN_HIGH=76;
 const POSITIONS=[1,5,9,12];
 const frets=p=>p===1?[0,4]:[p,p+3];
 const posRange=p=>[OPEN_LOW+frets(p)[0],OPEN_HIGH+frets(p)[1]];
+const reach=p=>p===1?[0,4]:[p-1,p+3]; // frets the hand can play in that position, including the reach back
 const WHOLE=[52,96];
 // Can these notes (ascending MIDI) be played at once on neighboring strings, low note on the lower string?
 // With positions chosen, all fretted notes must fit in one of them; on the whole neck, within a 5-fret stretch.
 function playable(midis,sel){
-  const windows=sel.length?sel.map(frets):[[0,22]];
+  const windows=sel.length?sel.map(reach):[[0,22]];
   for(let s0=0;s0+midis.length<=6;s0++){
     const f=midis.map((m,i)=>m-STRINGS[s0+i]);
     const fretted=f.filter(x=>x>0);
@@ -312,15 +315,18 @@ function fingering(x){
   // Hand positions to choose from, and what each costs for a given way of playing the notes.
   const hands=sel.length?sel:Array.from({length:19},(_,i)=>i+1);
   const fit=(w,p)=>{
-    if(sel.length){const [a,b]=frets(p);
+    if(sel.length){const [a,b]=reach(p);
       if(w.open&&a!==0)return Infinity;
-      return w.lo===null||(w.lo>=Math.max(a,1)&&w.hi<=b)?0:Infinity;}
+      if(w.lo===null)return 0;
+      if(w.lo>=Math.max(frets(p)[0],1)&&w.hi<=b)return 0;
+      return w.lo>=Math.max(a,1)&&w.hi<=b?.3:Infinity;} // reaching back one fret
     let c=.12*Math.abs(p-HOME);                   // settle around 5th position; leave it only when the notes need to
     if(w.open)c+=.6*w.frets.filter(f=>f===0).length; // prefer fretted notes to open strings
     if(w.open&&p>5)c+=1.2;                        // open strings are awkward high up
     w.strs.forEach((st,j)=>{const f=w.frets[j];if(st<=2&&f>12)c+=1.5;if(st===3&&f>15)c+=1;}); // high frets on the thick strings
     if(w.lo===null)return c;
     if(w.lo>=p&&w.hi<=p+3)return c;
+    if(w.lo===p-1&&w.hi<=p+3)return c+.3;         // index finger reaches back a fret (beats an open string)
     if(w.lo>=p&&w.hi<=p+4)return c+1.5;           // a stretch
     return Infinity;};
   const move=(a,b)=>a===b?0:1+.15*Math.abs(a-b);
@@ -633,7 +639,7 @@ const customPop=Popup('Customize',()=>{
     <div class="seg" role="group" aria-label="Rhythm extras">${btns('flag',[['dotted','Dotted'],['rests','Rests']])}</div>
     <div class="set-row"><div><b>Notes</b><p class="cap">Double stops are 3rds and 5ths. Triple stops are three-note chords stacked in 3rds. Both are always on neighboring strings and fit your positions. Choose more than one to mix them.</p></div></div>
     <div class="seg" role="group" aria-label="Notes">${btns('tex',Object.entries(TEXTURES))}</div>
-    <div class="set-row"><div><b>Positions</b><p class="cap">Only use notes you can play without leaving the positions you choose. A position is named for its lowest fret and covers four frets; 1st position also uses the open strings. Choose several to combine them, or Whole neck for everything.</p></div></div>
+    <div class="set-row"><div><b>Positions</b><p class="cap">Only use notes you can play without leaving the positions you choose. A position is named for its lowest fret and covers four frets, plus the index finger's reach back one fret; 1st position uses the open strings. Choose several to combine them, or Whole neck for everything.</p></div></div>
     <div class="seg" role="group" aria-label="Positions">
       <button type="button" class="btn" data-whole>Whole neck</button>
       ${POSITIONS.map(p=>`<button type="button" class="btn" data-pos="${p}">${ORD(p)}</button>`).join('')}
@@ -667,7 +673,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v8';
+window.APP_VERSION = 'v9';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
