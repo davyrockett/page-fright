@@ -13,6 +13,10 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#F1F0EC" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#151310" media="(prefers-color-scheme: dark)">
+<script>
+// Light unless changed in Settings. Set before the page draws so it never flashes dark first.
+(()=>{let t='light';try{const v=localStorage.getItem('sr.theme');if(v)t=JSON.parse(v);}catch(e){}if(t!=='auto')document.documentElement.setAttribute('data-theme',t);})();
+</script>
 <style>
 :root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 [hidden]{display:none!important}
@@ -355,11 +359,11 @@ function applyTheme(t){
   if(t==='light'||t==='dark'){r.setAttribute('data-theme',t);document.querySelectorAll('meta[name="theme-color"]').forEach(m=>m.setAttribute('content',THEME_BG[t]));}
   else{r.removeAttribute('data-theme');document.querySelectorAll('meta[name="theme-color"]').forEach(m=>m.setAttribute('content',m.media.includes('dark')?THEME_BG.dark:THEME_BG.light));}
 }
-applyTheme(store.get('theme','auto'));
+applyTheme(store.get('theme','light'));
 const settingsPop=Popup('Settings',()=>{
   const seg=(key,label,opts,def)=>`<div class="seg" role="group" aria-label="${label}" data-key="${key}" data-def="${def}">${opts.map(([v,t])=>`<button type="button" class="btn" data-v="${v}">${t}</button>`).join('')}</div>`;
   const el=h(`<div class="settings">
-    <div class="set-row"><div><b>Appearance</b><p class="cap">Auto follows your device's light or dark setting.</p></div>${seg('theme','Appearance',[['auto','Auto'],['light','Light'],['dark','Dark']],'auto')}</div>
+    <div class="set-row"><div><b>Appearance</b><p class="cap">Light unless you change it. Auto follows your device's light or dark setting.</p></div>${seg('theme','Appearance',[['light','Light'],['dark','Dark'],['auto','Auto']],'light')}</div>
     <div class="set-row"><div><b>App version</b><p class="cap ver-line"></p></div><button type="button" class="btn" id="set-update">Check for updates</button></div>
     <p class="cap">Settings are saved on this device only.</p></div>`);
   const mark=()=>el.querySelectorAll('.seg').forEach(g=>{const cur=store.get(g.dataset.key,g.dataset.def);g.querySelectorAll('[data-v]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===cur));});
@@ -417,7 +421,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v2';
+window.APP_VERSION = 'v3';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
