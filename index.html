@@ -113,7 +113,7 @@ p{margin:0}
   <div class="notes cap">
     <p id="range-note"></p>
     <p>Guitar music is written an octave higher than it sounds, so the playback is at real guitar pitch.</p>
-    <p>Tap any note to hear it. Play counts you in for one measure. Keys: <b>space</b> plays or stops, <b>N</b> makes a new exercise.</p>
+    <p>Tap any note or chord to hear it. Play counts you in for one measure. Keys: <b>space</b> plays or stops, <b>N</b> makes a new exercise.</p>
   </div>
 </div>
 
@@ -138,51 +138,103 @@ for(let oct=3;oct<=6;oct++)LETTERS.forEach((l,i)=>{
 const freqOf=midi=>440*Math.pow(2,(midi-12-69)/12);
 const midiOf=key=>RANGE.find(p=>p.key===key).midi;
 
-/* ---------- positions ----------
+/* ---------- positions and the fretboard ----------
    A position is named for its lowest fret and covers 4 frets (1st position also gets the open strings).
-   Lowest note = low E string at that fret, highest = high E string 3 frets up. */
+   Lowest note = low E string at that fret, highest = high E string 3 frets up.
+   Whole neck runs from open low E to the high E string's 15th fret (written G6), so it covers every position. */
+const STRINGS=[52,57,62,67,71,76]; // open strings, written pitch, low E first
 const OPEN_LOW=52, OPEN_HIGH=76;
 const POSITIONS=[1,5,9,12];
-const posRange=p=>p===1?[OPEN_LOW,OPEN_HIGH+4]:[OPEN_LOW+p,OPEN_HIGH+p+3];
-const WHOLE=[52,86];
+const frets=p=>p===1?[0,4]:[p,p+3];
+const posRange=p=>[OPEN_LOW+frets(p)[0],OPEN_HIGH+frets(p)[1]];
+const WHOLE=[52,91];
+// Can these notes (ascending MIDI) be played at once on neighboring strings, low note on the lower string?
+// With positions chosen, all fretted notes must fit in one of them; on the whole neck, within a 5-fret stretch.
+function playable(midis,sel){
+  const windows=sel.length?sel.map(frets):[[0,22]];
+  for(let s0=0;s0+midis.length<=6;s0++){
+    const f=midis.map((m,i)=>m-STRINGS[s0+i]);
+    const fretted=f.filter(x=>x>0);
+    const stretchOk=!fretted.length||Math.max(...fretted)-Math.min(...fretted)<=4;
+    if(stretchOk&&windows.some(([lo,hi])=>f.every(x=>x>=0&&(x===0?lo===0:x>=lo&&x<=hi))))return true;
+  }
+  return false;
+}
 
 /* ---------- exercise generator ----------
    A walk that heads toward a random target somewhere in the range, mostly by step with some
    skips and leaps. When it gets there it picks a new target, so the exercise covers the range.
-   With positions chosen, every note can be played without leaving them. Starts and ends on a C. */
+   The walk is the top voice; double and triple stops add notes under it.
+   With positions chosen, every note can be played without leaving them. Starts and ends on C. */
 const MEASURES=16, BEATS=4;
+const TEXTURES={single:'Single notes',double:'Double stops',triple:'Triple stops'};
 function pickWeighted(pairs){let t=Math.random()*pairs.reduce((s,p)=>s+p[1],0);for(const [v,w] of pairs){if((t-=w)<=0)return v;}return pairs[0][0];}
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
 // Lowest and highest written MIDI note allowed. The positions' ranges overlap, so together they make one span.
 function span(sel){
   if(!sel.length)return WHOLE;
   const rs=sel.map(posRange);
   return [Math.min(...rs.map(r=>r[0])),Math.max(...rs.map(r=>r[1]))];
 }
-function generate(sel=store.get('positions',[])){
+// The chord with `top` (a RANGE index) as its highest note, as RANGE indexes low to high, or null if it won't work.
+// Double stops: a 3rd or a perfect 5th. Triple stops: a triad in close position (3rd + 3rd, perfect 5th outside).
+// The diminished 5th (B–F) is left out of both.
+function chordOn(top,type,lo,hi,sel){
+  const shapes=type==='single'?[[0]]:type==='double'?shuffle([[-2,0],[-4,0]]):[[-4,-2,0]];
+  for(const sh of shapes){
+    const idx=sh.map(d=>top+d);
+    if(idx[0]<lo||top>hi)continue;
+    const m=idx.map(i=>RANGE[i].midi);
+    if(sh[0]===-4&&m.at(-1)-m[0]!==7)continue;
+    if(playable(m,sel))return idx;
+  }
+  return null;
+}
+function generate(sel=store.get('positions',[]),tex=store.get('textures',['single'])){
   const [loM,hiM]=span(sel);
   const idx=RANGE.map((n,i)=>n.midi>=loM&&n.midi<=hiM?i:-1).filter(i=>i>=0), lo=idx[0], hi=idx.at(-1);
-  const cs=idx.filter(i=>RANGE[i].key[0]==='c');
-  let pos=cs[Math.floor(Math.random()*cs.length)], target=pos, last=null;
+  const isC=i=>RANGE[i].key[0]==='c';
+  // Every chord (of the chosen kinds) that can be played, keyed by its top note.
+  const options=t=>{const o=[];for(let top=lo;top<=hi;top++){const c=chordOn(top,t,lo,hi,sel);if(c)o.push(c);}return o;};
+  const anyType=()=>tex[Math.floor(Math.random()*tex.length)];
+  const nearest=(list,pos)=>list.reduce((b,c)=>Math.abs(c.at(-1)-pos)<Math.abs(b.at(-1)-pos)?c:b);
+  // Start and end with C at the bottom. If no such chord fits (e.g. triple stops in 9th position), any chord with a C in it.
+  const homeChords=list=>{const b=list.filter(c=>isC(c[0]));return b.length?b:list.filter(c=>c.some(isC)).length?list.filter(c=>c.some(isC)):list;};
+  const first=homeChords(options(anyType()));
+  let cur=first[Math.floor(Math.random()*first.length)];
+  let pos=cur.at(-1), last=null;
   const newTarget=()=>{let t,tries=0;do t=lo+Math.floor(Math.random()*(hi-lo+1));while(Math.abs(t-pos)<5&&++tries<50);return t;};
-  target=newTarget();
-  const out=[pos];
-  for(let n=1;n<MEASURES*BEATS-1;n++){
+  let target=newTarget();
+  const out=[cur];
+  for(let n=1;n<MEASURES*BEATS;n++){
+    const type=anyType();
+    if(n===MEASURES*BEATS-1){ // end on C at the bottom, as close as possible
+      out.push(nearest(homeChords(tex.flatMap(options)),pos));break;
+    }
     if(pos===target)target=newTarget();
     const dir=Math.sign(target-pos);
     let move;
-    if(Math.random()<.05&&last!==0)move=0;                       // an occasional repeated note
+    if(Math.random()<.05&&last!==0)move=0;                       // an occasional repeat
     else if(Math.random()<.18)move=-dir*pickWeighted([[1,3],[2,2]]); // a little turn back
     else move=dir*Math.min(Math.abs(target-pos),pickWeighted([[1,40],[2,28],[3,14],[4,9],[5,5],[7,4]]));
-    pos=Math.max(lo,Math.min(hi,pos+move));last=move;out.push(pos);
+    const want=Math.max(lo,Math.min(hi,pos+move));
+    // Use the wanted top note if that kind of chord works there, otherwise the closest one that does.
+    let pick=null;
+    for(const t of [type,...shuffle(tex.filter(x=>x!==type))]){
+      for(let d=0;d<=6&&!pick;d++)for(const s of d?[dir||1,-(dir||1)]:[0]){const c=chordOn(want+s*d,t,lo,hi,sel);if(c){pick=c;break;}}
+      if(pick)break;
+    }
+    if(!pick)pick=[want];
+    last=pick.at(-1)-pos;pos=pick.at(-1);out.push(pick);
   }
-  const end=cs.reduce((b,c)=>Math.abs(c-pos)<Math.abs(b-pos)?c:b);
-  out.push(end===pos?(cs.find(c=>c!==end&&Math.abs(c-pos)===7)??end):end);
-  return out.map(i=>RANGE[i].key);
+  return out.map(c=>c.map(i=>RANGE[i].key));
 }
 
 let exercise=store.get('exercise',null);
-if(!Array.isArray(exercise)||exercise.length!==MEASURES*BEATS||!exercise.every(k=>RANGE.some(p=>p.key===k)))exercise=generate();
+const validEx=e=>Array.isArray(e)&&e.length===MEASURES*BEATS&&e.every(c=>Array.isArray(c)&&c.length&&c.every(k=>RANGE.some(p=>p.key===k)));
+if(!validEx(exercise))exercise=generate();
 store.set('exercise',exercise);
+const nameOf=c=>c.map(k=>RANGE.find(p=>p.key===k).name).join('–');
 
 /* ---------- drawing ---------- */
 const scoreEl=document.getElementById('score');
@@ -192,7 +244,7 @@ function render(){
   const scale=W>=1000?1.4:W>=760?1.25:W>=560?1.1:1;
   const per=W/scale>=560?4:2;
   // Notes in the higher positions go 4 ledger lines up, so give those lines more headroom.
-  const above=exercise.some(k=>midiOf(k)>86)?5.5:4;
+  const above=exercise.some(c=>c.some(k=>midiOf(k)>86))?5.5:4;
   const w=Math.floor(W/scale)-10, rowH=88+above*10, rows=Math.ceil(MEASURES/per);
   scoreEl.replaceChildren();
   const r=new VF.Renderer(scoreEl,VF.Renderer.Backends.SVG);
@@ -214,7 +266,7 @@ function render(){
       if(k===0){stave.addClef('treble');if(row===0)stave.addTimeSignature('4/4');if(row>0)stave.setMeasure(m+1);}
       if(m===MEASURES-1)stave.setEndBarType(VF.Barline.type.END);
       stave.setContext(ctx).draw();
-      const notes=exercise.slice(m*BEATS,m*BEATS+BEATS).map(k=>new VF.StaveNote({keys:[k],duration:'q',auto_stem:true}));
+      const notes=exercise.slice(m*BEATS,m*BEATS+BEATS).map(c=>new VF.StaveNote({keys:c,duration:'q',auto_stem:true}));
       const voice=new VF.Voice({num_beats:BEATS,beat_value:4}).addTickables(notes);
       new VF.Formatter().joinVoices([voice]).format([voice],stave.getNoteEndX()-stave.getNoteStartX()-12);
       voice.draw(ctx,stave);
@@ -224,8 +276,7 @@ function render(){
   }
   noteEls=[...scoreEl.querySelectorAll('.vf-stavenote')];
   noteEls.forEach((el,i)=>{el.dataset.i=i;
-    const p=RANGE.find(p=>p.key===exercise[i]);
-    el.setAttribute('role','img');el.setAttribute('aria-label',`${p.name}, measure ${Math.floor(i/BEATS)+1}`);});
+    el.setAttribute('role','img');el.setAttribute('aria-label',`${nameOf(exercise[i])}, measure ${Math.floor(i/BEATS)+1}`);});
 }
 let rt=0;
 new ResizeObserver(()=>{if(scoreEl.clientWidth!==lastWidth){clearTimeout(rt);rt=setTimeout(()=>{render();if(player.on)mark(player.cur,false);},80);}}).observe(scoreEl);
@@ -263,6 +314,9 @@ function tick(at,strong){
   g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(strong?.35:.22,at+.002);g.gain.exponentialRampToValueAtTime(.0001,at+.06);
   o.connect(g);g.connect(OUT);o.start(at);o.stop(at+.08);
 }
+// Play a note or chord: chords are a quick low-to-high strum, a little softer per string.
+function strike(keys,at,dur){const c=audio();if(!c)return;const t=Math.max(at,c.currentTime);
+  keys.forEach((k,j)=>pluck(freqOf(midiOf(k)),{at:t+j*.018,dur,vol:keys.length>1?.42:.6}));}
 function hush(){const c=AC;if(!c)return;live.forEach(g=>{g.gain.cancelScheduledValues(c.currentTime);g.gain.setTargetAtTime(0,c.currentTime,.03);});}
 
 /* ---------- playback ---------- */
@@ -287,7 +341,7 @@ function schedule(){
   while(player.next<TOTAL&&player.start+player.next*player.spb<c.currentTime+.2){
     const b=player.next,at=player.start+b*player.spb;
     if(b<COUNT||metro)tick(at,b%BEATS===0);
-    if(b>=COUNT)pluck(freqOf(midiOf(exercise[b-COUNT])),{at,dur:Math.min(2.4,Math.max(.6,player.spb*1.5)),vol:.6});
+    if(b>=COUNT)strike(exercise[b-COUNT],at,Math.min(2.4,Math.max(.6,player.spb*1.5)));
     player.next++;
   }
 }
@@ -327,7 +381,7 @@ clickBtn.onclick=()=>{metro=!metro;store.set('metronome',metro);clickBtn.setAttr
 // Tap a note to hear it.
 scoreEl.addEventListener('click',e=>{
   const el=e.target.closest('.vf-stavenote');if(!el)return;
-  const i=+el.dataset.i;pluck(freqOf(midiOf(exercise[i])),{dur:1.8});
+  const i=+el.dataset.i;strike(exercise[i],0,1.8);
   if(!player.on){el.classList.add('on');setTimeout(()=>el.classList.remove('on'),450);}
 });
 
@@ -387,11 +441,12 @@ document.getElementById('settings-open').onclick=()=>settingsPop.open();
 /* ---------- customize (what the exercises contain) ---------- */
 const ORD=n=>n===1?'1st':n+'th';
 function describe(){
-  const sel=store.get('positions',[]);
-  document.getElementById('subtitle').textContent=`Guitar · Key of C · Quarter notes · ${sel.length?sel.map(ORD).join(' + ')+(sel.length>1?' positions':' position'):'Whole neck'}`;
+  const sel=store.get('positions',[]), tex=store.get('textures',['single']);
+  const texName=tex.map(t=>TEXTURES[t]).join(' + ').toLowerCase().replace(/^./,c=>c.toUpperCase());
+  document.getElementById('subtitle').textContent=`Guitar · Key of C · ${texName} · ${sel.length?sel.map(ORD).join(' + ')+(sel.length>1?' positions':' position'):'Whole neck'}`;
   document.getElementById('range-note').textContent=sel.length
-    ?`Every note fits in ${sel.length>1?'these positions':'this position'}: ${sel.map(p=>`${ORD(p)} (${p===1?'open strings to fret 4':`frets ${p}–${p+3}`})`).join(', ')}.`
-    :'Range: low E (open 6th string) up to high D (22nd fret, 1st string).';
+    ?`Everything fits in ${sel.length>1?'these positions':'this position'}: ${sel.map(p=>`${ORD(p)} (${p===1?'open strings to fret 4':`frets ${p}–${p+3}`})`).join(', ')}.`
+    :'Range: low E (open 6th string) up to G on the 1st string, 15th fret.';
 }
 describe();
 const customPop=Popup('Customize',()=>{
@@ -401,11 +456,24 @@ const customPop=Popup('Customize',()=>{
       <button type="button" class="btn" data-whole>Whole neck</button>
       ${POSITIONS.map(p=>`<button type="button" class="btn" data-pos="${p}">${ORD(p)}</button>`).join('')}
     </div>
+    <div class="set-row"><div><b>Notes</b><p class="cap">Double stops are 3rds and 5ths. Triple stops are three-note chords stacked in 3rds. Both are always on neighboring strings and fit your positions. Choose more than one to mix them.</p></div></div>
+    <div class="seg" role="group" aria-label="Notes">
+      ${Object.entries(TEXTURES).map(([t,n])=>`<button type="button" class="btn" data-tex="${t}">${n}</button>`).join('')}
+    </div>
     <p class="cap">Changes make a new exercise right away.</p></div>`);
   const mark=()=>{const sel=store.get('positions',[]);
     el.querySelector('[data-whole]').setAttribute('aria-pressed',sel.length===0);
-    el.querySelectorAll('[data-pos]').forEach(b=>b.setAttribute('aria-pressed',sel.includes(+b.dataset.pos)));};
+    el.querySelectorAll('[data-pos]').forEach(b=>b.setAttribute('aria-pressed',sel.includes(+b.dataset.pos)));
+    const tex=store.get('textures',['single']);
+    el.querySelectorAll('[data-tex]').forEach(b=>b.setAttribute('aria-pressed',tex.includes(b.dataset.tex)));};
   el.addEventListener('click',e=>{
+    const tb=e.target.closest('[data-tex]');
+    if(tb){ // at least one kind stays on
+      const t=tb.dataset.tex,tex=store.get('textures',['single']);
+      const next=tex.includes(t)?tex.filter(x=>x!==t):Object.keys(TEXTURES).filter(x=>x===t||tex.includes(x));
+      if(!next.length)return;
+      store.set('textures',next);mark();newExercise();return;
+    }
     const b=e.target.closest('[data-pos],[data-whole]');if(!b)return;
     let sel=store.get('positions',[]);
     if(b.dataset.whole!==undefined)sel=[];
@@ -421,7 +489,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v3';
+window.APP_VERSION = 'v4';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');

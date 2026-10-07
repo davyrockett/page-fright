@@ -1,7 +1,8 @@
 # Sight Reading
 
 Endless guitar sight-reading exercises. Each one is 16 measures of quarter notes in C major,
-covering the whole guitar range: low E (open 6th string) up to high D (22nd fret, 1st string).
+covering the whole guitar range: low E (open 6th string) up to G on the 1st string's 15th fret
+(written G6, 4 ledger lines up).
 Written in treble clef, which sounds an octave lower on guitar.
 
 **Live app:** https://davyrockett.github.io/sight-reading/ It runs as an app on
@@ -25,7 +26,10 @@ iPhone and iPad Home Screens and the Mac's Dock, and works with no signal once i
 - Tap any note to hear it.
 - **Customize** limits the notes to one or more positions (1st, 5th, 9th, 12th), so every note can be played
   without leaving them. 1st position is open strings to fret 4; the others are 4 frets starting at that fret.
-  Choosing several combines their ranges. Positions can reach up to written G6 (15th fret).
+  Choosing several combines their ranges.
+- **Notes** (in Customize): single notes, double stops (3rds and perfect 5ths) and/or triple stops (close-position
+  triads). Chords are always on neighboring strings and are checked to be playable in the chosen positions
+  (or within a 5-fret stretch on the whole neck). The diminished 5th B–F is left out.
 
 ## Publishing a change
 
@@ -36,4 +40,4 @@ iPhone and iPad Home Screens and the Mac's Dock, and works with no signal once i
 
 ## Ideas for later
 
-Choose keys, rhythms, double and triple stops; more positions.
+Choose keys and rhythms; more chord types; more positions; 8va for notes above the 15th fret.
