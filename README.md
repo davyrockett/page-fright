@@ -1,6 +1,6 @@
 # Sight Reading
 
-Endless guitar sight-reading exercises. Each one is 16 measures of quarter notes in C major,
+Endless guitar sight-reading exercises. Each one is 16 measures in 4/4 (quarter notes in C major to start),
 covering the whole guitar range: low E (open 6th string) up to C on the 1st string's 20th fret
 (written C7, above the 5th ledger line).
 Written in treble clef, which sounds an octave lower on guitar.
@@ -27,6 +27,11 @@ iPhone and iPad Home Screens and the Mac's Dock, and works with no signal once i
 - **Customize** limits the notes to one or more positions (1st, 5th, 9th, 12th), so every note can be played
   without leaving them. 1st position is open strings to fret 4; the others are 4 frets starting at that fret.
   Choosing several combines their ranges.
+- **Key** (in Customize): C, G, D, A, E, F, B♭, E♭, A♭ major. Choose several and each exercise picks one.
+  Only notes in the key are used; it starts and ends on the home note.
+- **Rhythm** (in Customize): any mix of whole, half, quarter, eighth and sixteenth notes, plus Dotted and Rests.
+  Measures are built from common one- and two-beat patterns (two-beat ones start on beat 1 or 3), and
+  eighths/sixteenths are beamed by the beat.
 - **Notes** (in Customize): single notes, double stops (3rds and perfect 5ths) and/or triple stops (close-position
   triads). Chords are always on neighboring strings and are checked to be playable in the chosen positions
   (or within a 5-fret stretch on the whole neck). The diminished 5th B–F is left out.
@@ -40,4 +45,4 @@ iPhone and iPad Home Screens and the Mac's Dock, and works with no signal once i
 
 ## Ideas for later
 
-Choose keys and rhythms; more chord types; more positions; 8va for the highest notes.
+Minor keys; triplets, ties and syncopation; more chord types; more positions; 8va for the highest notes.
