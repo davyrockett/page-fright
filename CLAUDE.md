@@ -84,7 +84,8 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
 - Drill section (v40, `drill.js`): Read | Improv | Drill switch; `showView()` in improv.js handles all three and
   the first view is opened at the end of drill.js. Triads: root + quality (maj/min/dim/aug), any strings
   (tap toggles, all 6 allowed — David's call; 3+ are grouped three neighbours at a time, `stringGroups()`,
-  one notation strip per group; 1–2 strings show the chord's notes on them), every
+  ONE notation staff: shapes at about the same spot merge into one stacked chord, noteheads coloured by
+  inversion — David's call, he's fine with big stacks; 1–2 strings show the chord's notes on them), every
   playable shape on frets 0–17 (span ≤4 frets adjacent, ≤5 spread), lines coloured by inversion (toggleable),
   tap a line to hear it, Play walks up the neck. Note names (on by default, David's call) spelled from the
   root letter (`spell()`).

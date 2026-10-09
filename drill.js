@@ -53,7 +53,7 @@ function triadShapes(){
 
 /* ---------- drawing ---------- */
 const dfb=document.getElementById('dfb');
-let tShapes=[], tFocus=-1;
+let tShapes=[], tFocus=[]; // tFocus: the shapes highlighted right now
 function drawDrill(){
   tShapes=triadShapes().filter(sh=>D.inv.includes(sh.inv));
   const q=QUALITIES[D.qual];
@@ -67,7 +67,7 @@ function drawDrill(){
     svg+=`<line class="str" x1="${NUT-34}" x2="${NUT+LAST*FW}" y1="${sy(s)}" y2="${sy(s)}" stroke-width="${1+s*.35}"${used?'':' stroke-opacity=".35"'}/>`;}
   // Shape lines first, then the dots on top.
   tShapes.forEach((sh,i)=>{const pts=sh.notes.map(n=>`${fx(n.f)},${sy(n.s)}`).join(' ');
-    svg+=`<polyline class="shape inv${sh.inv}${i===tFocus?' on':''}" data-i="${i}" points="${pts}"><title>${INVERSIONS[sh.inv]}</title></polyline>`;});
+    svg+=`<polyline class="shape inv${sh.inv}${tFocus.includes(i)?' on':''}" data-i="${i}" points="${pts}"><title>${INVERSIONS[sh.inv]}</title></polyline>`;});
   const dots=new Map();
   // Fewer than three strings: no shapes yet, so show where the chord's notes fall on the strings picked.
   if(D.strings.length<3){const pcs=q.iv.map(i=>(D.root+i)%12);
@@ -75,10 +75,10 @@ function drawDrill(){
   tShapes.forEach((sh,i)=>sh.notes.forEach((n,j)=>{const k=n.s+','+n.f;const d=dots.get(k)||{...n,deg:sh.degs[j],tShapes:[]};d.tShapes.push(i);dots.set(k,d);}));
   dots.forEach(d=>{
     const label=D.lab==='int'?q.lab[d.deg]:spell(D.root,d.deg,D.qual);
-    const on=tFocus>=0&&d.tShapes.includes(tFocus);
+    const on=d.tShapes.some(i=>tFocus.includes(i));
     svg+=`<g class="dot${d.deg===0?' root':''}${on?' on':''}" data-s="${d.s}" data-f="${d.f}"><circle cx="${fx(d.f)}" cy="${sy(d.s)}" r="10.5"/><text x="${fx(d.f)}" y="${sy(d.s)+.5}">${label}</text></g>`;
   });
-  dfb.setAttribute('viewBox',`0 0 ${W} ${H}`);dfb.innerHTML=svg;dfb.classList.toggle('focus',tFocus>=0);
+  dfb.setAttribute('viewBox',`0 0 ${W} ${H}`);dfb.innerHTML=svg;dfb.classList.toggle('focus',tFocus.length>0);
   const note=document.getElementById('dnote'), n=D.strings.length;
   note.hidden=n>=3&&tShapes.length>0;
   note.textContent=(n===0?'Pick three or more strings.':n<3?`Showing the chord's notes on ${n===1?'that string':'those strings'}. Pick ${n===1?'two more strings':'one more string'} to see the triad shapes.`
@@ -101,52 +101,57 @@ function vfKey(n,deg){
 function drawNotation(){
   dnot.replaceChildren();
   if(!tShapes.length)return;
-  const chords=tShapes.map(sh=>sh.notes.map((n,j)=>vfKey(n,sh.degs[j])).sort((a,b)=>a.midi-b.midi));
-  const groups=stringGroups(), many=groups.length>1;
   const step=k=>{const [l,o]=k.split('/');return 7*(+o)+'cdefgab'.indexOf(l[0]);};
-  // One strip per group of strings (highest strings on top, like the fretboard), so chords never pile up.
-  for(let g=groups.length-1;g>=0;g--){
-    const idx=tShapes.map((sh,i)=>sh.group===g?i:-1).filter(i=>i>=0);
-    if(!idx.length)continue;
-    // Room above and below the staff for the highest and lowest notes (ledger lines).
-    const all=idx.flatMap(i=>chords[i]).map(c=>step(c.key)), top=Math.max(...all), bot=Math.min(...all);
-    const above=Math.max(many?3:2,(top-step('f/5'))/2+1.5), below=Math.max(2,(step('e/4')-bot)/2+1.5);
-    const h=Math.ceil((above+4+below)*10+8);
-    const box=document.createElement('div');box.className='strip';dnot.append(box);
-    const r=new VF.Renderer(box,VF.Renderer.Backends.SVG);r.resize(W,h);
-    const ctx=r.getContext();
-    const stave=new VF.Stave(0,0,W,{space_above_staff_ln:above,space_below_staff_ln:below,left_bar:false});
-    stave.addClef('treble').setEndBarType(VF.Barline.type.NONE).setContext(ctx).draw();
-    // Label each strip with its strings.
-    if(many){ctx.save();ctx.setFont('Arial',11,'bold');ctx.fillText(groups[g].map(s=>STRING_NAMES[s]).join(' '),4,13);ctx.restore();}
-    const minX=stave.getNoteStartX()+18;
-    idx.forEach(i=>{
-      const sh=tShapes[i],ch=chords[i];
-      const note=new VF.StaveNote({keys:ch.map(c=>c.key),duration:'w'});
-      ch.forEach((c,j)=>{if(c.acc)note.addModifier(new VF.Accidental(c.acc),j);});
-      const mc=new VF.ModifierContext();note.addToModifierContext(mc);
-      const tc=new VF.TickContext();tc.addTickable(note).preFormat();
-      const mid=sh.notes.reduce((a,n)=>a+fx(n.f),0)/3;
-      tc.setX(Math.max(minX,mid)-stave.getNoteStartX()-16);
-      note.setStave(stave).setContext(ctx).draw();
-    });
-    const svg=box.querySelector('svg');svg.setAttribute('viewBox',`0 0 ${W} ${h}`);svg.removeAttribute('width');svg.removeAttribute('height');svg.style.width='';svg.style.height='';
-    box.querySelectorAll('.vf-stavenote').forEach((el,n)=>{const i=idx[n];el.dataset.i=i;el.classList.add('inv'+tShapes[i].inv);if(i===tFocus)el.classList.add('on');
-      el.setAttribute('role','img');el.setAttribute('aria-label',`${INVERSIONS[tShapes[i].inv]}: ${chords[i].map(c=>c.name).join(', ')}`);});
-  }
-  dnot.classList.toggle('focus',tFocus>=0);
+  // Shapes at about the same spot on the neck (e.g. on different string sets) become one stacked chord.
+  const at=tShapes.map((sh,i)=>({i,x:sh.notes.reduce((a,n)=>a+fx(n.f),0)/3})).sort((a,b)=>a.x-b.x);
+  const clusters=[];
+  at.forEach(p=>{const c=clusters.at(-1);if(c&&p.x-c.x0<34)c.items.push(p);else clusters.push({x0:p.x,items:[p]});});
+  clusters.forEach(c=>{
+    c.x=c.items.reduce((a,p)=>a+p.x,0)/c.items.length;
+    c.shapes=c.items.map(p=>p.i);
+    const seen=new Map();   // one notehead per pitch, coloured by the inversion it came from
+    c.shapes.forEach(i=>tShapes[i].notes.forEach((n,j)=>{const k=vfKey(n,tShapes[i].degs[j]);if(!seen.has(k.midi))seen.set(k.midi,{...k,inv:tShapes[i].inv});}));
+    c.keys=[...seen.values()].sort((a,b)=>a.midi-b.midi);
+  });
+  // Room above and below the staff for the highest and lowest notes (ledger lines).
+  const all=clusters.flatMap(c=>c.keys).map(k=>step(k.key)), top=Math.max(...all), bot=Math.min(...all);
+  const above=Math.max(2,(top-step('f/5'))/2+1.5), below=Math.max(2,(step('e/4')-bot)/2+1.5);
+  const h=Math.ceil((above+4+below)*10+8);
+  const r=new VF.Renderer(dnot,VF.Renderer.Backends.SVG);r.resize(W,h);
+  const ctx=r.getContext();
+  const stave=new VF.Stave(0,0,W,{space_above_staff_ln:above,space_below_staff_ln:below,left_bar:false});
+  stave.addClef('treble').setEndBarType(VF.Barline.type.NONE).setContext(ctx).draw();
+  const minX=stave.getNoteStartX()+18;
+  clusters.forEach(c=>{
+    const note=new VF.StaveNote({keys:c.keys.map(k=>k.key),duration:'w'});
+    c.keys.forEach((k,j)=>{if(k.acc)note.addModifier(new VF.Accidental(k.acc),j);});
+    const mc=new VF.ModifierContext();note.addToModifierContext(mc);
+    const tc=new VF.TickContext();tc.addTickable(note).preFormat();
+    tc.setX(Math.max(minX,c.x)-stave.getNoteStartX()-16);
+    note.setStave(stave).setContext(ctx).draw();
+  });
+  const svg=dnot.querySelector('svg');svg.setAttribute('viewBox',`0 0 ${W} ${h}`);svg.removeAttribute('width');svg.removeAttribute('height');svg.style.width='';svg.style.height='';
+  dnot.querySelectorAll('.vf-stavenote').forEach((el,n)=>{const c=clusters[n];el.dataset.c=n;
+    el.querySelectorAll('.vf-notehead').forEach((nh,j)=>nh.classList.add('inv'+c.keys[j].inv));
+    if(c.shapes.some(i=>tFocus.includes(i)))el.classList.add('on');
+    el.setAttribute('role','img');el.setAttribute('aria-label',c.keys.map(k=>k.name).join(', '));});
+  dnot.clusters=clusters;
+  dnot.classList.toggle('focus',tFocus.length>0);
 }
+// Tap a chord: hear all its notes and highlight its shapes on the fretboard.
 dnot.addEventListener('click',e=>{const g=e.target.closest('.vf-stavenote');if(!g)return;
-  tFocus=+g.dataset.i;strumShape(tShapes[tFocus],audio()?.currentTime||0);drawDrill();});
+  const c=dnot.clusters[+g.dataset.c],t=audio()?.currentTime||0;
+  c.keys.forEach((k,j)=>pluck(freqOf(k.midi),{at:t+j*.03,dur:1.6,vol:.34}));
+  tFocus=c.shapes;drawDrill();});
 
 /* ---------- sound ---------- */
 const strumShape=(sh,at=0)=>[...sh.notes].sort((a,b)=>a.s-b.s).forEach((n,j)=>pluck(freqOf(STRINGS[n.s]+n.f),{at:at+j*.03,dur:1.6,vol:.4}));
 dfb.addEventListener('click',e=>{
   const line=e.target.closest('.shape');
-  if(line){tFocus=+line.dataset.i;strumShape(tShapes[tFocus],audio()?.currentTime||0);drawDrill();return;}
+  if(line){const i=+line.dataset.i;tFocus=[i];strumShape(tShapes[i],audio()?.currentTime||0);drawDrill();return;}
   const dot=e.target.closest('.dot');
   if(dot)pluck(freqOf(STRINGS[+dot.dataset.s]+ +dot.dataset.f),{dur:1.4});
-  else if(tFocus>=0&&!dp.on){tFocus=-1;drawDrill();}
+  else if(tFocus.length&&!dp.on){tFocus=[];drawDrill();}
 });
 
 // Play: strum every shape in order up the neck, highlighting each one.
@@ -155,20 +160,20 @@ const dplay=document.getElementById('dplay'),dstatus=document.getElementById('ds
 function dstep(){
   if(!dp.on)return;
   if(dp.i>=tShapes.length){dstop();dstatus.textContent='Done.';return;}
-  tFocus=dp.i;strumShape(tShapes[dp.i],audio().currentTime);drawDrill();
+  tFocus=[dp.i];strumShape(tShapes[dp.i],audio().currentTime);drawDrill();
   dstatus.textContent=`Shape ${dp.i+1} of ${tShapes.length} · ${INVERSIONS[tShapes[dp.i].inv]}`;
   scrollToFocus();
   dp.i++;dp.timer=setTimeout(dstep,1100);
 }
 function dstart(){if(!audio()||!tShapes.length)return;dp.on=true;dp.i=0;
   dplay.querySelector('span').textContent='Stop';dplay.querySelector('path').setAttribute('d','M3 3h10v10H3z');dstep();}
-function dstop(){if(!dp.on)return;dp.on=false;clearTimeout(dp.timer);hush();tFocus=-1;dstatus.textContent='';drawDrill();
+function dstop(){if(!dp.on)return;dp.on=false;clearTimeout(dp.timer);hush();tFocus=[];dstatus.textContent='';drawDrill();
   dplay.querySelector('span').textContent='Play';dplay.querySelector('path').setAttribute('d','M3 1.5v13l11-6.5z');}
 dplay.onclick=()=>dp.on?dstop():dstart();
 // On a narrow screen the fretboard scrolls sideways: keep the shape being played in view.
 function scrollToFocus(){
-  const wrap=dfb.parentElement;if(tFocus<0||wrap.scrollWidth<=wrap.clientWidth)return;
-  const k=dfb.clientWidth/W,x=fx(Math.min(...tShapes[tFocus].notes.map(n=>n.f)))*k;
+  const wrap=dfb.parentElement;if(!tFocus.length||wrap.scrollWidth<=wrap.clientWidth)return;
+  const k=dfb.clientWidth/W,x=fx(Math.min(...tShapes[tFocus[0]].notes.map(n=>n.f)))*k;
   if(x<wrap.scrollLeft+20||x>wrap.scrollLeft+wrap.clientWidth-120)wrap.scrollLeft=Math.max(0,x-40);
 }
 
@@ -176,7 +181,7 @@ function scrollToFocus(){
 const rootSel=document.getElementById('droot'),qualSel=document.getElementById('dqual');
 rootSel.innerHTML=ROOTS.map(r=>`<option value="${r}">${ROOT_SPELL[r]}</option>`).join('');
 rootSel.value=D.root;qualSel.value=D.qual;
-const changed=()=>{dstop();tFocus=-1;drawDrill();};
+const changed=()=>{dstop();tFocus=[];drawDrill();};
 rootSel.onchange=()=>{D.root=+rootSel.value;store.set('droot',D.root);changed();};
 qualSel.onchange=()=>{D.qual=qualSel.value;store.set('dqual',D.qual);drawInv();changed();};
 function drawStrings(){
