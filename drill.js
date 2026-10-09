@@ -48,7 +48,7 @@ function triadShapes(){
 
 /* ---------- drawing ---------- */
 const dfb=document.getElementById('dfb');
-let tShapes=[], tFocus=-1;
+let tShapes=[], tFocus=-1, noteFlash='', flashTimer=0;
 function drawDrill(){
   tShapes=triadShapes().filter(sh=>D.inv.includes(sh.inv));
   const q=QUALITIES[D.qual];
@@ -64,6 +64,9 @@ function drawDrill(){
   tShapes.forEach((sh,i)=>{const pts=sh.notes.map(n=>`${fx(n.f)},${sy(n.s)}`).join(' ');
     svg+=`<polyline class="shape inv${sh.inv}${i===tFocus?' on':''}" data-i="${i}" points="${pts}"><title>${INVERSIONS[sh.inv]}</title></polyline>`;});
   const dots=new Map();
+  // Fewer than three strings: no shapes yet, so show where the chord's notes fall on the strings picked.
+  if(D.strings.length<3){const pcs=q.iv.map(i=>(D.root+i)%12);
+    D.strings.forEach(s=>{for(let f=0;f<=LAST;f++){const deg=pcs.indexOf(pcAt(s,f));if(deg>=0)dots.set(s+','+f,{s,f,pc:pcAt(s,f),deg,tShapes:[]});}});}
   tShapes.forEach((sh,i)=>sh.notes.forEach((n,j)=>{const k=n.s+','+n.f;const d=dots.get(k)||{...n,deg:sh.degs[j],tShapes:[]};d.tShapes.push(i);dots.set(k,d);}));
   dots.forEach(d=>{
     const label=D.lab==='int'?q.lab[d.deg]:spell(D.root,d.deg,D.qual);
@@ -71,9 +74,10 @@ function drawDrill(){
     svg+=`<g class="dot${d.deg===0?' root':''}${on?' on':''}" data-s="${d.s}" data-f="${d.f}"><circle cx="${fx(d.f)}" cy="${sy(d.s)}" r="10.5"/><text x="${fx(d.f)}" y="${sy(d.s)+.5}">${label}</text></g>`;
   });
   dfb.setAttribute('viewBox',`0 0 ${W} ${H}`);dfb.innerHTML=svg;dfb.classList.toggle('focus',tFocus>=0);
-  const note=document.getElementById('dnote');
-  note.hidden=D.strings.length===3&&tShapes.length>0;
-  note.textContent=D.strings.length!==3?'Pick three strings.':!D.inv.length?'Turn on at least one inversion.':'No playable tShapes on these strings.';
+  const note=document.getElementById('dnote'), n=D.strings.length;
+  note.hidden=n===3&&tShapes.length>0&&!noteFlash;
+  note.textContent=noteFlash||(n===0?'Pick up to three strings.':n<3?`Showing the chord's notes on ${n===1?'that string':'those strings'}. Pick ${n===1?'two more strings':'one more string'} to see the triad shapes.`
+    :!D.inv.length?'Turn on at least one inversion.':'No playable shapes on these strings.');
   describeDrill();
 }
 
@@ -127,7 +131,11 @@ document.getElementById('drill-view').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;const d=b.dataset;
   if(d.str!==undefined){const s=+d.str;
     if(D.strings.includes(s))D.strings=D.strings.filter(x=>x!==s);
-    else{D.strings=[...D.strings,s];if(D.strings.length>3)D.strings.shift();} // keep three: drop the oldest pick
+    else if(D.strings.length>=3){ // up to three: say so instead of adding a fourth
+      noteFlash='Up to three strings. Tap one to turn it off first.';clearTimeout(flashTimer);
+      flashTimer=setTimeout(()=>{noteFlash='';drawDrill();},2500);drawDrill();return;}
+    else D.strings=[...D.strings,s];
+    noteFlash='';clearTimeout(flashTimer);
     store.set('dstrings',D.strings);drawStrings();changed();}
   else if(d.inv!==undefined){const i=+d.inv;D.inv=D.inv.includes(i)?D.inv.filter(x=>x!==i):[...D.inv,i].sort();store.set('dinv',D.inv);drawInv();changed();}
   else if(b.id==='dlab'){D.lab=D.lab==='note'?'int':'note';store.set('dlab',D.lab);b.setAttribute('aria-pressed',D.lab==='note');drawDrill();}

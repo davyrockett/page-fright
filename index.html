@@ -257,7 +257,7 @@ p{margin:0}
     <details class="notes cap help">
       <summary>How it works</summary>
       <p>Pick a chord and any three strings. The fretboard shows every playable way to play that triad on those strings, up and down the neck: one note on each string, joined by a line colored by inversion. Root position has the root on the lowest of the three strings; 1st inversion has the 3rd there; 2nd inversion has the 5th. Tap the inversion buttons to show or hide each kind.</p>
-      <p>Tap a shape's line to hear the chord, or a dot to hear one note. <b>Play</b> (or <b>space</b>) strums every shape in order up the neck. Tapping a fourth string swaps out the one you picked longest ago.</p>
+      <p>Tap a shape's line to hear the chord, or a dot to hear one note. <b>Play</b> (or <b>space</b>) strums every shape in order up the neck. Pick up to three strings; with one or two, the fretboard shows where the chord's notes are on them.</p>
     </details>
   </div>
 </div>
@@ -818,7 +818,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v40';
+window.APP_VERSION = 'v41';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
