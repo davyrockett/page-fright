@@ -85,11 +85,16 @@ bplay.onclick=()=>bp.on?bstop():bstart();
 /* ---------- scales and shapes ----------
    Pentatonic shapes are the five 2-notes-per-string boxes. Box n starts on the n-th scale note on the low E
    string and takes the next two scale notes on each string up. Each is named for the CAGED chord shape it
-   sits around, found from which strings its roots are on. */
+   sits around, found from which strings its roots are on.
+   Full major and minor scale shapes are the matching pentatonic box plus the two missing notes in the same
+   position (4 and 7 for major, 2 and ♭6 for minor), each placed once, on the string where it falls inside
+   the box (or one fret outside it, preferring the index finger's reach back). */
 const SCALES={
   minor:{name:'Minor pentatonic',iv:[0,3,5,7,10]},
   blues:{name:'Blues scale',iv:[0,3,5,6,7,10],base:'minor',extra:6},
+  minorScale:{name:'Minor scale',iv:[0,2,3,5,7,8,10],base:'minor',add:[2,8]},
   major:{name:'Major pentatonic',iv:[0,2,4,7,9]},
+  majorScale:{name:'Major scale',iv:[0,2,4,5,7,9,11],base:'major',add:[5,11]},
   caged:{name:'CAGED chords',iv:[0,4,7]},
 };
 const LAST=17; // frets shown
@@ -114,12 +119,24 @@ function shapes(){
   return iv.map((_,k)=>{
     const f0=((pcs[k]-STRINGS[0])%12+12)%12, i0=pitches.indexOf(STRINGS[0]+f0);
     let notes=[];for(let s=0;s<6;s++)for(let j=0;j<2;j++){const m=pitches[i0+2*s+j];notes.push({s,f:m-STRINGS[s]});}
+    if(Math.min(...notes.map(p=>p.f))<0)notes=notes.map(p=>({s:p.s,f:p.f+12})); // keep it on the neck before filling in
+    const rootStr=[...new Set(notes.filter(p=>pcAt(p.s,p.f)===key).map(p=>p.s))].sort().join(',');
+    const name=Object.keys(ROOT_STRINGS).find(L=>ROOT_STRINGS[L]===rootStr)||`Shape ${k+1}`;
+    if(sc.add){ // full scale: fill in the missing notes, each pitch once
+      const lo=Math.min(...notes.map(p=>p.f)),hi=Math.max(...notes.map(p=>p.f));
+      const ps=notes.map(p=>STRINGS[p.s]+p.f),minP=Math.min(...ps),maxP=Math.max(...ps),want=sc.add.map(i=>(key+i)%12);
+      for(let m=minP-2;m<=maxP+2;m++){ // a little past the box's ends too (e.g. the 7 under the root)
+        if(!want.includes(m%12))continue;
+        let best=null,bd=9;
+        for(let st=0;st<6;st++){const f=m-STRINGS[st];if(f<0||f<lo-1||f>hi+1)continue;
+          const d=f<lo?lo-f-.1:f>hi?f-hi:0;if(d<bd){bd=d;best={s:st,f};}} // reaching back beats reaching up
+        if(best)notes.push(best);
+      }
+    }
     if(sc.extra!==undefined){ // blues: add the ♭5 wherever it falls inside the box
       const lo=Math.min(...notes.map(p=>p.f)),hi=Math.max(...notes.map(p=>p.f)),b5=(key+sc.extra)%12;
       for(let s=0;s<6;s++)for(let f=lo;f<=hi;f++)if(pcAt(s,f)===b5)notes.push({s,f});
     }
-    const rootStr=[...new Set(notes.filter(p=>pcAt(p.s,p.f)===key).map(p=>p.s))].sort().join(',');
-    const name=Object.keys(ROOT_STRINGS).find(L=>ROOT_STRINGS[L]===rootStr)||`Shape ${k+1}`;
     return {name,notes};
   });
 }
