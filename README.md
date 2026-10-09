@@ -54,7 +54,8 @@ The **Read | Improv** switch under the header changes sections (`#improv` links 
 - **Fretboard (frets 0–17):** minor pentatonic, blues scale, minor scale, major pentatonic, major scale, or the CAGED
   chord shapes for the key. Full-scale shapes are the pentatonic box plus the two missing notes (4 & 7 major; 2 & ♭6 minor).
   Show all shapes or pick one or more (named E, D, C, A, G for the chord shape each sits around). Dots show intervals or note
-  names; roots are orange. **Chord tones** rings the notes of the chord being played while the track runs.
+  names; roots are orange. **Chord tones** rings the notes of the chord being played while the track runs, and shows
+  chord tones the scale lacks (e.g. the IV chord's major 3rd over minor pentatonic) as hollow blue dots labeled R/3/5/♭7.
 
 ## Publishing a change
 

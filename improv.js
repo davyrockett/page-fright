@@ -176,6 +176,18 @@ function drawBoard(){
     svg+=`<g class="${cls}" data-s="${p.s}" data-f="${p.f}"><circle cx="${fx(p.f)}" cy="${sy(p.s)}" r="10.5"/><text x="${fx(p.f)}" y="${sy(p.s)+.5}">${label}</text></g>`;
     if(tones&&tones.includes(pc)&&!(any&&!on.has(p.s+','+p.f)))svg+=`<circle class="ring" cx="${fx(p.f)}" cy="${sy(p.s)}" r="14"/>`;
   });
+  // Chord tones the scale doesn't have (like the IV chord's major 3rd over minor pentatonic): hollow blue dots,
+  // labeled by their job in the chord being played. Only while the track runs with Chord tones on,
+  // and only inside the chosen shapes (or anywhere with All shapes).
+  if(tones){
+    const cr=(key+form()[bp.bar])%12, inScale=sc.iv.map(i=>(key+i)%12), JOB={0:'R',4:'3',7:'5',10:'♭7'};
+    const areas=any?sel.flatMap(x=>x.places.map(pl=>[Math.min(...pl.map(p=>p.f)),Math.max(...pl.map(p=>p.f))])):[[0,LAST]];
+    for(let s=0;s<6;s++)for(let f=0;f<=LAST;f++){
+      const pc=pcAt(s,f);if(!tones.includes(pc)||inScale.includes(pc)||!areas.some(([a,b])=>f>=a&&f<=b))continue;
+      const label=B.lab==='int'?JOB[((pc-cr)%12+12)%12]:pcName(pc,key);
+      svg+=`<g class="dot extra" data-s="${s}" data-f="${f}"><circle cx="${fx(f)}" cy="${sy(s)}" r="10.5"/><text x="${fx(f)}" y="${sy(s)+.5}">${label}</text></g>`;
+    }
+  }
   fb.setAttribute('viewBox',`0 0 ${W} ${H}`);fb.innerHTML=svg;
   document.getElementById('fb-note').textContent=B.scale==='caged'
     ?`The five ${pcName(key,key)} major chord shapes up the neck, named for the open chord each one is shaped like.`
