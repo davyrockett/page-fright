@@ -65,7 +65,9 @@ The third section of the **Read | Improv | Drill** switch (`#drill` links straig
 pick a root and quality (major, minor, diminished, augmented) and up to three strings (with one or two it shows where
 the chord's notes fall on them). The fretboard shows every playable shape of that triad on those strings, frets 0–17, joined by a line
 coloured by inversion (blue root position, green 1st, purple 2nd; each can be turned off). Note names are spelled
-from the root (C minor = C–E♭–G). Tap a shape's line to hear it; **Play** strums every shape up the neck.
+from the root (C minor = C–E♭–G). Under the fretboard, each shape is also written as a stacked whole-note chord (guitar pitch, spelled from the root,
+coloured by inversion), lined up under its shape. Tap a shape's line or its chord to hear it; **Play** strums every
+shape up the neck.
 
 ## Publishing a change
 

@@ -78,8 +78,52 @@ function drawDrill(){
   note.hidden=n===3&&tShapes.length>0&&!noteFlash;
   note.textContent=noteFlash||(n===0?'Pick up to three strings.':n<3?`Showing the chord's notes on ${n===1?'that string':'those strings'}. Pick ${n===1?'two more strings':'one more string'} to see the triad shapes.`
     :!D.inv.length?'Turn on at least one inversion.':'No playable shapes on these strings.');
+  drawNotation();
   describeDrill();
 }
+
+/* ---------- notation under the fretboard ----------
+   Each shape as a stacked whole-note chord, written at guitar pitch (an octave above how it sounds) and spelled
+   from the root, placed under the middle of its shape on the fretboard. */
+const dnot=document.getElementById('dnotation');
+function vfKey(n,deg){
+  const name=spell(D.root,deg,D.qual), L=name[0], acc=name.slice(1);
+  const alter=[...acc].reduce((a,c)=>a+(c==='♯'?1:-1),0), midi=STRINGS[n.s]+n.f;
+  const oct=Math.round((midi-LETTER_PC[L]-alter)/12)-1;
+  const a=acc.replace(/♯/g,'#').replace(/♭/g,'b');
+  return {key:`${L.toLowerCase()}${a}/${oct}`,acc:a,name:name+oct,midi};
+}
+function drawNotation(){
+  dnot.replaceChildren();
+  if(!tShapes.length)return;
+  const chords=tShapes.map(sh=>sh.notes.map((n,j)=>vfKey(n,sh.degs[j])).sort((a,b)=>a.midi-b.midi));
+  // Room above and below the staff for the highest and lowest notes (ledger lines).
+  const step=k=>{const [l,o]=k.split('/');return 7*(+o)+'cdefgab'.indexOf(l[0]);};
+  const all=chords.flat().map(c=>step(c.key)), top=Math.max(...all), bot=Math.min(...all);
+  const above=Math.max(2,(top-step('f/5'))/2+1.5), below=Math.max(2,(step('e/4')-bot)/2+1.5);
+  const h=Math.ceil((above+4+below)*10+8);
+  const r=new VF.Renderer(dnot,VF.Renderer.Backends.SVG);r.resize(W,h);
+  const ctx=r.getContext();
+  const stave=new VF.Stave(0,0,W,{space_above_staff_ln:above,space_below_staff_ln:below,left_bar:false});
+  stave.addClef('treble').setEndBarType(VF.Barline.type.NONE).setContext(ctx).draw();
+  const minX=stave.getNoteStartX()+18;
+  tShapes.forEach((sh,i)=>{
+    const ch=chords[i];
+    const note=new VF.StaveNote({keys:ch.map(c=>c.key),duration:'w'});
+    ch.forEach((c,j)=>{if(c.acc)note.addModifier(new VF.Accidental(c.acc),j);});
+    const mc=new VF.ModifierContext();note.addToModifierContext(mc);
+    const tc=new VF.TickContext();tc.addTickable(note).preFormat();
+    const mid=sh.notes.reduce((a,n)=>a+fx(n.f),0)/3;
+    tc.setX(Math.max(minX,mid)-stave.getNoteStartX()-16);
+    note.setStave(stave).setContext(ctx).draw();
+  });
+  const svg=dnot.querySelector('svg');svg.setAttribute('viewBox',`0 0 ${W} ${h}`);svg.removeAttribute('width');svg.removeAttribute('height');svg.style.width='';svg.style.height='';
+  dnot.querySelectorAll('.vf-stavenote').forEach((g,i)=>{g.dataset.i=i;g.classList.add('inv'+tShapes[i].inv);if(i===tFocus)g.classList.add('on');
+    g.setAttribute('role','img');g.setAttribute('aria-label',`${INVERSIONS[tShapes[i].inv]}: ${chords[i].map(c=>c.name).join(', ')}`);});
+  dnot.classList.toggle('focus',tFocus>=0);
+}
+dnot.addEventListener('click',e=>{const g=e.target.closest('.vf-stavenote');if(!g)return;
+  tFocus=+g.dataset.i;strumShape(tShapes[tFocus],audio()?.currentTime||0);drawDrill();});
 
 /* ---------- sound ---------- */
 const strumShape=(sh,at=0)=>[...sh.notes].sort((a,b)=>a.s-b.s).forEach((n,j)=>pluck(freqOf(STRINGS[n.s]+n.f),{at:at+j*.03,dur:1.6,vol:.4}));

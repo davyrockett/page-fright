@@ -142,6 +142,15 @@ p{margin:0}
 .inv-btn .sw{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:-1px}
 .inv-btn[aria-pressed="false"]{opacity:.55}
 .inv-btn .short{display:none}
+/* Drill notation strip: same width as the fretboard, so each chord sits under its shape. */
+#dnotation svg{display:block;width:100%;min-width:760px;height:auto}
+#dnotation svg,#dnotation svg [fill]:not([fill="none"]){fill:var(--ink)}
+#dnotation svg,#dnotation svg [stroke]:not([stroke="none"]){stroke:var(--ink)}
+#dnotation .vf-stavenote{cursor:pointer}
+#dnotation .vf-stavenote.inv0,#dnotation .vf-stavenote.inv0 *{fill:var(--inv0)!important;stroke:var(--inv0)!important}
+#dnotation .vf-stavenote.inv1,#dnotation .vf-stavenote.inv1 *{fill:var(--inv1)!important;stroke:var(--inv1)!important}
+#dnotation .vf-stavenote.inv2,#dnotation .vf-stavenote.inv2 *{fill:var(--inv2)!important;stroke:var(--inv2)!important}
+#dnotation.focus .vf-stavenote:not(.on){opacity:.2}
 @media (max-width:560px){.inv-btn .long{display:none}.inv-btn .short{display:inline}}
 #droot{margin-right:4px}
 .chip{padding:7px 12px;font-size:14px}
@@ -250,7 +259,7 @@ p{margin:0}
         <button type="button" class="btn" id="dlab" aria-pressed="false" title="Off: intervals (R, 3, 5). On: note names.">Note names</button>
         <div class="seg" role="group" aria-label="Inversions" id="dinv"></div>
       </div>
-      <div class="fb-wrap"><svg id="dfb" class="fretboard" role="img" aria-label="Triad shapes on the fretboard"></svg></div>
+      <div class="fb-wrap"><svg id="dfb" class="fretboard" role="img" aria-label="Triad shapes on the fretboard"></svg><div id="dnotation" aria-label="The triads in notation"></div></div>
       <p class="cap" id="dnote" hidden></p>
     </div>
 
@@ -818,7 +827,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v41';
+window.APP_VERSION = 'v42';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
