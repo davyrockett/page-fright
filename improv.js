@@ -233,7 +233,7 @@ function pressAll(){
   document.getElementById('bfeel').value=B.feel;
   document.getElementById('bscale').value=B.scale;
   document.getElementById('blab').setAttribute('aria-pressed',B.lab==='note');
-  document.getElementById('bshapes').setAttribute('aria-pressed',B.shapesOn);document.getElementById('bshape').hidden=!B.shapesOn;
+  document.getElementById('bshapes').setAttribute('aria-pressed',B.shapesOn);const sh=document.getElementById('bshape');sh.classList.toggle('off',!B.shapesOn);sh.setAttribute('aria-hidden',!B.shapesOn); // invisible but still takes its space, so nothing jumps
   document.querySelectorAll('#bshape [data-sh]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.sh==='all'?!B.shapes.length:B.shapes.includes(b.dataset.sh)));
   document.getElementById('bquick').setAttribute('aria-pressed',B.quick);
   document.getElementById('btones').setAttribute('aria-pressed',B.tones);
