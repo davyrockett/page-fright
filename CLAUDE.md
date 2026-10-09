@@ -81,6 +81,12 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
   the rhythm-guitar chops with a soft drawbar organ: a chord on 1 and a push on the "and" of 2. v25 made it
   shorter (~0.8 and ~1.25 beats), quieter, with less wobble, voicing 3-5-♭7 only and mostly fundamental +
   octave, because the 9th, upper partials and deep wobble sounded out of tune. Keep the parts understated.
+- Drill section (v40, `drill.js`): Read | Improv | Drill switch; `showView()` in improv.js handles all three and
+  the first view is opened at the end of drill.js. Triads: root + quality (maj/min/dim/aug), exactly three strings
+  (a 4th tap drops the oldest; David said "any combination of strings", I chose 3 — ask if he wants 4+), every
+  playable shape on frets 0–17 (span ≤4 frets adjacent, ≤5 spread), lines coloured by inversion (toggleable),
+  tap a line to hear it, Play walks up the neck. Note names spelled from the root letter (`spell()`).
+  drill.js shares improv.js globals (fx, sy, W, H, NUT, FW, TOP, GAP, LAST, pcAt) — avoid reusing their names.
 - Planned (2026-10-09): David will provide a MIDI file of exactly the backing track he wants. Play it with
   the app's own synths, transposed to the chosen key and at the chosen tempo (no recorded audio: he decided
   against pitch-shifting a found recording). Ask for one track per part and the key it's written in.

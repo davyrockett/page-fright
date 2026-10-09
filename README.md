@@ -15,6 +15,7 @@ iPhone and iPad Home Screens and the Mac's Dock, and works with no signal once i
 | File | What it does |
 |---|---|
 | `index.html` | The whole app: exercise generator, notation, playback, settings |
+| `drill.js` | The Drill section: triad shapes on any three strings |
 | `improv.js` | The Improv section: 12-bar blues backing track and scale shapes on the fretboard |
 | `vendor/vexflow-bravura.js` | [VexFlow](https://www.vexflow.com) 4.2.5, which draws the notation (MIT license, see `vendor/VEXFLOW-LICENSE`) |
 | `sw.js` | The "service worker": saves the app on the device so it works offline |
@@ -57,6 +58,14 @@ The **Read | Improv** switch under the header changes sections (`#improv` links 
   names; roots are orange. **Chord tones** rings the notes of the chord being played while the track runs, and shows
   chord tones the scale lacks (e.g. the IV chord's major 3rd over minor pentatonic) as hollow blue dots labeled R/3/5/♭7.
   Tap I/IV/V beside Chord tones to preview a chord's tones any time; the chord being played is outlined.
+
+## Drill
+
+The third section of the **Read | Improv | Drill** switch (`#drill` links straight to it). It starts with **triads**:
+pick a root and quality (major, minor, diminished, augmented) and any three strings (tapping a fourth swaps out the
+oldest pick). The fretboard shows every playable shape of that triad on those strings, frets 0–17, joined by a line
+coloured by inversion (blue root position, green 1st, purple 2nd; each can be turned off). Note names are spelled
+from the root (C minor = C–E♭–G). Tap a shape's line to hear it; **Play** strums every shape up the neck.
 
 ## Publishing a change
 

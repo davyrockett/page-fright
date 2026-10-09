@@ -112,24 +112,38 @@ p{margin:0}
 /* Fretboard */
 .scales{padding:14px;display:flex;flex-direction:column;gap:12px}
 .fb-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px}
-#fb{display:block;width:100%;min-width:760px;height:auto}
-#fb .wood{fill:var(--sunk)}
-#fb .fret{stroke:var(--muted);stroke-opacity:.45;stroke-width:2}
-#fb .nut{fill:var(--muted)}
-#fb .str{stroke:var(--muted)}
-#fb .inlay{fill:var(--line)}
-#fb .fnum{fill:var(--muted);font-size:12px;text-anchor:middle;font-family:var(--f-body)}
-#fb .region{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
-#fb .dot{cursor:pointer}
-#fb .dot circle{fill:var(--ink)}
-#fb .dot text{fill:var(--surface);font-size:11px;font-weight:700;text-anchor:middle;dominant-baseline:central;font-family:var(--f-body);pointer-events:none}
-#fb .dot.root circle{fill:var(--accent)}
-#fb .dot.root text{fill:#1E1B18}
-#fb .dot.blue circle{fill:var(--muted)}
-#fb .dot.dim{opacity:.18}
-#fb .ring{fill:none;stroke:var(--hl);stroke-width:3}
-#fb .dot.extra circle{fill:var(--surface);stroke:var(--hl);stroke-width:2.5}
-#fb .dot.extra text{fill:var(--hl)}
+.fretboard{display:block;width:100%;min-width:760px;height:auto}
+.fretboard .wood{fill:var(--sunk)}
+.fretboard .fret{stroke:var(--muted);stroke-opacity:.45;stroke-width:2}
+.fretboard .nut{fill:var(--muted)}
+.fretboard .str{stroke:var(--muted)}
+.fretboard .inlay{fill:var(--line)}
+.fretboard .fnum{fill:var(--muted);font-size:12px;text-anchor:middle;font-family:var(--f-body)}
+.fretboard .region{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
+.fretboard .dot{cursor:pointer}
+.fretboard .dot circle{fill:var(--ink)}
+.fretboard .dot text{fill:var(--surface);font-size:11px;font-weight:700;text-anchor:middle;dominant-baseline:central;font-family:var(--f-body);pointer-events:none}
+.fretboard .dot.root circle{fill:var(--accent)}
+.fretboard .dot.root text{fill:#1E1B18}
+.fretboard .dot.blue circle{fill:var(--muted)}
+.fretboard .dot.dim{opacity:.18}
+.fretboard .ring{fill:none;stroke:var(--hl);stroke-width:3}
+.fretboard .dot.extra circle{fill:var(--surface);stroke:var(--hl);stroke-width:2.5}
+.fretboard .dot.extra text{fill:var(--hl)}
+/* Drill: triad shapes are joined by a thick line, coloured by inversion. */
+:root{--inv0:#1668E3;--inv1:#2E7D4F;--inv2:#8E44AD}
+:root[data-theme="dark"]{--inv0:#3D8BFF;--inv1:#5DBB84;--inv2:#B57EDC}
+@media (prefers-color-scheme: dark){:root:not([data-theme]){--inv0:#3D8BFF;--inv1:#5DBB84;--inv2:#B57EDC}}
+.fretboard .shape{fill:none;stroke-width:15;stroke-linecap:round;stroke-linejoin:round;opacity:.38;cursor:pointer}
+.fretboard .shape.inv0{stroke:var(--inv0)}.fretboard .shape.inv1{stroke:var(--inv1)}.fretboard .shape.inv2{stroke:var(--inv2)}
+.fretboard .shape.on{opacity:.9}
+.fretboard.focus .shape:not(.on){opacity:.1}
+.fretboard.focus .dot:not(.on){opacity:.25}
+.inv-btn .sw{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.inv-btn[aria-pressed="false"]{opacity:.55}
+.inv-btn .short{display:none}
+@media (max-width:560px){.inv-btn .long{display:none}.inv-btn .short{display:inline}}
+#droot{margin-right:4px}
 .chip{padding:7px 12px;font-size:14px}
 .chip.now{box-shadow:0 0 0 2px var(--hl)}
 .fb-opts{justify-content:space-between}
@@ -168,6 +182,7 @@ p{margin:0}
       <div class="views" role="tablist" aria-label="Section">
         <button type="button" class="btn" role="tab" data-view="read">Read</button>
         <button type="button" class="btn" role="tab" data-view="improv">Improv</button>
+        <button type="button" class="btn" role="tab" data-view="drill">Drill</button>
       </div>
       <button type="button" class="btn icon" id="settings-open" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.5 7.5 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.5 7.5 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.5 7.5 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7.5 7.5 0 0 0 1.7-1l2.5 1 2-3.5zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg></button>
     </div>
@@ -212,13 +227,37 @@ p{margin:0}
         <div class="row tones"><button type="button" class="btn" id="btones" aria-pressed="true">Chord tones</button><div class="seg" id="bchips" role="group" aria-label="Preview a chord's tones"></div></div>
         <div class="row shapes-group"><button type="button" class="btn" id="bshapes" aria-pressed="false" title="Highlight scale shapes">Shapes</button><div class="seg" role="group" aria-label="Shapes" id="bshape"></div></div>
       </div>
-      <div class="fb-wrap"><svg id="fb" role="img" aria-label="Fretboard"></svg></div>
+      <div class="fb-wrap"><svg id="fb" class="fretboard" role="img" aria-label="Fretboard"></svg></div>
     </div>
 
     <details class="notes cap help">
       <summary>How it works</summary>
       <p>The backing track is 12-bar blues: drums, a boogie bass line, and organ. Quick change moves to the IV chord in bar 2. Play counts you in for one measure, then loops until you stop it.</p>
       <p>Orange dots are the root. With <b>Chord tones</b> on, notes of the chord being played get a blue ring while the track runs, so you can aim for them as the chords change. Chord tones that aren't in the scale (like the IV chord's major 3rd over minor pentatonic) show as hollow blue dots, labeled by their part in the chord: R, 3, 5 or ♭7. Tap a chord beside Chord tones to see its tones any time (tap it again to go back to following the track); the chord being played is outlined in blue. Tap a dot to hear it. <b>Space</b> plays or stops.</p>
+    </details>
+  </div>
+
+  <div id="drill-view" class="view" hidden>
+    <div class="controls card">
+      <button type="button" class="btn primary play" id="dplay" title="Play every shape up the neck (space)"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M3 1.5v13l11-6.5z"/></svg><span>Play</span></button>
+      <label class="tempo"><span class="cap">Chord</span><select id="droot" aria-label="Root"></select><select id="dqual" aria-label="Quality"><option value="maj">Major</option><option value="min">Minor</option><option value="dim">Diminished</option><option value="aug">Augmented</option></select></label>
+      <div class="row"><span class="cap">Strings</span><div class="seg" role="group" aria-label="Strings (pick 3)" id="dstrings"></div></div>
+      <span class="cap status" id="dstatus" aria-live="polite"></span>
+    </div>
+
+    <div class="card scales">
+      <div class="row pick-row">
+        <button type="button" class="btn" id="dlab" aria-pressed="false" title="Off: intervals (R, 3, 5). On: note names.">Note names</button>
+        <div class="seg" role="group" aria-label="Inversions" id="dinv"></div>
+      </div>
+      <div class="fb-wrap"><svg id="dfb" class="fretboard" role="img" aria-label="Triad shapes on the fretboard"></svg></div>
+      <p class="cap" id="dnote" hidden></p>
+    </div>
+
+    <details class="notes cap help">
+      <summary>How it works</summary>
+      <p>Pick a chord and any three strings. The fretboard shows every playable way to play that triad on those strings, up and down the neck: one note on each string, joined by a line colored by inversion. Root position has the root on the lowest of the three strings; 1st inversion has the 3rd there; 2nd inversion has the 5th. Tap the inversion buttons to show or hide each kind.</p>
+      <p>Tap a shape's line to hear the chord, or a dot to hear one note. <b>Play</b> (or <b>space</b>) strums every shape in order up the neck. Tapping a fourth string swaps out the one you picked longest ago.</p>
     </details>
   </div>
 </div>
@@ -773,12 +812,13 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 </script>
 
 <script src="improv.js"></script>
+<script src="drill.js"></script>
 
 <div class="update" id="update-banner" role="status" hidden><span>A new version is ready.</span><button type="button" class="btn primary" id="update-btn">Update</button></div>
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v39';
+window.APP_VERSION = 'v40';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');

@@ -269,17 +269,20 @@ function describeImprov(){
   document.getElementById('subtitle').textContent=`12-bar blues in ${pcName(B.key,B.key)} · ${B.bpm} bpm · ${B.feel==='shuffle'?'Shuffle':'Straight'}${B.quick?' · Quick change':''}`;
 }
 
-/* ---------- Read | Improv ---------- */
+/* ---------- Read | Improv | Drill ---------- */
+const TAGLINES={read:'Guitar Sight-Reading Generator',improv:'Guitar Improv Practice',drill:'Guitar Drills'};
 function showView(v){
-  const improv=v==='improv';
-  document.getElementById('read-view').hidden=improv;
-  document.getElementById('improv-view').hidden=!improv;
+  if(!TAGLINES[v])v='read';
+  for(const k of Object.keys(TAGLINES))document.getElementById(k+'-view').hidden=k!==v;
   document.querySelectorAll('.views [data-view]').forEach(b=>{b.setAttribute('aria-selected',b.dataset.view===v);b.setAttribute('aria-pressed',b.dataset.view===v);});
-  document.querySelector('.tagline').textContent=improv?'Guitar Improv Practice':'Guitar Sight-Reading Generator';
+  document.querySelector('.tagline').textContent=TAGLINES[v];
   store.set('view',v);
-  if(improv){if(player.on)stop();describeImprov();}
-  else{if(bp.on)bstop();describe();}
-  history.replaceState(null,'',improv?'#improv':location.pathname+location.search); // #improv links straight here
+  // Only one thing plays at a time.
+  if(v!=='read'&&player.on)stop();
+  if(v!=='improv'&&bp.on)bstop();
+  if(v!=='drill'&&typeof dstop==='function')dstop();
+  if(v==='read')describe();else if(v==='improv')describeImprov();else if(typeof describeDrill==='function')describeDrill();
+  history.replaceState(null,'',v==='read'?location.pathname+location.search:'#'+v); // #improv / #drill link straight there
 }
 document.querySelector('.views').addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(b)showView(b.dataset.view);});
 document.addEventListener('keydown',e=>{
@@ -290,4 +293,4 @@ document.addEventListener('keydown',e=>{
 });
 
 drawShapes();drawChips();drawBoard();
-showView(location.hash==='#improv'?'improv':store.get('view','read'));
+// The first view is shown at the end of drill.js, once every section is set up.
