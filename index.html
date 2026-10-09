@@ -127,7 +127,7 @@ p{margin:0}
 .fb-opts{justify-content:space-between}
 .pick-row{gap:10px 18px}
 @media (min-width:760px){.pick-row .tones{margin-left:auto}}
-#blab,#btones{padding:7px 13px;font-size:14px}
+#blab,#btones,#bshapes{padding:7px 13px;font-size:14px}
 #bshape .btn{padding:7px 13px;font-size:14px;min-width:38px}
 .help summary{cursor:pointer;font-weight:700;color:var(--muted);list-style-position:inside}
 .help[open] summary{margin-bottom:6px}
@@ -174,14 +174,14 @@ p{margin:0}
       <label class="tempo"><span class="cap">Key</span><select id="bkey" aria-label="Key"></select></label>
       <label class="tempo"><span class="cap">Tempo</span><input type="range" id="btempo" min="50" max="180" step="2"><output id="btempo-val"></output></label>
       <label class="tempo"><span class="cap">Feel</span><select id="bfeel" aria-label="Feel"><option value="shuffle">Shuffle</option><option value="straight">Straight</option></select></label>
-      <button type="button" class="btn" id="bquick" aria-pressed="false" title="IV chord in bar 2">Quick change</button>
       <span class="cap status" id="bstatus" aria-live="polite"></span>
+      <button type="button" class="btn" id="bquick" aria-pressed="false" title="IV chord in bar 2">Quick change</button>
     </div>
 
     <div class="card scales">
       <div class="row pick-row">
-        <label class="tempo"><span class="cap">Scale</span><select id="bscale" aria-label="Scale"></select></label>
-        <div class="row"><span class="cap">Shapes</span><div class="seg" role="group" aria-label="Shapes" id="bshape"></div></div>
+        <label class="tempo"><select id="bscale" aria-label="Scale"></select></label>
+        <div class="row"><button type="button" class="btn" id="bshapes" aria-pressed="false" title="Highlight scale shapes">Shapes</button><div class="seg" role="group" aria-label="Shapes" id="bshape"></div></div>
         <button type="button" class="btn" id="blab" aria-pressed="false" title="Off: intervals (R, ♭3, 5…). On: note names.">Note names</button>
         <div class="row tones"><button type="button" class="btn" id="btones" aria-pressed="true">Chord tones</button><div class="seg" id="bchips" role="group" aria-label="Preview a chord's tones"></div></div>
       </div>
@@ -751,7 +751,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v27';
+window.APP_VERSION = 'v28';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');

@@ -14,6 +14,8 @@ const INT_N={0:'R',1:'♭2',2:'2',3:'♭3',4:'3',5:'4',6:'♭5',7:'5',8:'♭6',9
 const FORM=[0,0,0,0,5,5,0,0,7,5,0,7], QUICK=[0,5,0,0,5,5,0,0,7,5,0,7];
 const B={key:store.get('bkey',9),bpm:store.get('btempo',92),feel:store.get('bfeel','shuffle'),quick:store.get('bquick',false),
   scale:store.get('bscale','minor'),shapes:store.get('bshapes',[]),lab:store.get('blab','int'),tones:store.get('btones',true)};
+B.shapesOn=store.get('bshapesOn',B.shapes.length>0); // the Shapes button: off = no shape highlighting
+const activeShapes=()=>B.shapesOn?B.shapes:[];
 const form=()=>B.quick?QUICK:FORM;
 // Which chord's tones to show (steps above the key): a tapped chord, else the one playing, else none.
 B.preview=null;
@@ -171,7 +173,7 @@ const NUT=46,FW=50,TOP=22,GAP=24,W=NUT+LAST*FW+14,H=TOP+5*GAP+38;
 const fx=f=>f===0?NUT-20:NUT+(f-.5)*FW, sy=s=>TOP+(5-s)*GAP;
 function drawBoard(){
   const key=B.key,sc=SCALES[B.scale],placed=placedShapes();
-  const sel=placed.filter(x=>B.shapes.includes(x.name)), any=sel.length>0; // chosen shapes (none = all)
+  const sel=placed.filter(x=>activeShapes().includes(x.name)), any=sel.length>0; // chosen shapes (none = all)
   const step=toneStep(), tones=step===null?null:[0,4,7,10].map(i=>(key+step+i)%12);
   let svg=`<rect class="wood" x="${NUT}" y="${TOP-10}" width="${LAST*FW}" height="${5*GAP+20}" rx="3"/>`;
   // The chosen shapes' areas, under the fret lines so those still show
@@ -231,6 +233,7 @@ function pressAll(){
   document.getElementById('bfeel').value=B.feel;
   document.getElementById('bscale').value=B.scale;
   document.getElementById('blab').setAttribute('aria-pressed',B.lab==='note');
+  document.getElementById('bshapes').setAttribute('aria-pressed',B.shapesOn);document.getElementById('bshape').hidden=!B.shapesOn;
   document.querySelectorAll('#bshape [data-sh]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.sh==='all'?!B.shapes.length:B.shapes.includes(b.dataset.sh)));
   document.getElementById('bquick').setAttribute('aria-pressed',B.quick);
   document.getElementById('btones').setAttribute('aria-pressed',B.tones);
@@ -247,12 +250,13 @@ function drawShapes(){
 document.getElementById('improv-view').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;const d=b.dataset;
   if(b.id==='blab'){B.lab=B.lab==='note'?'int':'note';store.set('blab',B.lab);}
+  else if(b.id==='bshapes'){B.shapesOn=!B.shapesOn;store.set('bshapesOn',B.shapesOn);}
   else if(d.sh){B.shapes=d.sh==='all'?[]:B.shapes.includes(d.sh)?B.shapes.filter(n=>n!==d.sh):[...B.shapes,d.sh];store.set('bshapes',B.shapes);}
   else if(b.id==='bquick'){B.quick=!B.quick;store.set('bquick',B.quick);}
   else if(b.id==='btones'){B.tones=!B.tones;store.set('btones',B.tones);if(!B.tones)B.preview=null;drawChips();}
   else if(d.chip!==undefined){const st=+d.chip;B.preview=B.preview===st?null:st;drawChips();}
   else return;
-  pressAll();drawBoard();if(d.sh)scrollToShape();describeImprov();
+  pressAll();drawBoard();if(d.sh||b.id==='bshapes')scrollToShape();describeImprov();
 });
 // The I, IV and V chords beside Chord tones: tap one to see its tones; the one playing is outlined.
 function drawChips(){
