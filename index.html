@@ -53,6 +53,14 @@ p{margin:0}
 .top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
 .brand h1{font-size:clamp(38px,6vw,52px)}
 .title-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 14px}
+/* The logo (same note and exclamation mark as the app icon) sits in front of the title. */
+.logo{height:.92em;width:auto;vertical-align:-.06em;margin-right:.3em;overflow:visible}
+.logo-note{fill:var(--accent)}
+.logo-bang{fill:var(--ink)}
+:root[data-theme="dark"] .logo-note{filter:drop-shadow(0 0 14px rgba(238,154,69,.55))}
+:root[data-theme="dark"] .logo-bang{filter:drop-shadow(0 0 12px rgba(240,235,227,.35))}
+@media (prefers-color-scheme: dark){:root:not([data-theme]) .logo-note{filter:drop-shadow(0 0 14px rgba(238,154,69,.55))}
+  :root:not([data-theme]) .logo-bang{filter:drop-shadow(0 0 12px rgba(240,235,227,.35))}}
 .tagline{color:var(--muted);font-size:clamp(15px,2vw,18px)}
 .brand p{font-size:13px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-top:6px}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -137,7 +145,7 @@ p{margin:0}
 <body>
 <div class="wrap">
   <header class="top">
-    <div class="brand"><div class="title-row"><h1>Page Fright</h1><span class="tagline">Guitar Sight-Reading Generator</span></div><p id="subtitle">C major · Quarter notes</p></div>
+    <div class="brand"><div class="title-row"><h1><svg class="logo" viewBox="150 140 690 730" aria-hidden="true"><g class="logo-note"><ellipse cx="335" cy="735" rx="165" ry="115" transform="rotate(-24 335 735)"/><rect x="446.8" y="150" width="46" height="552"/><path d="M446.8 150L492.8 150C522.8 300 722.8 330 662.8 600C682.8 430 552.8 360 490.8 330Z"/></g><g class="logo-bang"><g transform="translate(643.9 206.2) scale(0.68)"><path d="M138 150H262L234 640H166Z"/><circle cx="200" cy="150" r="62"/><circle cx="200" cy="778" r="66"/></g></g></svg>Page Fright</h1><span class="tagline">Guitar Sight-Reading Generator</span></div><p id="subtitle">C major · Quarter notes</p></div>
     <div class="row">
       <div class="views" role="tablist" aria-label="Section">
         <button type="button" class="btn" role="tab" data-view="read">Read</button>
@@ -752,7 +760,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v34';
+window.APP_VERSION = 'v35';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');

@@ -84,7 +84,8 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
 - Planned (2026-10-09): David will provide a MIDI file of exactly the backing track he wants. Play it with
   the app's own synths, transposed to the chosen key and at the chosen tempo (no recorded audio: he decided
   against pitch-shifting a found recording). Ask for one track per part and the key it's written in.
-- Header: "Page Fright" with a plain tagline ("Guitar Sight-Reading Generator" / "Guitar Improv Practice").
+- Header: the logo (inline SVG copy of the icon: orange note, "!" in the text color, glow only in dark mode)
+  before "Page Fright", with a plain tagline ("Guitar Sight-Reading Generator" / "Guitar Improv Practice").
   The Read | Improv switch is a pill at the top right. In Read, the Play box comes first (matching Improv),
   then New exercise and Customize, then the score.
 - Improv layout (David liked it, v29): controls row Play, Key, Quick change (right after Key, so it stays on
