@@ -54,6 +54,8 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
   `tick`, `hush`, `STRINGS`, `player`, `stop`, `describe`). Notation uses vendored VexFlow 4.2.5; CSS recolors it.
 - localStorage keys start with `sr.` (from the old name, Sight Reading); keep that so settings survive.
 - Old address davyrockett.github.io/sight-reading/ forwards here (repo davyrockett/sight-reading).
+- Icon links carry `?v=N` (index.html and manifest). After redrawing the icons, bump N so Safari fetches the new
+  files; installed Home Screen / Dock copies still keep their old icon until removed and re-added.
 
 ### Music decisions David made (keep them)
 - Guitar notation is written an octave above sounding pitch; playback is at real guitar pitch. Written range
