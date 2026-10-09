@@ -80,4 +80,5 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
   shorter (~0.8 and ~1.25 beats), quieter, with less wobble, voicing 3-5-♭7 only and mostly fundamental +
   octave, because the 9th, upper partials and deep wobble sounded out of tune. Keep the parts understated.
 - Header: "Page Fright" with a plain tagline ("Guitar Sight-Reading Generator" / "Guitar Improv Practice").
-  The Read | Improv switch is a pill at the top right; New exercise and Customize live inside Read.
+  The Read | Improv switch is a pill at the top right. In Read, the Play box comes first (matching Improv),
+  then New exercise and Customize, then the score.

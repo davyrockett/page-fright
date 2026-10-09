@@ -141,16 +141,16 @@ p{margin:0}
   </header>
 
   <div id="read-view" class="view">
-  <div class="row">
-    <button type="button" class="btn" id="new" title="New exercise (N)">New exercise</button>
-    <button type="button" class="btn" id="custom-open">Customize</button>
-  </div>
   <div class="controls card">
     <button type="button" class="btn primary play" id="play" title="Play / stop (space)"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M3 1.5v13l11-6.5z"/></svg><span>Play</span></button>
     <button type="button" class="btn" id="click" aria-pressed="true">Metronome</button>
     <button type="button" class="btn" id="tab-toggle" aria-pressed="false" title="Show or hide tab (T)">Tab</button>
     <label class="tempo"><span class="cap">Tempo</span><input type="range" id="tempo" min="40" max="200" step="2"><output id="tempo-val"></output></label>
     <span class="cap status" id="status" aria-live="polite"></span>
+  </div>
+  <div class="row">
+    <button type="button" class="btn" id="new" title="New exercise (N)">New exercise</button>
+    <button type="button" class="btn" id="custom-open">Customize</button>
   </div>
 
   <div class="score card" id="score" aria-label="Sight-reading exercise, 16 measures"></div>
@@ -745,7 +745,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v25';
+window.APP_VERSION = 'v26';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
