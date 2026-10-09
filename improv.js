@@ -35,8 +35,20 @@ function bass(midi,at,dur){const c=AC,o=c.createOscillator(),f=c.createBiquadFil
   o.type='triangle';o.frequency.value=440*Math.pow(2,(midi-69)/12);f.type='lowpass';f.frequency.value=420;f.Q.value=.7;
   g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(.3,at+.012);g.gain.exponentialRampToValueAtTime(.16,at+dur*.6);g.gain.exponentialRampToValueAtTime(.0001,at+dur);
   o.connect(f);f.connect(g);g.connect(OUT);o.start(at);o.stop(at+dur+.02);}
-// Rhythm guitar: a dominant 7th chop (root, ♭7, 3rd, 5th), lightly strummed.
-function chop(pc,at){const root=45+((pc-9)%12+12)%12;[0,10,16,19].forEach((iv,j)=>pluck(440*Math.pow(2,(root+iv-69)/12),{at:at+j*.012,dur:.26,vol:.26}));}
+// Organ: a soft drawbar-style tone (a few blended sine partials) with a gentle Leslie-like wobble.
+// Voicing: the chord's 3rd, 5th, ♭7 and 9th, built on a root between C3 and B3.
+function organ(pc,at,dur){
+  const c=AC,root=48+((pc%12)+12)%12,end=at+dur;
+  const g=c.createGain(),trem=c.createGain(),f=c.createBiquadFilter(),lfo=c.createOscillator(),depth=c.createGain();
+  f.type='lowpass';f.frequency.value=2600;
+  g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(.042,at+.03);g.gain.setValueAtTime(.042,end-.08);g.gain.linearRampToValueAtTime(0,end);
+  lfo.frequency.value=5.6;depth.gain.value=.18;trem.gain.value=1;lfo.connect(depth);depth.connect(trem.gain); // the wobble
+  trem.connect(g);g.connect(f);f.connect(OUT);lfo.start(at);lfo.stop(end+.05);
+  [4,7,10,14].forEach(iv=>{const fr=440*Math.pow(2,(root+iv-69)/12);
+    [[1,1],[2,.45],[3,.22],[4,.1]].forEach(([h,a])=>{const o=c.createOscillator(),og=c.createGain();
+      o.frequency.value=fr*h;og.gain.value=a;o.connect(og);og.connect(trem);o.start(at);o.stop(end+.05);});});
+  live.add(g);setTimeout(()=>live.delete(g),(end-c.currentTime+.5)*1000); // so Stop fades it out
+}
 
 /* ---------- playback ---------- */
 const bp={on:false,start:0,spb:.6,next:0,timer:0,raf:0,bar:-1};
@@ -44,8 +56,8 @@ const BCOUNT=4; // count-in beats
 const bplay=document.getElementById('bplay'),bstatus=document.getElementById('bstatus');
 // When in the beat each 8th note lands: swung (2/3 of the way) or straight (halfway).
 const off8=()=>B.feel==='shuffle'?2/3:1/2;
-// Bass line: plain quarter notes on root, root, 5th, root.
-const BASS_LINE=[0,0,7,0];
+// Boogie bass: root, 3, 5, 6, ♭7, 6, 5, 3 in 8th notes.
+const BOOGIE=[0,4,7,9,10,9,7,4];
 function bschedule(){
   const c=AC;
   while(bp.start+bp.next*bp.spb<c.currentTime+.25){
@@ -56,8 +68,10 @@ function bschedule(){
       const root=28+((pc-4)%12+12)%12;                 // bass root between low E and D♯
       if(beat===0||beat===2)kick(at); else snare(at);
       hat(at,.16);hat(at2,.1);
-      bass(root+BASS_LINE[beat],at,bp.spb*.85);
-      if(beat===1||beat===3)chop(pc,at);
+      bass(root+BOOGIE[beat*2],at,off8()*bp.spb*.95);bass(root+BOOGIE[beat*2+1],at2,(1-off8())*bp.spb*.95);
+      // Organ: a chord on 1 held into beat 2, then a push on the "and" of 2 held to the end of the bar.
+      if(beat===0)organ(pc,at,bp.spb*1.35);
+      if(beat===1)organ(pc,at2,(3-off8())*bp.spb*.96);
     }
     bp.next++;
   }
