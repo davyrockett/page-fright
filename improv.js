@@ -263,15 +263,7 @@ function drawChips(){
   const el=document.getElementById('bchips');el.classList.toggle('off',!B.tones);el.setAttribute('aria-hidden',!B.tones);
   const now=bp.on&&bp.bar>=0?form()[bp.bar]:null;
   el.innerHTML=[0,5,7].map(st=>`<button type="button" class="btn chip${st===now?' now':''}" data-chip="${st}" aria-pressed="${B.preview===st}" title="Show the tones of ${pcName(B.key+st,B.key)}7">${pcName(B.key+st,B.key)}7</button>`).join('');
-  placeTones(); // chord names differ in width between keys
 }
-// Chord tones: right-aligned on the first line if it fits there, otherwise on its own row, aligned left.
-function placeTones(){
-  const t=document.querySelector('.pick-row .tones'),first=document.getElementById('bscale');if(!t||!first.offsetParent)return;
-  t.classList.remove('own-row');
-  if(t.getBoundingClientRect().top>first.getBoundingClientRect().top+8)t.classList.add('own-row');
-}
-new ResizeObserver(placeTones).observe(document.querySelector('.pick-row'));
 function describeImprov(){
   if(document.getElementById('improv-view').hidden)return;
   document.getElementById('subtitle').textContent=`12-bar blues in ${pcName(B.key,B.key)} · ${B.bpm} bpm · ${B.feel==='shuffle'?'Shuffle':'Straight'}${B.quick?' · Quick change':''}`;
