@@ -155,14 +155,14 @@ function drawBoard(){
   const sel=placed.filter(x=>B.shapes.includes(x.name)), any=sel.length>0; // chosen shapes (none = all)
   const tones=B.tones&&bp.on&&bp.bar>=0?[0,4,7,10].map(i=>(key+form()[bp.bar]+i)%12):null;
   let svg=`<rect class="wood" x="${NUT}" y="${TOP-10}" width="${LAST*FW}" height="${5*GAP+20}" rx="3"/>`;
+  // The chosen shapes' areas, under the fret lines so those still show
+  sel.forEach(x=>x.places.forEach(pl=>{const fr=pl.map(p=>p.f),lo=Math.min(...fr),hi=Math.max(...fr);
+    const x1=lo===0?NUT-34:NUT+(lo-1)*FW+4,x2=NUT+hi*FW-4;
+    svg+=`<rect class="region" x="${x1}" y="${TOP-12}" width="${x2-x1}" height="${5*GAP+24}" rx="10"/>`;}));
   [3,5,7,9,15,17].forEach(f=>{svg+=`<circle class="inlay" cx="${fx(f)}" cy="${TOP+2.5*GAP}" r="5"/>`;});
   svg+=`<circle class="inlay" cx="${fx(12)}" cy="${TOP+1.5*GAP}" r="5"/><circle class="inlay" cx="${fx(12)}" cy="${TOP+3.5*GAP}" r="5"/>`;
   for(let f=1;f<=LAST;f++)svg+=`<line class="fret" x1="${NUT+f*FW}" x2="${NUT+f*FW}" y1="${TOP-10}" y2="${TOP+5*GAP+10}"/>`;
   [3,5,7,9,12,15,17].forEach(f=>{svg+=`<text class="fnum" x="${fx(f)}" y="${TOP+5*GAP+30}">${f}</text>`;});
-  // The chosen shapes' areas
-  sel.forEach(x=>x.places.forEach(pl=>{const fr=pl.map(p=>p.f),lo=Math.min(...fr),hi=Math.max(...fr);
-    const x1=lo===0?NUT-34:NUT+(lo-1)*FW+4,x2=NUT+hi*FW-4;
-    svg+=`<rect class="region" x="${x1}" y="${TOP-12}" width="${x2-x1}" height="${5*GAP+24}" rx="10"/>`;}));
   svg+=`<rect class="nut" x="${NUT-4}" y="${TOP-10}" width="5" height="${5*GAP+20}"/>`;
   for(let s=0;s<6;s++)svg+=`<line class="str" x1="${NUT-34}" x2="${NUT+LAST*FW}" y1="${sy(s)}" y2="${sy(s)}" stroke-width="${1+s*.35}"/>`;
   // Dots: every note of the scale (or of all five chord shapes), with the chosen shapes bright.

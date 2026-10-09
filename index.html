@@ -106,7 +106,7 @@ p{margin:0}
 .fb-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px}
 #fb{display:block;width:100%;min-width:760px;height:auto}
 #fb .wood{fill:var(--sunk)}
-#fb .fret{stroke:var(--line);stroke-width:2}
+#fb .fret{stroke:var(--muted);stroke-opacity:.45;stroke-width:2}
 #fb .nut{fill:var(--muted)}
 #fb .str{stroke:var(--muted)}
 #fb .inlay{fill:var(--line)}
@@ -741,7 +741,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v18';
+window.APP_VERSION = 'v19';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
