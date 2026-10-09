@@ -101,16 +101,6 @@ p{margin:0}
 .views .btn[aria-pressed="true"]{background:var(--accent);color:#1E1B18;box-shadow:0 1px 3px rgba(0,0,0,.18)}
 .view{display:flex;flex-direction:column;gap:16px}
 .tempo select{font:inherit;font-size:15px;padding:7px 9px;border-radius:8px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font-weight:700}
-/* 12-bar chart */
-.chart{display:grid;grid-template-columns:repeat(4,1fr);gap:0;padding:0;overflow:hidden}
-.chart .bar{padding:8px 12px 9px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:2px;transition:background .15s}
-.chart .bar:nth-child(4n){border-right:0}
-.chart .bar:nth-last-child(-n+4){border-bottom:0}
-.chart .bar small{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
-.chart .bar b{font-family:var(--f-display);font-size:clamp(22px,3.2vw,28px);line-height:1.05}
-.chart .bar i{font-style:normal;font-size:13px;color:var(--muted)}
-.chart .bar.on{background:var(--accent-soft)}
-.chart .bar.on b{color:var(--accent-ink)}
 /* Fretboard */
 .scales{padding:14px;display:flex;flex-direction:column;gap:12px}
 .fb-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px}
@@ -177,8 +167,6 @@ p{margin:0}
       <button type="button" class="btn" id="bquick" aria-pressed="false" title="IV chord in bar 2">Quick change</button>
       <span class="cap status" id="bstatus" aria-live="polite"></span>
     </div>
-
-    <div class="chart card" id="chart" aria-label="12-bar blues chord chart"></div>
 
     <div class="card scales">
       <div class="seg" role="group" aria-label="Scale" id="bscale"></div>
@@ -753,7 +741,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v15';
+window.APP_VERSION = 'v16';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');

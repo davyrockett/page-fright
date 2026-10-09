@@ -12,7 +12,6 @@ const INT_N={0:'R',1:'♭2',2:'2',3:'♭3',4:'3',5:'4',6:'♭5',7:'5',8:'♭6',9
 /* ---------- the form ----------
    Chords as steps above the key: 0 = I, 5 = IV, 7 = V. Bar 12 is the turnaround (V). */
 const FORM=[0,0,0,0,5,5,0,0,7,5,0,7], QUICK=[0,5,0,0,5,5,0,0,7,5,0,7];
-const ROMAN={0:'I7',5:'IV7',7:'V7'};
 const B={key:store.get('bkey',9),bpm:store.get('btempo',92),feel:store.get('bfeel','shuffle'),quick:store.get('bquick',false),
   scale:store.get('bscale','minor'),shape:store.get('bshape','all'),lab:store.get('blab','int'),tones:store.get('btones',true)};
 const form=()=>B.quick?QUICK:FORM;
@@ -67,7 +66,6 @@ function bframe(){
   bp.raf=requestAnimationFrame(bframe);
 }
 function showBar(){
-  document.querySelectorAll('#chart .bar').forEach((el,i)=>el.classList.toggle('on',i===bp.bar));
   bstatus.textContent=bp.bar>=0?`Bar ${bp.bar+1} of 12 · ${chordName(bp.bar)}`:'';
   drawBoard();
 }
@@ -83,11 +81,6 @@ function bstop(){
   bplay.querySelector('span').textContent='Play';bplay.querySelector('path').setAttribute('d','M3 1.5v13l11-6.5z');
 }
 bplay.onclick=()=>bp.on?bstop():bstart();
-
-/* ---------- chord chart ---------- */
-function drawChart(){
-  document.getElementById('chart').innerHTML=form().map((st,i)=>`<div class="bar${i===bp.bar?' on':''}"><small>${i+1}</small><b>${chordName(i)}</b><i>${ROMAN[st]}</i></div>`).join('');
-}
 
 /* ---------- scales and shapes ----------
    Pentatonic shapes are the five 2-notes-per-string boxes. Box n starts on the n-th scale note on the low E
@@ -183,7 +176,7 @@ fb.addEventListener('click',e=>{const g=e.target.closest('.dot');if(!g)return;
 const keySelect=document.getElementById('bkey');
 keySelect.innerHTML=BKEYS.map(k=>`<option value="${k}">${pcName(k,k)}</option>`).join('');
 keySelect.value=B.key;
-keySelect.onchange=()=>{B.key=+keySelect.value;store.set('bkey',B.key);drawChart();drawShapes();drawBoard();scrollToShape();describeImprov();};
+keySelect.onchange=()=>{B.key=+keySelect.value;store.set('bkey',B.key);drawShapes();drawBoard();scrollToShape();describeImprov();};
 const bt=document.getElementById('btempo'),btv=document.getElementById('btempo-val');
 bt.value=B.bpm;btv.textContent=B.bpm+' bpm';
 bt.oninput=()=>{const nb=+bt.value;btv.textContent=nb+' bpm';
@@ -210,7 +203,7 @@ document.getElementById('improv-view').addEventListener('click',e=>{
   else if(d.lab){B.lab=d.lab;store.set('blab',B.lab);}
   else if(d.sc){B.scale=d.sc;store.set('bscale',B.scale);drawShapes();}
   else if(d.sh){B.shape=d.sh;store.set('bshape',B.shape);}
-  else if(b.id==='bquick'){B.quick=!B.quick;store.set('bquick',B.quick);drawChart();}
+  else if(b.id==='bquick'){B.quick=!B.quick;store.set('bquick',B.quick);}
   else if(b.id==='btones'){B.tones=!B.tones;store.set('btones',B.tones);}
   else return;
   pressAll();drawBoard();if(d.sh||d.sc)scrollToShape();describeImprov();
@@ -240,5 +233,5 @@ document.addEventListener('keydown',e=>{
   if(e.key===' '){e.preventDefault();bp.on?bstop():bstart();}
 });
 
-drawChart();drawShapes();drawBoard();
+drawShapes();drawBoard();
 showView(location.hash==='#improv'?'improv':store.get('view','read'));
