@@ -15,6 +15,7 @@ iPhone and iPad Home Screens and the Mac's Dock, and works with no signal once i
 | File | What it does |
 |---|---|
 | `index.html` | The whole app: exercise generator, notation, playback, settings |
+| `improv.js` | The Improv section: 12-bar blues backing track, chord chart, scale shapes on the fretboard |
 | `vendor/vexflow-bravura.js` | [VexFlow](https://www.vexflow.com) 4.2.5, which draws the notation (MIT license, see `vendor/VEXFLOW-LICENSE`) |
 | `sw.js` | The "service worker": saves the app on the device so it works offline |
 | `manifest.webmanifest` | Tells the device the app's name, icon, and to open full-screen |
@@ -43,6 +44,17 @@ iPhone and iPad Home Screens and the Mac's Dock, and works with no signal once i
 - **Notes** (in Customize): single notes, double stops (3rds and perfect 5ths) and/or triple stops (close-position
   triads). Chords are always on neighboring strings and are checked to be playable in the chosen positions
   (or within a 5-fret stretch on the whole neck). The diminished 5th B–F is left out.
+
+## Improv
+
+The **Read | Improv** switch under the header changes sections (`#improv` links straight to Improv).
+
+- **Backing track:** 12-bar blues in any key, made live in the browser (drums, boogie bass, rhythm-guitar chops on
+  2 and 4). Tempo, shuffle or straight, and quick change (IV in bar 2). Counts in one bar, then loops.
+- **Chord chart:** the 12 bars, with the current one lit.
+- **Fretboard (frets 0–17):** minor pentatonic, blues scale, major pentatonic, or the CAGED chord shapes for the key.
+  Show all shapes or pick one (named E, D, C, A, G for the chord shape it sits around). Dots show intervals or note
+  names; roots are orange. **Chord tones** rings the notes of the chord being played while the track runs.
 
 ## Publishing a change
 
