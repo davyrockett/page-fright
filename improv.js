@@ -225,7 +225,6 @@ function showView(v){
   const improv=v==='improv';
   document.getElementById('read-view').hidden=improv;
   document.getElementById('improv-view').hidden=!improv;
-  document.querySelectorAll('.read-only').forEach(el=>el.hidden=improv);
   document.querySelectorAll('.views [data-view]').forEach(b=>{b.setAttribute('aria-selected',b.dataset.view===v);b.setAttribute('aria-pressed',b.dataset.view===v);});
   document.querySelector('.tagline').textContent=improv?'Guitar Improv Practice':'Guitar Sight-Reading Generator';
   store.set('view',v);
