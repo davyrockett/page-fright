@@ -23,7 +23,7 @@ function spell(root,deg,qual){
   return letter+(diff>0?'♯'.repeat(diff):'♭'.repeat(-diff));
 }
 const D={root:store.get('droot',0),qual:store.get('dqual','maj'),strings:store.get('dstrings',[3,4,5]),
-  inv:store.get('dinv',[0,1,2]),lab:store.get('dlab','int')};
+  inv:store.get('dinv',[0,1,2]),lab:store.get('dlab','note')};
 if(!Array.isArray(D.strings)||D.strings.some(s=>!(s>=0&&s<6)))D.strings=[3,4,5];
 
 /* ---------- the tShapes ----------
