@@ -24,7 +24,7 @@ function spell(root,deg,qual){
 }
 const D={root:store.get('droot',0),qual:store.get('dqual','maj'),strings:store.get('dstrings',[3,4,5]),
   inv:store.get('dinv',[0,1,2]),lab:store.get('dlab','note')};
-if(!Array.isArray(D.strings)||D.strings.some(s=>!(s>=0&&s<6)))D.strings=[3,4,5];
+if(!Array.isArray(D.strings)||D.strings.length>3||D.strings.some(s=>!(s>=0&&s<6)))D.strings=[3,4,5]; // up to three strings
 
 /* ---------- the tShapes ----------
    One note on each of the three strings, using each chord tone once. Playable = all three within a 5-fret
@@ -53,7 +53,7 @@ function triadShapes(){
 
 /* ---------- drawing ---------- */
 const dfb=document.getElementById('dfb');
-let tShapes=[], tFocus=[]; // tFocus: the shapes highlighted right now
+let tShapes=[], tFocus=[], noteFlash='', flashTimer=0; // tFocus: the shapes highlighted right now
 function drawDrill(){
   tShapes=triadShapes().filter(sh=>D.inv.includes(sh.inv));
   const q=QUALITIES[D.qual];
@@ -80,8 +80,8 @@ function drawDrill(){
   });
   dfb.setAttribute('viewBox',`0 0 ${W} ${H}`);dfb.innerHTML=svg;dfb.classList.toggle('focus',tFocus.length>0);
   const note=document.getElementById('dnote'), n=D.strings.length;
-  note.hidden=n>=3&&tShapes.length>0;
-  note.textContent=(n===0?'Pick three or more strings.':n<3?`Showing the chord's notes on ${n===1?'that string':'those strings'}. Pick ${n===1?'two more strings':'one more string'} to see the triad shapes.`
+  note.hidden=n===3&&tShapes.length>0&&!noteFlash;
+  note.textContent=noteFlash||(n===0?'Pick up to three strings.':n<3?`Showing the chord's notes on ${n===1?'that string':'those strings'}. Pick ${n===1?'two more strings':'one more string'} to see the triad shapes.`
     :!D.inv.length?'Turn on at least one inversion.':'No playable shapes on these strings.');
   drawNotation();
   describeDrill();
@@ -102,10 +102,9 @@ function drawNotation(){
   dnot.replaceChildren();
   if(!tShapes.length)return;
   const step=k=>{const [l,o]=k.split('/');return 7*(+o)+'cdefgab'.indexOf(l[0]);};
-  // Shapes at about the same spot on the neck (e.g. on different string sets) become one stacked chord.
-  const at=tShapes.map((sh,i)=>({i,x:sh.notes.reduce((a,n)=>a+fx(n.f),0)/3})).sort((a,b)=>a.x-b.x);
-  const clusters=[];
-  at.forEach(p=>{const c=clusters.at(-1);if(c&&p.x-c.x0<34)c.items.push(p);else clusters.push({x0:p.x,items:[p]});});
+  // One chord per shape, under the middle of its shape. (Merging shapes from different string sets into one
+  // chord was only needed when more than three strings could be picked.)
+  const clusters=tShapes.map((sh,i)=>({items:[{i,x:sh.notes.reduce((a,n)=>a+fx(n.f),0)/3}]}));
   clusters.forEach(c=>{
     c.x=c.items.reduce((a,p)=>a+p.x,0)/c.items.length;
     c.shapes=c.items.map(p=>p.i);
@@ -194,7 +193,11 @@ document.getElementById('drill-view').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;const d=b.dataset;
   if(d.str!==undefined){const s=+d.str;
     if(D.strings.includes(s))D.strings=D.strings.filter(x=>x!==s);
+    else if(D.strings.length>=3){ // up to three: say so instead of adding a fourth
+      noteFlash='Up to three strings. Tap one to turn it off first.';clearTimeout(flashTimer);
+      flashTimer=setTimeout(()=>{noteFlash='';drawDrill();},2500);drawDrill();return;}
     else D.strings=[...D.strings,s];
+    noteFlash='';clearTimeout(flashTimer);
     store.set('dstrings',D.strings);drawStrings();changed();}
   else if(d.inv!==undefined){const i=+d.inv;D.inv=D.inv.includes(i)?D.inv.filter(x=>x!==i):[...D.inv,i].sort();store.set('dinv',D.inv);drawInv();changed();}
   else if(b.id==='dlab'){D.lab=D.lab==='note'?'int':'note';store.set('dlab',D.lab);b.setAttribute('aria-pressed',D.lab==='note');drawDrill();}

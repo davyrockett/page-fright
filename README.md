@@ -62,8 +62,7 @@ The **Read | Improv** switch under the header changes sections (`#improv` links 
 ## Drill
 
 The third section of the **Read | Improv | Drill** switch (`#drill` links straight to it). It starts with **triads**:
-pick a root and quality (major, minor, diminished, augmented) and any strings: three or more are taken three neighbours at a time (all six give
-E A D, A D G, D G B and G B e; the notation stays on one staff, stacking shapes at the same spot into one chord); one or two show where the chord's notes fall. The fretboard shows every playable shape of that triad on those strings, frets 0–17, joined by a line
+pick a root and quality (major, minor, diminished, augmented) and up to three strings (with one or two it shows where the chord's notes fall on them). The fretboard shows every playable shape of that triad on those strings, frets 0–17, joined by a line
 coloured by inversion (blue root position, green 1st, purple 2nd; each can be turned off). Note names are spelled
 from the root (C minor = C–E♭–G). Under the fretboard, each shape is also written as a stacked whole-note chord (guitar pitch, spelled from the root,
 coloured by inversion), lined up under its shape. Tap a shape's line or its chord to hear it; **Play** strums every
