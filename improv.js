@@ -30,9 +30,10 @@ function snare(at){const c=AC,n=c.createBufferSource(),f=c.createBiquadFilter(),
   const o=c.createOscillator(),g2=env(c,at,.25,.09);o.frequency.value=185;o.connect(g2);o.start(at);o.stop(at+.1);}
 function hat(at,vol=.16){const c=AC,n=c.createBufferSource(),f=c.createBiquadFilter(),g=env(c,at,vol,.05);
   n.buffer=noise(c);f.type='highpass';f.frequency.value=7000;n.connect(f);f.connect(g);n.start(at,Math.random()*.5);n.stop(at+.06);}
+// Bass: a round, quiet triangle tone (not a buzzy sawtooth), sitting under the drums and guitar.
 function bass(midi,at,dur){const c=AC,o=c.createOscillator(),f=c.createBiquadFilter(),g=c.createGain();
-  o.type='sawtooth';o.frequency.value=440*Math.pow(2,(midi-69)/12);f.type='lowpass';f.frequency.value=650;f.Q.value=2;
-  g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(.42,at+.008);g.gain.exponentialRampToValueAtTime(.2,at+dur*.5);g.gain.exponentialRampToValueAtTime(.0001,at+dur);
+  o.type='triangle';o.frequency.value=440*Math.pow(2,(midi-69)/12);f.type='lowpass';f.frequency.value=420;f.Q.value=.7;
+  g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(.3,at+.012);g.gain.exponentialRampToValueAtTime(.16,at+dur*.6);g.gain.exponentialRampToValueAtTime(.0001,at+dur);
   o.connect(f);f.connect(g);g.connect(OUT);o.start(at);o.stop(at+dur+.02);}
 // Rhythm guitar: a dominant 7th chop (root, ♭7, 3rd, 5th), lightly strummed.
 function chop(pc,at){const root=45+((pc-9)%12+12)%12;[0,10,16,19].forEach((iv,j)=>pluck(440*Math.pow(2,(root+iv-69)/12),{at:at+j*.012,dur:.26,vol:.26}));}
@@ -43,8 +44,8 @@ const BCOUNT=4; // count-in beats
 const bplay=document.getElementById('bplay'),bstatus=document.getElementById('bstatus');
 // When in the beat each 8th note lands: swung (2/3 of the way) or straight (halfway).
 const off8=()=>B.feel==='shuffle'?2/3:1/2;
-// Boogie bass: root, 3, 5, 6, ♭7, 6, 5, 3 in 8th notes.
-const BOOGIE=[0,4,7,9,10,9,7,4];
+// Bass line: plain quarter notes on root, root, 5th, root.
+const BASS_LINE=[0,0,7,0];
 function bschedule(){
   const c=AC;
   while(bp.start+bp.next*bp.spb<c.currentTime+.25){
@@ -55,7 +56,7 @@ function bschedule(){
       const root=28+((pc-4)%12+12)%12;                 // bass root between low E and D♯
       if(beat===0||beat===2)kick(at); else snare(at);
       hat(at,.16);hat(at2,.1);
-      bass(root+BOOGIE[beat*2],at,off8()*bp.spb*.95);bass(root+BOOGIE[beat*2+1],at2,(1-off8())*bp.spb*.95);
+      bass(root+BASS_LINE[beat],at,bp.spb*.85);
       if(beat===1||beat===3)chop(pc,at);
     }
     bp.next++;

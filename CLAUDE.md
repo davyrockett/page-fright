@@ -69,10 +69,12 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
 - Tab (toggle, or T): fingering is chosen for the whole exercise (`fingering()`, a cheapest-route search over
   hand positions). Whole neck settles around **5th position** (David is getting comfortable there),
   reach-back beats an open string, avoid high frets on the thick strings.
-- Improv: synthesized 12-bar blues (drums, boogie bass, 7th-chord chops on 2 and 4), any key, tempo,
+- Improv: synthesized 12-bar blues (drums, bass, 7th-chord chops on 2 and 4), any key, tempo,
   shuffle/straight, quick change. Fretboard 0–17 with minor pentatonic, blues, minor scale, major pentatonic,
   major scale, CAGED chord shapes; shapes named E/D/C/A/G, several selectable. Chord tones: blue rings on scale
   notes in the chord; chord tones outside the scale as hollow blue dots labeled by role (R/3/5/♭7); tap I/IV/V
   beside Chord tones to preview a chord. David asked to remove the 12-bar chord chart; don't bring it back.
+- Backing track sound: David found it "way too cheesy". The boogie bass was replaced (v23) by a quiet,
+  round triangle-wave bass playing quarter notes R-R-5-R. Keep the parts simple and understated.
 - Header: "Page Fright" with a plain tagline ("Guitar Sight-Reading Generator" / "Guitar Improv Practice").
   The Read | Improv switch is a pill at the top right; New exercise and Customize live inside Read.
