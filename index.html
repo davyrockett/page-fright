@@ -122,6 +122,8 @@ p{margin:0}
 #fb .ring{fill:none;stroke:var(--hl);stroke-width:3}
 #fb .dot.extra circle{fill:var(--surface);stroke:var(--hl);stroke-width:2.5}
 #fb .dot.extra text{fill:var(--hl)}
+.chip{padding:7px 12px;font-size:14px}
+.chip.now{box-shadow:0 0 0 2px var(--hl)}
 .fb-opts{justify-content:space-between}
 </style>
 </head>
@@ -176,14 +178,14 @@ p{margin:0}
       <div class="fb-wrap"><svg id="fb" role="img" aria-label="Fretboard"></svg></div>
       <div class="row fb-opts">
         <div class="seg" role="group" aria-label="Dot labels"><button type="button" class="btn" data-lab="int">Intervals</button><button type="button" class="btn" data-lab="note">Note names</button></div>
-        <button type="button" class="btn" id="btones" aria-pressed="true">Chord tones</button>
+        <div class="row"><button type="button" class="btn" id="btones" aria-pressed="true">Chord tones</button><div class="seg" id="bchips" role="group" aria-label="Preview a chord's tones"></div></div>
       </div>
       <p class="cap" id="fb-note"></p>
     </div>
 
     <div class="notes cap">
       <p>The backing track is 12-bar blues: drums, a boogie bass line, and rhythm guitar on beats 2 and 4. Quick change moves to the IV chord in bar 2. Play counts you in for one measure, then loops until you stop it.</p>
-      <p>Orange dots are the root. With <b>Chord tones</b> on, notes of the chord being played get a blue ring while the track runs, so you can aim for them as the chords change. Chord tones that aren't in the scale (like the IV chord's major 3rd over minor pentatonic) show as hollow blue dots, labeled by their part in the chord: R, 3, 5 or ♭7. Tap a dot to hear it. <b>Space</b> plays or stops.</p>
+      <p>Orange dots are the root. With <b>Chord tones</b> on, notes of the chord being played get a blue ring while the track runs, so you can aim for them as the chords change. Chord tones that aren't in the scale (like the IV chord's major 3rd over minor pentatonic) show as hollow blue dots, labeled by their part in the chord: R, 3, 5 or ♭7. Tap a chord beside Chord tones to see its tones any time (tap it again to go back to following the track); the chord being played is outlined in blue. Tap a dot to hear it. <b>Space</b> plays or stops.</p>
     </div>
   </div>
 </div>
@@ -743,7 +745,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v20';
+window.APP_VERSION = 'v21';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');

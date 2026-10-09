@@ -15,6 +15,9 @@ const FORM=[0,0,0,0,5,5,0,0,7,5,0,7], QUICK=[0,5,0,0,5,5,0,0,7,5,0,7];
 const B={key:store.get('bkey',9),bpm:store.get('btempo',92),feel:store.get('bfeel','shuffle'),quick:store.get('bquick',false),
   scale:store.get('bscale','minor'),shapes:store.get('bshapes',[]),lab:store.get('blab','int'),tones:store.get('btones',true)};
 const form=()=>B.quick?QUICK:FORM;
+// Which chord's tones to show (steps above the key): a tapped chord, else the one playing, else none.
+B.preview=null;
+const toneStep=()=>!B.tones?null:B.preview!==null?B.preview:bp.on&&bp.bar>=0?form()[bp.bar]:null;
 const chordName=bar=>pcName(B.key+form()[bar],B.key)+'7';
 
 /* ---------- sounds ---------- */
@@ -67,7 +70,7 @@ function bframe(){
 }
 function showBar(){
   bstatus.textContent=bp.bar>=0?`Bar ${bp.bar+1} of 12 · ${chordName(bp.bar)}`:'';
-  drawBoard();
+  drawChips();drawBoard();
 }
 function bstart(){
   const c=audio();if(!c)return;
@@ -153,7 +156,7 @@ const fx=f=>f===0?NUT-20:NUT+(f-.5)*FW, sy=s=>TOP+(5-s)*GAP;
 function drawBoard(){
   const key=B.key,sc=SCALES[B.scale],placed=placedShapes();
   const sel=placed.filter(x=>B.shapes.includes(x.name)), any=sel.length>0; // chosen shapes (none = all)
-  const tones=B.tones&&bp.on&&bp.bar>=0?[0,4,7,10].map(i=>(key+form()[bp.bar]+i)%12):null;
+  const step=toneStep(), tones=step===null?null:[0,4,7,10].map(i=>(key+step+i)%12);
   let svg=`<rect class="wood" x="${NUT}" y="${TOP-10}" width="${LAST*FW}" height="${5*GAP+20}" rx="3"/>`;
   // The chosen shapes' areas, under the fret lines so those still show
   sel.forEach(x=>x.places.forEach(pl=>{const fr=pl.map(p=>p.f),lo=Math.min(...fr),hi=Math.max(...fr);
@@ -177,10 +180,10 @@ function drawBoard(){
     if(tones&&tones.includes(pc)&&!(any&&!on.has(p.s+','+p.f)))svg+=`<circle class="ring" cx="${fx(p.f)}" cy="${sy(p.s)}" r="14"/>`;
   });
   // Chord tones the scale doesn't have (like the IV chord's major 3rd over minor pentatonic): hollow blue dots,
-  // labeled by their job in the chord being played. Only while the track runs with Chord tones on,
+  // labeled by their job in the chord. Only with Chord tones on, for a tapped chord or the one playing,
   // and only inside the chosen shapes (or anywhere with All shapes).
   if(tones){
-    const cr=(key+form()[bp.bar])%12, inScale=sc.iv.map(i=>(key+i)%12), JOB={0:'R',4:'3',7:'5',10:'♭7'};
+    const cr=(key+step)%12, inScale=sc.iv.map(i=>(key+i)%12), JOB={0:'R',4:'3',7:'5',10:'♭7'};
     const areas=any?sel.flatMap(x=>x.places.map(pl=>[Math.min(...pl.map(p=>p.f)),Math.max(...pl.map(p=>p.f))])):[[0,LAST]];
     for(let s=0;s<6;s++)for(let f=0;f<=LAST;f++){
       const pc=pcAt(s,f);if(!tones.includes(pc)||inScale.includes(pc)||!areas.some(([a,b])=>f>=a&&f<=b))continue;
@@ -205,7 +208,7 @@ fb.addEventListener('click',e=>{const g=e.target.closest('.dot');if(!g)return;
 const keySelect=document.getElementById('bkey');
 keySelect.innerHTML=BKEYS.map(k=>`<option value="${k}">${pcName(k,k)}</option>`).join('');
 keySelect.value=B.key;
-keySelect.onchange=()=>{B.key=+keySelect.value;store.set('bkey',B.key);drawShapes();drawBoard();scrollToShape();describeImprov();};
+keySelect.onchange=()=>{B.key=+keySelect.value;store.set('bkey',B.key);drawShapes();drawChips();drawBoard();scrollToShape();describeImprov();};
 const bt=document.getElementById('btempo'),btv=document.getElementById('btempo-val');
 bt.value=B.bpm;btv.textContent=B.bpm+' bpm';
 bt.oninput=()=>{const nb=+bt.value;btv.textContent=nb+' bpm';
@@ -233,10 +236,17 @@ document.getElementById('improv-view').addEventListener('click',e=>{
   else if(d.sc){B.scale=d.sc;store.set('bscale',B.scale);drawShapes();}
   else if(d.sh){B.shapes=d.sh==='all'?[]:B.shapes.includes(d.sh)?B.shapes.filter(n=>n!==d.sh):[...B.shapes,d.sh];store.set('bshapes',B.shapes);}
   else if(b.id==='bquick'){B.quick=!B.quick;store.set('bquick',B.quick);}
-  else if(b.id==='btones'){B.tones=!B.tones;store.set('btones',B.tones);}
+  else if(b.id==='btones'){B.tones=!B.tones;store.set('btones',B.tones);if(!B.tones)B.preview=null;drawChips();}
+  else if(d.chip!==undefined){const st=+d.chip;B.preview=B.preview===st?null:st;drawChips();}
   else return;
   pressAll();drawBoard();if(d.sh||d.sc)scrollToShape();describeImprov();
 });
+// The I, IV and V chords beside Chord tones: tap one to see its tones; the one playing is outlined.
+function drawChips(){
+  const el=document.getElementById('bchips');el.hidden=!B.tones;
+  const now=bp.on&&bp.bar>=0?form()[bp.bar]:null;
+  el.innerHTML=[0,5,7].map(st=>`<button type="button" class="btn chip${st===now?' now':''}" data-chip="${st}" aria-pressed="${B.preview===st}" title="Show the tones of ${pcName(B.key+st,B.key)}7">${pcName(B.key+st,B.key)}7</button>`).join('');
+}
 function describeImprov(){
   if(document.getElementById('improv-view').hidden)return;
   document.getElementById('subtitle').textContent=`12-bar blues in ${pcName(B.key,B.key)} · ${B.bpm} bpm · ${B.feel==='shuffle'?'Shuffle':'Straight'}${B.quick?' · Quick change':''}`;
@@ -262,5 +272,5 @@ document.addEventListener('keydown',e=>{
   if(e.key===' '){e.preventDefault();bp.on?bstop():bstart();}
 });
 
-drawShapes();drawBoard();
+drawShapes();drawChips();drawBoard();
 showView(location.hash==='#improv'?'improv':store.get('view','read'));

@@ -56,6 +56,7 @@ The **Read | Improv** switch under the header changes sections (`#improv` links 
   Show all shapes or pick one or more (named E, D, C, A, G for the chord shape each sits around). Dots show intervals or note
   names; roots are orange. **Chord tones** rings the notes of the chord being played while the track runs, and shows
   chord tones the scale lacks (e.g. the IV chord's major 3rd over minor pentatonic) as hollow blue dots labeled R/3/5/♭7.
+  Tap I/IV/V beside Chord tones to preview a chord's tones any time; the chord being played is outlined.
 
 ## Publishing a change
 
