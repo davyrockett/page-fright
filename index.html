@@ -134,7 +134,12 @@ p{margin:0}
 .chip.now{box-shadow:0 0 0 2px var(--hl)}
 .fb-opts{justify-content:space-between}
 .pick-row{gap:10px 18px}
-@media (min-width:760px){.pick-row .tones{margin-left:auto}}
+/* Chord tones sits at the right end when it fits on the first line; if it has to wrap it gets its own row,
+   aligned left (improv.js sets .own-row). Its chord buttons keep their space when hidden, like the shapes. */
+.pick-row .tones{margin-left:auto;flex-wrap:nowrap}
+.pick-row .tones.own-row{margin-left:0;flex-basis:100%}
+#bchips{flex-wrap:nowrap}
+#bchips.off{visibility:hidden}
 #blab,#btones,#bshapes{padding:7px 13px;font-size:14px}
 #bshape.off{visibility:hidden}
 /* The Shapes button and its shape buttons always share one line, so the space kept for them never leaves a gap. */
@@ -775,7 +780,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v37';
+window.APP_VERSION = 'v38';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');

@@ -93,5 +93,7 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
   buttons (All A G E D C; it only shows/hides them: picks stay highlighted while hidden; their space is always reserved so turning
   Shapes on never pushes other controls to a new line), and Chord tones +
   I/IV/V. No caption under the fretboard; instructions folded into "How it works".
+- Chord tones: right end of the first line if it fits; otherwise its own row, aligned LEFT (never alone on the
+  right; `placeTones()`). Its I/IV/V buttons keep their space when hidden, like the shape buttons.
 - Phones (≤560px): smaller buttons and tighter spacing; the Shapes button and its shape buttons always share
   one line (no blank row); Play, Key and Quick change fit on one line down to 360px wide.
