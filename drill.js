@@ -76,7 +76,7 @@ function drawDrill(){
   dots.forEach(d=>{
     const label=D.lab==='int'?q.lab[d.deg]:spell(D.root,d.deg,D.qual);
     const on=d.tShapes.some(i=>tFocus.includes(i));
-    svg+=`<g class="dot${d.deg===0?' root':''}${on?' on':''}" data-s="${d.s}" data-f="${d.f}"><circle cx="${fx(d.f)}" cy="${sy(d.s)}" r="10.5"/><text x="${fx(d.f)}" y="${sy(d.s)+.5}">${label}</text></g>`;
+    svg+=`<g class="dot${d.deg===0?' root':''}${on?' on':''}" data-s="${d.s}" data-f="${d.f}"><circle cx="${fx(d.f)}" cy="${sy(d.s)}" r="${DOT}"/><text x="${fx(d.f)}" y="${sy(d.s)+.5}">${label}</text></g>`;
   });
   dfb.setAttribute('viewBox',`0 0 ${W} ${H}`);dfb.innerHTML=svg;dfb.classList.toggle('focus',tFocus.length>0);
   const note=document.getElementById('dnote'), n=D.strings.length;

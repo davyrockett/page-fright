@@ -169,7 +169,8 @@ function placedShapes(){
 
 /* ---------- fretboard drawing ---------- */
 const fb=document.getElementById('fb');
-const NUT=46,FW=50,TOP=22,GAP=24,W=NUT+LAST*FW+14,H=TOP+5*GAP+38;
+// Shared with drill.js. DOT is the dot radius; strings are GAP apart.
+const NUT=46,FW=50,TOP=26,GAP=30,DOT=12.5,W=NUT+LAST*FW+14,H=TOP+5*GAP+38;
 const fx=f=>f===0?NUT-20:NUT+(f-.5)*FW, sy=s=>TOP+(5-s)*GAP;
 function drawBoard(){
   const key=B.key,sc=SCALES[B.scale],placed=placedShapes();
@@ -194,8 +195,8 @@ function drawBoard(){
     const pc=pcAt(p.s,p.f),iv=((pc-key)%12+12)%12;
     const cls=['dot',iv===0?'root':'',sc.extra!==undefined&&iv===sc.extra?'blue':'',any&&!on.has(p.s+','+p.f)?'dim':''].join(' ');
     const label=B.lab==='int'?INT_N[iv]:pcName(pc,key);
-    svg+=`<g class="${cls}" data-s="${p.s}" data-f="${p.f}"><circle cx="${fx(p.f)}" cy="${sy(p.s)}" r="10.5"/><text x="${fx(p.f)}" y="${sy(p.s)+.5}">${label}</text></g>`;
-    if(tones&&tones.includes(pc)&&!(any&&!on.has(p.s+','+p.f)))svg+=`<circle class="ring" cx="${fx(p.f)}" cy="${sy(p.s)}" r="14"/>`;
+    svg+=`<g class="${cls}" data-s="${p.s}" data-f="${p.f}"><circle cx="${fx(p.f)}" cy="${sy(p.s)}" r="${DOT}"/><text x="${fx(p.f)}" y="${sy(p.s)+.5}">${label}</text></g>`;
+    if(tones&&tones.includes(pc)&&!(any&&!on.has(p.s+','+p.f)))svg+=`<circle class="ring" cx="${fx(p.f)}" cy="${sy(p.s)}" r="${DOT+3.5}"/>`;
   });
   // Chord tones the scale doesn't have (like the IV chord's major 3rd over minor pentatonic): hollow blue dots,
   // labeled by their job in the chord. Only with Chord tones on, for a tapped chord or the one playing,
@@ -206,7 +207,7 @@ function drawBoard(){
     for(let s=0;s<6;s++)for(let f=0;f<=LAST;f++){
       const pc=pcAt(s,f);if(!tones.includes(pc)||inScale.includes(pc)||!areas.some(([a,b])=>f>=a&&f<=b))continue;
       const label=B.lab==='int'?JOB[((pc-cr)%12+12)%12]:pcName(pc,key);
-      svg+=`<g class="dot extra" data-s="${s}" data-f="${f}"><circle cx="${fx(f)}" cy="${sy(s)}" r="10.5"/><text x="${fx(f)}" y="${sy(s)+.5}">${label}</text></g>`;
+      svg+=`<g class="dot extra" data-s="${s}" data-f="${f}"><circle cx="${fx(f)}" cy="${sy(s)}" r="${DOT}"/><text x="${fx(f)}" y="${sy(s)+.5}">${label}</text></g>`;
     }
   }
   fb.setAttribute('viewBox',`0 0 ${W} ${H}`);fb.innerHTML=svg;

@@ -122,7 +122,7 @@ p{margin:0}
 .fretboard .region{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
 .fretboard .dot{cursor:pointer}
 .fretboard .dot circle{fill:var(--ink)}
-.fretboard .dot text{fill:var(--surface);font-size:11px;font-weight:700;text-anchor:middle;dominant-baseline:central;font-family:var(--f-body);pointer-events:none}
+.fretboard .dot text{fill:var(--surface);font-size:13px;font-weight:700;text-anchor:middle;dominant-baseline:central;font-family:var(--f-body);pointer-events:none}
 .fretboard .dot.root circle{fill:var(--accent)}
 .fretboard .dot.root text{fill:#1E1B18}
 .fretboard .dot.blue circle{fill:var(--muted)}
@@ -134,7 +134,7 @@ p{margin:0}
 :root{--inv0:#1668E3;--inv1:#2E7D4F;--inv2:#8E44AD}
 :root[data-theme="dark"]{--inv0:#3D8BFF;--inv1:#5DBB84;--inv2:#B57EDC}
 @media (prefers-color-scheme: dark){:root:not([data-theme]){--inv0:#3D8BFF;--inv1:#5DBB84;--inv2:#B57EDC}}
-.fretboard .shape{fill:none;stroke-width:15;stroke-linecap:round;stroke-linejoin:round;opacity:.38;cursor:pointer}
+.fretboard .shape{fill:none;stroke-width:18;stroke-linecap:round;stroke-linejoin:round;opacity:.38;cursor:pointer}
 .fretboard .shape.inv0{stroke:var(--inv0)}.fretboard .shape.inv1{stroke:var(--inv1)}.fretboard .shape.inv2{stroke:var(--inv2)}
 .fretboard .shape.on{opacity:.9}
 .fretboard.focus .shape:not(.on){opacity:.1}
@@ -827,7 +827,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v46';
+window.APP_VERSION = 'v47';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
