@@ -2,7 +2,7 @@
 //
 // IMPORTANT: whenever any file below changes, bump VERSION (run tools/bump.sh).
 // That is how phones and iPads learn there's an update to download.
-const VERSION = 'v35';
+const VERSION = 'v36';
 const CACHE = `pagefright-${VERSION}`;
 const FONTS = 'pagefright-fonts';
 

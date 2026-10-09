@@ -137,6 +137,21 @@ p{margin:0}
 @media (min-width:760px){.pick-row .tones{margin-left:auto}}
 #blab,#btones,#bshapes{padding:7px 13px;font-size:14px}
 #bshape.off{visibility:hidden}
+/* The Shapes button and its shape buttons always share one line, so the space kept for them never leaves a gap. */
+.shapes-group,.shapes-group #bshape{flex-wrap:nowrap}
+/* Phones: smaller buttons so the rows fit. */
+@media (max-width:560px){
+  .btn{padding:7px 11px;font-size:14px}
+  .tempo select{font-size:14px;padding:6px 7px}
+  .pick-row #bshapes,.pick-row #blab,.pick-row #btones{padding:6px 9px;font-size:13px}
+  .shapes-group #bshape .btn,.pick-row .chip{padding:6px 6px;font-size:13px;min-width:28px}
+  .shapes-group,.shapes-group #bshape,.pick-row .tones{gap:4px}
+  .pick-row{gap:8px 10px}
+  .controls{gap:10px 12px;padding:12px}
+  .btn.play{min-width:80px}
+  .tempo{gap:6px}
+}
+@media (max-width:360px){.shapes-group #bshape .btn,.pick-row .chip{padding:6px 4px;min-width:26px}.pick-row #bshapes{padding:6px 7px}}
 #bshape .btn{padding:7px 13px;font-size:14px;min-width:38px}
 .help summary{cursor:pointer;font-weight:700;color:var(--muted);list-style-position:inside}
 .help[open] summary{margin-bottom:6px}
@@ -190,7 +205,7 @@ p{margin:0}
     <div class="card scales">
       <div class="row pick-row">
         <label class="tempo"><select id="bscale" aria-label="Scale"></select></label>
-        <div class="row"><button type="button" class="btn" id="bshapes" aria-pressed="false" title="Highlight scale shapes">Shapes</button><div class="seg" role="group" aria-label="Shapes" id="bshape"></div></div>
+        <div class="row shapes-group"><button type="button" class="btn" id="bshapes" aria-pressed="false" title="Highlight scale shapes">Shapes</button><div class="seg" role="group" aria-label="Shapes" id="bshape"></div></div>
         <button type="button" class="btn" id="blab" aria-pressed="false" title="Off: intervals (R, ♭3, 5…). On: note names.">Note names</button>
         <div class="row tones"><button type="button" class="btn" id="btones" aria-pressed="true">Chord tones</button><div class="seg" id="bchips" role="group" aria-label="Preview a chord's tones"></div></div>
       </div>
@@ -760,7 +775,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v35';
+window.APP_VERSION = 'v36';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
