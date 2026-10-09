@@ -97,7 +97,8 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
   against pitch-shifting a found recording). Ask for one track per part and the key it's written in.
 - Header: the logo (inline SVG copy of the icon: orange note, "!" in the text color, glow only in dark mode)
   before "Page Fright", with a plain tagline ("Guitar Sight-Reading Generator" / "Guitar Improv Practice").
-  The Read | Improv switch is a pill at the top right. In Read, the Play box comes first (matching Improv),
+  The Read | Improv | Drill switch is a pill that must NEVER move between sections (header is a grid: its own
+  column level with the title; on phones title → tagline → switch → settings line). In Read, the Play box comes first (matching Improv),
   then New exercise and Customize, then the score.
 - Improv layout (David liked it, v29): controls row Play, Key, Quick change (right after Key, so it stays on
   the first line when the row wraps), then Tempo and Feel dropdown. One row above the fretboard, in this order: scale dropdown (no label), Note names, Chord tones + I/IV/V, then

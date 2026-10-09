@@ -50,7 +50,17 @@ button{font:inherit;color:inherit}
 h1,h2{font-family:var(--f-display);font-weight:800;letter-spacing:.01em;line-height:1.02;margin:0;text-transform:uppercase}
 p{margin:0}
 .wrap{max-width:1240px;margin:0 auto;padding:24px clamp(16px,3vw,40px) 64px;display:flex;flex-direction:column;gap:16px}
-.top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.top{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"title nav" "sub nav";gap:6px 16px;align-items:start}
+/* The Read | Improv | Drill switch never moves: it has its own column (or its own row on phones),
+   and nothing above it changes height between sections. */
+.top .brand{display:contents}
+.top .title-row{grid-area:title}
+.top #subtitle{grid-area:sub;margin-top:0}
+.top .nav-row{grid-area:nav;align-self:start;flex-wrap:nowrap}
+@media (max-width:640px){
+  .top{grid-template-columns:1fr;grid-template-areas:"title" "nav" "sub";gap:10px}
+  .top .tagline{flex-basis:100%}   /* always its own line, whatever its length */
+}
 .brand h1{font-size:clamp(38px,6vw,52px)}
 .title-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 14px}
 /* The logo (same note and exclamation mark as the app icon) sits in front of the title. */
@@ -187,7 +197,7 @@ p{margin:0}
 <div class="wrap">
   <header class="top">
     <div class="brand"><div class="title-row"><h1><svg class="logo" viewBox="150 140 690 730" aria-hidden="true"><g class="logo-note"><ellipse cx="335" cy="735" rx="165" ry="115" transform="rotate(-24 335 735)"/><rect x="446.8" y="150" width="46" height="552"/><path d="M446.8 150L492.8 150C522.8 300 722.8 330 662.8 600C682.8 430 552.8 360 490.8 330Z"/></g><g class="logo-bang"><g transform="translate(643.9 206.2) scale(0.68)"><path d="M138 150H262L234 640H166Z"/><circle cx="200" cy="150" r="62"/><circle cx="200" cy="778" r="66"/></g></g></svg>Page Fright</h1><span class="tagline">Guitar Sight-Reading Generator</span></div><p id="subtitle">C major · Quarter notes</p></div>
-    <div class="row">
+    <div class="row nav-row">
       <div class="views" role="tablist" aria-label="Section">
         <button type="button" class="btn" role="tab" data-view="read">Read</button>
         <button type="button" class="btn" role="tab" data-view="improv">Improv</button>
@@ -827,7 +837,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v47';
+window.APP_VERSION = 'v48';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
