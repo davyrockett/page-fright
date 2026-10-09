@@ -2,7 +2,7 @@
 An orange eighth note and a cream exclamation mark on the app's dark background: page fright!"""
 import math
 from pathlib import Path
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 
 OUT = Path(__file__).resolve().parent.parent / "icons"
 BG = (21, 19, 16)          # dark page background
@@ -19,18 +19,16 @@ def bezier(p0, p1, p2, p3, n=40):
     return pts
 
 
-def draw(size: int = 1024) -> Image.Image:
-    s = 1024  # draw large, then shrink for smooth edges
-    img = Image.new("RGB", (s, s), BG)
+def note_layer() -> Image.Image:
+    """The eighth note on its own transparent layer: tilted notehead, stem on its right edge, curved flag."""
+    img = Image.new("RGBA", (1024, 1024), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
-
-    # Eighth note: a tilted notehead, a stem touching its right edge, and a curved flag.
     A, Bh, tilt = 165, 115, 24               # notehead half-width, half-height, tilt (degrees)
     head = Image.new("RGBA", (440, 440), (0, 0, 0, 0))
     ImageDraw.Draw(head).ellipse([220 - A, 220 - Bh, 220 + A, 220 + Bh], fill=ACCENT)
     head = head.rotate(tilt, resample=Image.BICUBIC)
     hx, hy = 335, 735                        # notehead centre
-    img.paste(head, (hx - 220, hy - 220), head)
+    img.alpha_composite(head, (hx - 220, hy - 220))
     # Where the tilted ellipse reaches furthest right: the stem's right edge goes there.
     c, sn = math.cos(math.radians(tilt)), math.sin(math.radians(tilt))
     xr = math.sqrt((A * c) ** 2 + (Bh * sn) ** 2)
@@ -41,20 +39,53 @@ def draw(size: int = 1024) -> Image.Image:
     outer = bezier(top, (top[0] + 30, 300), (top[0] + 230, 330), (top[0] + 170, 600))
     inner = bezier((top[0] + 170, 600), (top[0] + 190, 430), (top[0] + 60, 360), (top[0] - 2, 330))
     d.polygon([(stem_r - stem_w, top_y)] + outer + inner, fill=ACCENT)
+    return img.crop(img.getbbox())
 
-    # Exclamation mark: a tapering bar and a dot.
-    x0 = 790
+
+def bang_layer() -> Image.Image:
+    """The exclamation mark on its own transparent layer: a tapering bar and a dot."""
+    img = Image.new("RGBA", (400, 1024), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    x0 = 200
     d.polygon([(x0 - 62, 150), (x0 + 62, 150), (x0 + 34, 640), (x0 - 34, 640)], fill=PAPER)
     d.ellipse([x0 - 62, 88, x0 + 62, 212], fill=PAPER)   # round the top
     d.ellipse([x0 - 66, 712, x0 + 66, 844], fill=PAPER)
-    return img
+    return img.crop(img.getbbox())
+
+
+def fit(layer: Image.Image, height: int) -> Image.Image:
+    w, h = layer.size
+    return layer.resize((round(w * height / h), height), Image.LANCZOS)
+
+
+def glow(canvas: Image.Image, layer: Image.Image, pos, strength: float, radius: int):
+    """A soft halo of the shape's own colour behind it."""
+    halo = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
+    halo.alpha_composite(layer, pos)
+    halo = halo.filter(ImageFilter.GaussianBlur(radius))
+    r, g, b, a = halo.split()
+    halo.putalpha(a.point(lambda v: int(min(255, v * strength))))
+    canvas.alpha_composite(halo)
+    canvas.alpha_composite(layer, pos)
+
+
+def draw(size: int = 1024) -> Image.Image:
+    s = 1024
+    img = Image.new("RGBA", (s, s), BG + (255,))
+    note = fit(note_layer(), 830)            # the note fills most of the height
+    bang = fit(bang_layer(), 600)
+    nx, ny = 74, (s - note.height) // 2 + 10
+    bx, by = s - 70 - bang.width, (s - bang.height) // 2 + 30
+    glow(img, note, (nx, ny), strength=1.15, radius=40)
+    glow(img, bang, (bx, by), strength=0.9, radius=30)
+    return img.convert("RGB")
 
 
 def maskable() -> Image.Image:
     """Android crops icons to a circle, so this copy has the drawing shrunk to fit inside it."""
-    art = draw(1024).resize((800, 800), Image.LANCZOS)
+    art = draw(1024).resize((740, 740), Image.LANCZOS)
     img = Image.new("RGB", (1024, 1024), BG)
-    img.paste(art, (112, 112))
+    img.paste(art, (142, 142))
     return img
 
 
