@@ -222,11 +222,12 @@ p{margin:0}
 
   <div class="score card" id="score" aria-label="Sight-reading exercise, 16 measures"></div>
 
-  <div class="notes cap">
+  <details class="notes cap help">
+    <summary>How it works</summary>
     <p id="range-note"></p>
     <p>Guitar music is written an octave higher than it sounds, so the playback is at real guitar pitch.</p>
     <p>Tap any note or chord to hear it. Play counts you in for one measure. Keys: <b>space</b> plays or stops, <b>N</b> makes a new exercise, <b>T</b> shows or hides the tab.</p>
-  </div>
+  </details>
   </div>
 
   <div id="improv-view" class="view" hidden>
@@ -837,7 +838,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v48';
+window.APP_VERSION = 'v49';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
