@@ -14,8 +14,8 @@ const INT_N={0:'R',1:'♭2',2:'2',3:'♭3',4:'3',5:'4',6:'♭5',7:'5',8:'♭6',9
 const FORM=[0,0,0,0,5,5,0,0,7,5,0,7], QUICK=[0,5,0,0,5,5,0,0,7,5,0,7];
 const B={key:store.get('bkey',9),bpm:store.get('btempo',92),feel:store.get('bfeel','shuffle'),quick:store.get('bquick',false),
   scale:store.get('bscale','minor'),shapes:store.get('bshapes',[]),lab:store.get('blab','int'),tones:store.get('btones',true)};
-B.shapesOn=store.get('bshapesOn',B.shapes.length>0); // the Shapes button: off = no shape highlighting
-const activeShapes=()=>B.shapesOn?B.shapes:[];
+B.shapesOn=store.get('bshapesOn',B.shapes.length>0); // the Shapes button only shows or hides the shape buttons
+const activeShapes=()=>B.shapes;                      // picks stay highlighted either way
 const form=()=>B.quick?QUICK:FORM;
 // Which chord's tones to show (steps above the key): a tapped chord, else the one playing, else none.
 B.preview=null;
