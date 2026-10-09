@@ -13,7 +13,7 @@ const INT_N={0:'R',1:'♭2',2:'2',3:'♭3',4:'3',5:'4',6:'♭5',7:'5',8:'♭6',9
    Chords as steps above the key: 0 = I, 5 = IV, 7 = V. Bar 12 is the turnaround (V). */
 const FORM=[0,0,0,0,5,5,0,0,7,5,0,7], QUICK=[0,5,0,0,5,5,0,0,7,5,0,7];
 const B={key:store.get('bkey',9),bpm:store.get('btempo',92),feel:store.get('bfeel','shuffle'),quick:store.get('bquick',false),
-  scale:store.get('bscale','minor'),shape:store.get('bshape','all'),lab:store.get('blab','int'),tones:store.get('btones',true)};
+  scale:store.get('bscale','minor'),shapes:store.get('bshapes',[]),lab:store.get('blab','int'),tones:store.get('btones',true)};
 const form=()=>B.quick?QUICK:FORM;
 const chordName=bar=>pcName(B.key+form()[bar],B.key)+'7';
 
@@ -135,34 +135,34 @@ const NUT=46,FW=50,TOP=22,GAP=24,W=NUT+LAST*FW+14,H=TOP+5*GAP+38;
 const fx=f=>f===0?NUT-20:NUT+(f-.5)*FW, sy=s=>TOP+(5-s)*GAP;
 function drawBoard(){
   const key=B.key,sc=SCALES[B.scale],placed=placedShapes();
-  const sel=placed.find(x=>x.name===B.shape);
+  const sel=placed.filter(x=>B.shapes.includes(x.name)), any=sel.length>0; // chosen shapes (none = all)
   const tones=B.tones&&bp.on&&bp.bar>=0?[0,4,7,10].map(i=>(key+form()[bp.bar]+i)%12):null;
   let svg=`<rect class="wood" x="${NUT}" y="${TOP-10}" width="${LAST*FW}" height="${5*GAP+20}" rx="3"/>`;
   [3,5,7,9,15,17].forEach(f=>{svg+=`<circle class="inlay" cx="${fx(f)}" cy="${TOP+2.5*GAP}" r="5"/>`;});
   svg+=`<circle class="inlay" cx="${fx(12)}" cy="${TOP+1.5*GAP}" r="5"/><circle class="inlay" cx="${fx(12)}" cy="${TOP+3.5*GAP}" r="5"/>`;
   for(let f=1;f<=LAST;f++)svg+=`<line class="fret" x1="${NUT+f*FW}" x2="${NUT+f*FW}" y1="${TOP-10}" y2="${TOP+5*GAP+10}"/>`;
   [3,5,7,9,12,15,17].forEach(f=>{svg+=`<text class="fnum" x="${fx(f)}" y="${TOP+5*GAP+30}">${f}</text>`;});
-  // The chosen shape's area
-  if(sel)sel.places.forEach(pl=>{const fr=pl.map(p=>p.f),lo=Math.min(...fr),hi=Math.max(...fr);
+  // The chosen shapes' areas
+  sel.forEach(x=>x.places.forEach(pl=>{const fr=pl.map(p=>p.f),lo=Math.min(...fr),hi=Math.max(...fr);
     const x1=lo===0?NUT-34:NUT+(lo-1)*FW+4,x2=NUT+hi*FW-4;
-    svg+=`<rect class="region" x="${x1}" y="${TOP-12}" width="${x2-x1}" height="${5*GAP+24}" rx="10"/>`;});
+    svg+=`<rect class="region" x="${x1}" y="${TOP-12}" width="${x2-x1}" height="${5*GAP+24}" rx="10"/>`;}));
   svg+=`<rect class="nut" x="${NUT-4}" y="${TOP-10}" width="5" height="${5*GAP+20}"/>`;
   for(let s=0;s<6;s++)svg+=`<line class="str" x1="${NUT-34}" x2="${NUT+LAST*FW}" y1="${sy(s)}" y2="${sy(s)}" stroke-width="${1+s*.35}"/>`;
-  // Dots: every note of the scale (or of all five chord shapes), with the chosen shape bright.
+  // Dots: every note of the scale (or of all five chord shapes), with the chosen shapes bright.
   const on=new Set(), all=new Map();
-  placed.forEach(x=>x.places.forEach(pl=>pl.forEach(p=>{all.set(p.s+','+p.f,p);if(x===sel)on.add(p.s+','+p.f);})));
+  placed.forEach(x=>x.places.forEach(pl=>pl.forEach(p=>{all.set(p.s+','+p.f,p);if(sel.includes(x))on.add(p.s+','+p.f);})));
   if(B.scale!=='caged'){const iv=sc.iv.map(i=>(key+i)%12);for(let s=0;s<6;s++)for(let f=0;f<=LAST;f++)if(iv.includes(pcAt(s,f)))all.set(s+','+f,{s,f});}
   all.forEach(p=>{
     const pc=pcAt(p.s,p.f),iv=((pc-key)%12+12)%12;
-    const cls=['dot',iv===0?'root':'',sc.extra!==undefined&&iv===sc.extra?'blue':'',sel&&!on.has(p.s+','+p.f)?'dim':''].join(' ');
+    const cls=['dot',iv===0?'root':'',sc.extra!==undefined&&iv===sc.extra?'blue':'',any&&!on.has(p.s+','+p.f)?'dim':''].join(' ');
     const label=B.lab==='int'?INT_N[iv]:pcName(pc,key);
     svg+=`<g class="${cls}" data-s="${p.s}" data-f="${p.f}"><circle cx="${fx(p.f)}" cy="${sy(p.s)}" r="10.5"/><text x="${fx(p.f)}" y="${sy(p.s)+.5}">${label}</text></g>`;
-    if(tones&&tones.includes(pc)&&!(sel&&!on.has(p.s+','+p.f)))svg+=`<circle class="ring" cx="${fx(p.f)}" cy="${sy(p.s)}" r="14"/>`;
+    if(tones&&tones.includes(pc)&&!(any&&!on.has(p.s+','+p.f)))svg+=`<circle class="ring" cx="${fx(p.f)}" cy="${sy(p.s)}" r="14"/>`;
   });
   fb.setAttribute('viewBox',`0 0 ${W} ${H}`);fb.innerHTML=svg;
   document.getElementById('fb-note').textContent=B.scale==='caged'
     ?`The five ${pcName(key,key)} major chord shapes up the neck, named for the open chord each one is shaped like.`
-    :`${pcName(key,key)} ${sc.name.toLowerCase()}${B.scale==='blues'?' (minor pentatonic plus the ♭5, in gray)':''}. ${sel?`${sel.name} shape highlighted.`:'Pick a shape to highlight it.'}`;
+    :`${pcName(key,key)} ${sc.name.toLowerCase()}${B.scale==='blues'?' (minor pentatonic plus the ♭5, in gray)':''}. ${any?`${sel.map(x=>x.name).join(' + ')} shape${sel.length>1?'s':''} highlighted.`:'Pick one or more shapes to highlight them.'}`;
 }
 // On a narrow screen the fretboard scrolls sideways: bring the chosen shape into view.
 function scrollToShape(){
@@ -186,14 +186,14 @@ function pressAll(){
   document.querySelectorAll('[data-feel]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.feel===B.feel));
   document.querySelectorAll('[data-lab]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.lab===B.lab));
   document.querySelectorAll('#bscale [data-sc]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.sc===B.scale));
-  document.querySelectorAll('#bshape [data-sh]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.sh===B.shape));
+  document.querySelectorAll('#bshape [data-sh]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.sh==='all'?!B.shapes.length:B.shapes.includes(b.dataset.sh)));
   document.getElementById('bquick').setAttribute('aria-pressed',B.quick);
   document.getElementById('btones').setAttribute('aria-pressed',B.tones);
 }
 document.getElementById('bscale').innerHTML=Object.entries(SCALES).map(([k,v])=>`<button type="button" class="btn" data-sc="${k}">${v.name}</button>`).join('');
 function drawShapes(){
   const names=placedShapes().map(x=>x.name);
-  if(B.shape!=='all'&&!names.includes(B.shape))B.shape='all';
+  B.shapes=B.shapes.filter(n=>names.includes(n));
   document.getElementById('bshape').innerHTML=`<button type="button" class="btn" data-sh="all">All shapes</button>`+names.map(n=>`<button type="button" class="btn" data-sh="${n}">${n.length===1?n+' shape':n}</button>`).join('');
   pressAll();
 }
@@ -202,7 +202,7 @@ document.getElementById('improv-view').addEventListener('click',e=>{
   if(d.feel){B.feel=d.feel;store.set('bfeel',B.feel);}
   else if(d.lab){B.lab=d.lab;store.set('blab',B.lab);}
   else if(d.sc){B.scale=d.sc;store.set('bscale',B.scale);drawShapes();}
-  else if(d.sh){B.shape=d.sh;store.set('bshape',B.shape);}
+  else if(d.sh){B.shapes=d.sh==='all'?[]:B.shapes.includes(d.sh)?B.shapes.filter(n=>n!==d.sh):[...B.shapes,d.sh];store.set('bshapes',B.shapes);}
   else if(b.id==='bquick'){B.quick=!B.quick;store.set('bquick',B.quick);}
   else if(b.id==='btones'){B.tones=!B.tones;store.set('btones',B.tones);}
   else return;
