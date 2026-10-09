@@ -208,9 +208,6 @@ function drawBoard(){
     }
   }
   fb.setAttribute('viewBox',`0 0 ${W} ${H}`);fb.innerHTML=svg;
-  document.getElementById('fb-note').textContent=B.scale==='caged'
-    ?`The five ${pcName(key,key)} major chord shapes up the neck, named for the open chord each one is shaped like.`
-    :`${pcName(key,key)} ${sc.name.toLowerCase()}${B.scale==='blues'?' (minor pentatonic plus the ♭5, in gray)':''}. ${any?`${sel.map(x=>x.name).join(' + ')} shape${sel.length>1?'s':''} highlighted.`:'Pick one or more shapes to highlight them.'}`;
 }
 // On a narrow screen the fretboard scrolls sideways: bring the chosen shape into view.
 function scrollToShape(){
@@ -231,31 +228,31 @@ bt.oninput=()=>{const nb=+bt.value;btv.textContent=nb+' bpm';
   if(bp.on){const now=AC.currentTime,pos=(now-bp.start)/bp.spb,spb=60/nb;bp.start=now-pos*spb;bp.spb=spb;}
   B.bpm=nb;store.set('btempo',nb);describeImprov();};
 function pressAll(){
-  document.querySelectorAll('[data-feel]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.feel===B.feel));
-  document.querySelectorAll('[data-lab]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.lab===B.lab));
-  document.querySelectorAll('#bscale [data-sc]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.sc===B.scale));
+  document.getElementById('bfeel').value=B.feel;
+  document.getElementById('bscale').value=B.scale;
+  document.getElementById('blab').setAttribute('aria-pressed',B.lab==='note');
   document.querySelectorAll('#bshape [data-sh]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.sh==='all'?!B.shapes.length:B.shapes.includes(b.dataset.sh)));
   document.getElementById('bquick').setAttribute('aria-pressed',B.quick);
   document.getElementById('btones').setAttribute('aria-pressed',B.tones);
 }
-document.getElementById('bscale').innerHTML=Object.entries(SCALES).map(([k,v])=>`<button type="button" class="btn" data-sc="${k}">${v.name}</button>`).join('');
+document.getElementById('bscale').innerHTML=Object.entries(SCALES).map(([k,v])=>`<option value="${k}">${v.name}</option>`).join('');
+document.getElementById('bscale').onchange=e=>{B.scale=e.target.value;store.set('bscale',B.scale);drawShapes();drawBoard();scrollToShape();};
+document.getElementById('bfeel').onchange=e=>{B.feel=e.target.value;store.set('bfeel',B.feel);describeImprov();};
 function drawShapes(){
   const names=placedShapes().map(x=>x.name);
   B.shapes=B.shapes.filter(n=>names.includes(n));
-  document.getElementById('bshape').innerHTML=`<button type="button" class="btn" data-sh="all">All shapes</button>`+names.map(n=>`<button type="button" class="btn" data-sh="${n}">${n.length===1?n+' shape':n}</button>`).join('');
+  document.getElementById('bshape').innerHTML=`<button type="button" class="btn" data-sh="all">All</button>`+names.map(n=>`<button type="button" class="btn" data-sh="${n}" title="${n} shape">${n}</button>`).join('');
   pressAll();
 }
 document.getElementById('improv-view').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;const d=b.dataset;
-  if(d.feel){B.feel=d.feel;store.set('bfeel',B.feel);}
-  else if(d.lab){B.lab=d.lab;store.set('blab',B.lab);}
-  else if(d.sc){B.scale=d.sc;store.set('bscale',B.scale);drawShapes();}
+  if(b.id==='blab'){B.lab=B.lab==='note'?'int':'note';store.set('blab',B.lab);}
   else if(d.sh){B.shapes=d.sh==='all'?[]:B.shapes.includes(d.sh)?B.shapes.filter(n=>n!==d.sh):[...B.shapes,d.sh];store.set('bshapes',B.shapes);}
   else if(b.id==='bquick'){B.quick=!B.quick;store.set('bquick',B.quick);}
   else if(b.id==='btones'){B.tones=!B.tones;store.set('btones',B.tones);if(!B.tones)B.preview=null;drawChips();}
   else if(d.chip!==undefined){const st=+d.chip;B.preview=B.preview===st?null:st;drawChips();}
   else return;
-  pressAll();drawBoard();if(d.sh||d.sc)scrollToShape();describeImprov();
+  pressAll();drawBoard();if(d.sh)scrollToShape();describeImprov();
 });
 // The I, IV and V chords beside Chord tones: tap one to see its tones; the one playing is outlined.
 function drawChips(){
