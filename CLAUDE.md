@@ -89,9 +89,9 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
   The Read | Improv switch is a pill at the top right. In Read, the Play box comes first (matching Improv),
   then New exercise and Customize, then the score.
 - Improv layout (David liked it, v29): controls row Play, Key, Quick change (right after Key, so it stays on
-  the first line when the row wraps), then Tempo and Feel dropdown. One row above the fretboard: scale dropdown (no label), a Shapes toggle that reveals compact shape
+  the first line when the row wraps), then Tempo and Feel dropdown. One row above the fretboard: scale dropdown (no label), Note names toggle right beside it, a Shapes toggle that reveals compact shape
   buttons (All A G E D C; it only shows/hides them: picks stay highlighted while hidden; their space is always reserved so turning
-  Shapes on never pushes other controls to a new line), a Note names toggle, and Chord tones +
+  Shapes on never pushes other controls to a new line), and Chord tones +
   I/IV/V. No caption under the fretboard; instructions folded into "How it works".
 - Phones (≤560px): smaller buttons and tighter spacing; the Shapes button and its shape buttons always share
   one line (no blank row); Play, Key and Quick change fit on one line down to 360px wide.

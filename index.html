@@ -205,8 +205,8 @@ p{margin:0}
     <div class="card scales">
       <div class="row pick-row">
         <label class="tempo"><select id="bscale" aria-label="Scale"></select></label>
-        <div class="row shapes-group"><button type="button" class="btn" id="bshapes" aria-pressed="false" title="Highlight scale shapes">Shapes</button><div class="seg" role="group" aria-label="Shapes" id="bshape"></div></div>
         <button type="button" class="btn" id="blab" aria-pressed="false" title="Off: intervals (R, ♭3, 5…). On: note names.">Note names</button>
+        <div class="row shapes-group"><button type="button" class="btn" id="bshapes" aria-pressed="false" title="Highlight scale shapes">Shapes</button><div class="seg" role="group" aria-label="Shapes" id="bshape"></div></div>
         <div class="row tones"><button type="button" class="btn" id="btones" aria-pressed="true">Chord tones</button><div class="seg" id="bchips" role="group" aria-label="Preview a chord's tones"></div></div>
       </div>
       <div class="fb-wrap"><svg id="fb" role="img" aria-label="Fretboard"></svg></div>
@@ -775,7 +775,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v36';
+window.APP_VERSION = 'v37';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
