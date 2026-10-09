@@ -76,7 +76,8 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
   beside Chord tones to preview a chord. David asked to remove the 12-bar chord chart; don't bring it back.
 - Backing track sound: David found it "way too cheesy". v23 made the bass a quiet, round triangle-wave tone;
   v24 (his call) kept that tone but brought back the boogie line (R-3-5-6-♭7-6-5-3 swung 8ths), and replaced
-  the rhythm-guitar chops with a soft drawbar organ (3-5-♭7-9 voicing) that holds a chord on 1 and pushes on
-  the "and" of 2, sustaining to the end of the bar. Keep the parts understated.
+  the rhythm-guitar chops with a soft drawbar organ: a chord on 1 and a push on the "and" of 2. v25 made it
+  shorter (~0.8 and ~1.25 beats), quieter, with less wobble, voicing 3-5-♭7 only and mostly fundamental +
+  octave, because the 9th, upper partials and deep wobble sounded out of tune. Keep the parts understated.
 - Header: "Page Fright" with a plain tagline ("Guitar Sight-Reading Generator" / "Guitar Improv Practice").
   The Read | Improv switch is a pill at the top right; New exercise and Customize live inside Read.

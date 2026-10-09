@@ -35,17 +35,18 @@ function bass(midi,at,dur){const c=AC,o=c.createOscillator(),f=c.createBiquadFil
   o.type='triangle';o.frequency.value=440*Math.pow(2,(midi-69)/12);f.type='lowpass';f.frequency.value=420;f.Q.value=.7;
   g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(.3,at+.012);g.gain.exponentialRampToValueAtTime(.16,at+dur*.6);g.gain.exponentialRampToValueAtTime(.0001,at+dur);
   o.connect(f);f.connect(g);g.connect(OUT);o.start(at);o.stop(at+dur+.02);}
-// Organ: a soft drawbar-style tone (a few blended sine partials) with a gentle Leslie-like wobble.
-// Voicing: the chord's 3rd, 5th, ♭7 and 9th, built on a root between C3 and B3.
+// Organ: a soft drawbar-style tone (fundamental + octave, a touch of the 3rd harmonic) with a slight wobble.
+// Voicing: the chord's 3rd, 5th and ♭7, built on a root between C3 and B3. (A 9th and stronger upper
+// partials sounded out of tune to David, as did a deeper wobble.)
 function organ(pc,at,dur){
   const c=AC,root=48+((pc%12)+12)%12,end=at+dur;
   const g=c.createGain(),trem=c.createGain(),f=c.createBiquadFilter(),lfo=c.createOscillator(),depth=c.createGain();
   f.type='lowpass';f.frequency.value=2600;
-  g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(.042,at+.03);g.gain.setValueAtTime(.042,end-.08);g.gain.linearRampToValueAtTime(0,end);
-  lfo.frequency.value=5.6;depth.gain.value=.18;trem.gain.value=1;lfo.connect(depth);depth.connect(trem.gain); // the wobble
+  g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(.03,at+.02);g.gain.setValueAtTime(.03,end-.06);g.gain.linearRampToValueAtTime(0,end);
+  lfo.frequency.value=4.5;depth.gain.value=.06;trem.gain.value=1;lfo.connect(depth);depth.connect(trem.gain); // the wobble
   trem.connect(g);g.connect(f);f.connect(OUT);lfo.start(at);lfo.stop(end+.05);
-  [4,7,10,14].forEach(iv=>{const fr=440*Math.pow(2,(root+iv-69)/12);
-    [[1,1],[2,.45],[3,.22],[4,.1]].forEach(([h,a])=>{const o=c.createOscillator(),og=c.createGain();
+  [4,7,10].forEach(iv=>{const fr=440*Math.pow(2,(root+iv-69)/12);
+    [[1,1],[2,.4],[3,.08]].forEach(([h,a])=>{const o=c.createOscillator(),og=c.createGain();
       o.frequency.value=fr*h;og.gain.value=a;o.connect(og);og.connect(trem);o.start(at);o.stop(end+.05);});});
   live.add(g);setTimeout(()=>live.delete(g),(end-c.currentTime+.5)*1000); // so Stop fades it out
 }
@@ -69,9 +70,9 @@ function bschedule(){
       if(beat===0||beat===2)kick(at); else snare(at);
       hat(at,.16);hat(at2,.1);
       bass(root+BOOGIE[beat*2],at,off8()*bp.spb*.95);bass(root+BOOGIE[beat*2+1],at2,(1-off8())*bp.spb*.95);
-      // Organ: a chord on 1 held into beat 2, then a push on the "and" of 2 held to the end of the bar.
-      if(beat===0)organ(pc,at,bp.spb*1.35);
-      if(beat===1)organ(pc,at2,(3-off8())*bp.spb*.96);
+      // Organ: a short chord on 1, then a push on the "and" of 2.
+      if(beat===0)organ(pc,at,bp.spb*.8);
+      if(beat===1)organ(pc,at2,bp.spb*1.25);
     }
     bp.next++;
   }

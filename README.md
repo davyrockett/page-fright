@@ -49,7 +49,7 @@ iPhone and iPad Home Screens and the Mac's Dock, and works with no signal once i
 
 The **Read | Improv** switch under the header changes sections (`#improv` links straight to Improv).
 
-- **Backing track:** 12-bar blues in any key, made live in the browser (drums, a soft boogie bass, and organ chords
+- **Backing track:** 12-bar blues in any key, made live in the browser (drums, a soft boogie bass, and short organ chords
   on 1 and the "and" of 2). Tempo, shuffle or straight, and quick change (IV in bar 2). Counts in one bar, then loops.
 - **Fretboard (frets 0–17):** minor pentatonic, blues scale, minor scale, major pentatonic, major scale, or the CAGED
   chord shapes for the key. Full-scale shapes are the pentatonic box plus the two missing notes (4 & 7 major; 2 & ♭6 minor).
