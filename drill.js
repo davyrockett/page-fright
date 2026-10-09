@@ -29,26 +29,31 @@ if(!Array.isArray(D.strings)||D.strings.some(s=>!(s>=0&&s<6)))D.strings=[3,4,5];
 /* ---------- the tShapes ----------
    One note on each of the three strings, using each chord tone once. Playable = all three within a 5-fret
    stretch (6 when the strings aren't next to each other). The inversion is set by the note on the lowest string. */
-function triadShapes(){
+// The selected strings, three neighbours at a time: all six give E A D, A D G, D G B and G B e.
+function stringGroups(){
   const strs=[...D.strings].sort((a,b)=>a-b);
-  if(strs.length!==3)return [];
+  return strs.length<3?[]:strs.slice(0,-2).map((_,i)=>strs.slice(i,i+3));
+}
+function triadShapes(){
   const q=QUALITIES[D.qual], pcs=q.iv.map(i=>(D.root+i)%12);
-  const adjacent=strs[2]-strs[0]===2, reach=adjacent?4:5;
   const out=[];
-  for(let a=0;a<=LAST;a++)for(let b=0;b<=LAST;b++)for(let c=0;c<=LAST;c++){
-    const fr=[a,b,c];
-    if(Math.max(...fr)-Math.min(...fr)>reach)continue;
-    const notes=strs.map((s,i)=>({s,f:fr[i],pc:pcAt(s,fr[i])}));
-    const degs=notes.map(n=>pcs.indexOf(n.pc));
-    if(degs.includes(-1)||new Set(degs).size!==3)continue;
-    out.push({notes,degs,inv:degs[0],lo:Math.min(...fr)});
-  }
-  return out.sort((x,y)=>x.lo-y.lo||x.inv-y.inv);
+  stringGroups().forEach((strs,g)=>{
+    const adjacent=strs[2]-strs[0]===2, reach=adjacent?4:5;
+    for(let a=0;a<=LAST;a++)for(let b=0;b<=LAST;b++)for(let c=0;c<=LAST;c++){
+      const fr=[a,b,c];
+      if(Math.max(...fr)-Math.min(...fr)>reach)continue;
+      const notes=strs.map((s,i)=>({s,f:fr[i],pc:pcAt(s,fr[i])}));
+      const degs=notes.map(n=>pcs.indexOf(n.pc));
+      if(degs.includes(-1)||new Set(degs).size!==3)continue;
+      out.push({notes,degs,inv:degs[0],lo:Math.min(...fr),group:g});
+    }
+  });
+  return out.sort((x,y)=>x.lo-y.lo||y.group-x.group||x.inv-y.inv);
 }
 
 /* ---------- drawing ---------- */
 const dfb=document.getElementById('dfb');
-let tShapes=[], tFocus=-1, noteFlash='', flashTimer=0;
+let tShapes=[], tFocus=-1;
 function drawDrill(){
   tShapes=triadShapes().filter(sh=>D.inv.includes(sh.inv));
   const q=QUALITIES[D.qual];
@@ -75,8 +80,8 @@ function drawDrill(){
   });
   dfb.setAttribute('viewBox',`0 0 ${W} ${H}`);dfb.innerHTML=svg;dfb.classList.toggle('focus',tFocus>=0);
   const note=document.getElementById('dnote'), n=D.strings.length;
-  note.hidden=n===3&&tShapes.length>0&&!noteFlash;
-  note.textContent=noteFlash||(n===0?'Pick up to three strings.':n<3?`Showing the chord's notes on ${n===1?'that string':'those strings'}. Pick ${n===1?'two more strings':'one more string'} to see the triad shapes.`
+  note.hidden=n>=3&&tShapes.length>0;
+  note.textContent=(n===0?'Pick three or more strings.':n<3?`Showing the chord's notes on ${n===1?'that string':'those strings'}. Pick ${n===1?'two more strings':'one more string'} to see the triad shapes.`
     :!D.inv.length?'Turn on at least one inversion.':'No playable shapes on these strings.');
   drawNotation();
   describeDrill();
@@ -97,29 +102,38 @@ function drawNotation(){
   dnot.replaceChildren();
   if(!tShapes.length)return;
   const chords=tShapes.map(sh=>sh.notes.map((n,j)=>vfKey(n,sh.degs[j])).sort((a,b)=>a.midi-b.midi));
-  // Room above and below the staff for the highest and lowest notes (ledger lines).
+  const groups=stringGroups(), many=groups.length>1;
   const step=k=>{const [l,o]=k.split('/');return 7*(+o)+'cdefgab'.indexOf(l[0]);};
-  const all=chords.flat().map(c=>step(c.key)), top=Math.max(...all), bot=Math.min(...all);
-  const above=Math.max(2,(top-step('f/5'))/2+1.5), below=Math.max(2,(step('e/4')-bot)/2+1.5);
-  const h=Math.ceil((above+4+below)*10+8);
-  const r=new VF.Renderer(dnot,VF.Renderer.Backends.SVG);r.resize(W,h);
-  const ctx=r.getContext();
-  const stave=new VF.Stave(0,0,W,{space_above_staff_ln:above,space_below_staff_ln:below,left_bar:false});
-  stave.addClef('treble').setEndBarType(VF.Barline.type.NONE).setContext(ctx).draw();
-  const minX=stave.getNoteStartX()+18;
-  tShapes.forEach((sh,i)=>{
-    const ch=chords[i];
-    const note=new VF.StaveNote({keys:ch.map(c=>c.key),duration:'w'});
-    ch.forEach((c,j)=>{if(c.acc)note.addModifier(new VF.Accidental(c.acc),j);});
-    const mc=new VF.ModifierContext();note.addToModifierContext(mc);
-    const tc=new VF.TickContext();tc.addTickable(note).preFormat();
-    const mid=sh.notes.reduce((a,n)=>a+fx(n.f),0)/3;
-    tc.setX(Math.max(minX,mid)-stave.getNoteStartX()-16);
-    note.setStave(stave).setContext(ctx).draw();
-  });
-  const svg=dnot.querySelector('svg');svg.setAttribute('viewBox',`0 0 ${W} ${h}`);svg.removeAttribute('width');svg.removeAttribute('height');svg.style.width='';svg.style.height='';
-  dnot.querySelectorAll('.vf-stavenote').forEach((g,i)=>{g.dataset.i=i;g.classList.add('inv'+tShapes[i].inv);if(i===tFocus)g.classList.add('on');
-    g.setAttribute('role','img');g.setAttribute('aria-label',`${INVERSIONS[tShapes[i].inv]}: ${chords[i].map(c=>c.name).join(', ')}`);});
+  // One strip per group of strings (highest strings on top, like the fretboard), so chords never pile up.
+  for(let g=groups.length-1;g>=0;g--){
+    const idx=tShapes.map((sh,i)=>sh.group===g?i:-1).filter(i=>i>=0);
+    if(!idx.length)continue;
+    // Room above and below the staff for the highest and lowest notes (ledger lines).
+    const all=idx.flatMap(i=>chords[i]).map(c=>step(c.key)), top=Math.max(...all), bot=Math.min(...all);
+    const above=Math.max(many?3:2,(top-step('f/5'))/2+1.5), below=Math.max(2,(step('e/4')-bot)/2+1.5);
+    const h=Math.ceil((above+4+below)*10+8);
+    const box=document.createElement('div');box.className='strip';dnot.append(box);
+    const r=new VF.Renderer(box,VF.Renderer.Backends.SVG);r.resize(W,h);
+    const ctx=r.getContext();
+    const stave=new VF.Stave(0,0,W,{space_above_staff_ln:above,space_below_staff_ln:below,left_bar:false});
+    stave.addClef('treble').setEndBarType(VF.Barline.type.NONE).setContext(ctx).draw();
+    // Label each strip with its strings.
+    if(many){ctx.save();ctx.setFont('Arial',11,'bold');ctx.fillText(groups[g].map(s=>STRING_NAMES[s]).join(' '),4,13);ctx.restore();}
+    const minX=stave.getNoteStartX()+18;
+    idx.forEach(i=>{
+      const sh=tShapes[i],ch=chords[i];
+      const note=new VF.StaveNote({keys:ch.map(c=>c.key),duration:'w'});
+      ch.forEach((c,j)=>{if(c.acc)note.addModifier(new VF.Accidental(c.acc),j);});
+      const mc=new VF.ModifierContext();note.addToModifierContext(mc);
+      const tc=new VF.TickContext();tc.addTickable(note).preFormat();
+      const mid=sh.notes.reduce((a,n)=>a+fx(n.f),0)/3;
+      tc.setX(Math.max(minX,mid)-stave.getNoteStartX()-16);
+      note.setStave(stave).setContext(ctx).draw();
+    });
+    const svg=box.querySelector('svg');svg.setAttribute('viewBox',`0 0 ${W} ${h}`);svg.removeAttribute('width');svg.removeAttribute('height');svg.style.width='';svg.style.height='';
+    box.querySelectorAll('.vf-stavenote').forEach((el,n)=>{const i=idx[n];el.dataset.i=i;el.classList.add('inv'+tShapes[i].inv);if(i===tFocus)el.classList.add('on');
+      el.setAttribute('role','img');el.setAttribute('aria-label',`${INVERSIONS[tShapes[i].inv]}: ${chords[i].map(c=>c.name).join(', ')}`);});
+  }
   dnot.classList.toggle('focus',tFocus>=0);
 }
 dnot.addEventListener('click',e=>{const g=e.target.closest('.vf-stavenote');if(!g)return;
@@ -175,11 +189,7 @@ document.getElementById('drill-view').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;const d=b.dataset;
   if(d.str!==undefined){const s=+d.str;
     if(D.strings.includes(s))D.strings=D.strings.filter(x=>x!==s);
-    else if(D.strings.length>=3){ // up to three: say so instead of adding a fourth
-      noteFlash='Up to three strings. Tap one to turn it off first.';clearTimeout(flashTimer);
-      flashTimer=setTimeout(()=>{noteFlash='';drawDrill();},2500);drawDrill();return;}
     else D.strings=[...D.strings,s];
-    noteFlash='';clearTimeout(flashTimer);
     store.set('dstrings',D.strings);drawStrings();changed();}
   else if(d.inv!==undefined){const i=+d.inv;D.inv=D.inv.includes(i)?D.inv.filter(x=>x!==i):[...D.inv,i].sort();store.set('dinv',D.inv);drawInv();changed();}
   else if(b.id==='dlab'){D.lab=D.lab==='note'?'int':'note';store.set('dlab',D.lab);b.setAttribute('aria-pressed',D.lab==='note');drawDrill();}

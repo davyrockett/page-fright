@@ -144,6 +144,7 @@ p{margin:0}
 .inv-btn .short{display:none}
 /* Drill notation strip: same width as the fretboard, so each chord sits under its shape. */
 #dnotation svg{display:block;width:100%;min-width:760px;height:auto}
+#dnotation .strip+.strip{border-top:1px solid var(--line)}
 #dnotation svg,#dnotation svg [fill]:not([fill="none"]){fill:var(--ink)}
 #dnotation svg,#dnotation svg [stroke]:not([stroke="none"]){stroke:var(--ink)}
 #dnotation .vf-stavenote{cursor:pointer}
@@ -250,7 +251,7 @@ p{margin:0}
     <div class="controls card">
       <button type="button" class="btn primary play" id="dplay" title="Play every shape up the neck (space)"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M3 1.5v13l11-6.5z"/></svg><span>Play</span></button>
       <label class="tempo"><span class="cap">Chord</span><select id="droot" aria-label="Root"></select><select id="dqual" aria-label="Quality"><option value="maj">Major</option><option value="min">Minor</option><option value="dim">Diminished</option><option value="aug">Augmented</option></select></label>
-      <div class="row"><span class="cap">Strings</span><div class="seg" role="group" aria-label="Strings (pick 3)" id="dstrings"></div></div>
+      <div class="row"><span class="cap">Strings</span><div class="seg" role="group" aria-label="Strings" id="dstrings"></div></div>
       <span class="cap status" id="dstatus" aria-live="polite"></span>
     </div>
 
@@ -266,7 +267,7 @@ p{margin:0}
     <details class="notes cap help">
       <summary>How it works</summary>
       <p>Pick a chord and any three strings. The fretboard shows every playable way to play that triad on those strings, up and down the neck: one note on each string, joined by a line colored by inversion. Root position has the root on the lowest of the three strings; 1st inversion has the 3rd there; 2nd inversion has the 5th. Tap the inversion buttons to show or hide each kind.</p>
-      <p>Tap a shape's line to hear the chord, or a dot to hear one note. <b>Play</b> (or <b>space</b>) strums every shape in order up the neck. Pick up to three strings; with one or two, the fretboard shows where the chord's notes are on them.</p>
+      <p>Tap a shape's line to hear the chord, or a dot to hear one note. <b>Play</b> (or <b>space</b>) strums every shape in order up the neck. With more than three strings, triads are shown on each group of three neighbouring strings you picked (all six give E A D, A D G, D G B and G B e), each with its own line of notation. With one or two strings, the fretboard shows where the chord's notes are on them.</p>
     </details>
   </div>
 </div>
@@ -827,7 +828,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v43';
+window.APP_VERSION = 'v44';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
