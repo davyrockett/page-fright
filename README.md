@@ -19,7 +19,7 @@ iPhone and iPad Home Screens and the Mac's Dock, and works with no signal once i
 | `vendor/vexflow-bravura.js` | [VexFlow](https://www.vexflow.com) 4.2.5, which draws the notation (MIT license, see `vendor/VEXFLOW-LICENSE`) |
 | `sw.js` | The "service worker": saves the app on the device so it works offline |
 | `manifest.webmanifest` | Tells the device the app's name, icon, and to open full-screen |
-| `icons/` | App icons (redraw with `python3 tools/make-icons.py`) |
+| `icons/` | App icons: an orange eighth note and an exclamation mark (redraw with `python3 tools/make-icons.py`; `icon-maskable-512.png` is a smaller copy for Android's circle crop) |
 | `Start Page Fright.command` | Double-click to run a local test copy on this Mac (port 8769) |
 
 ## Using it

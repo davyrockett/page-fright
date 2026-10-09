@@ -2,7 +2,7 @@
 //
 // IMPORTANT: whenever any file below changes, bump VERSION (run tools/bump.sh).
 // That is how phones and iPads learn there's an update to download.
-const VERSION = 'v31';
+const VERSION = 'v32';
 const CACHE = `pagefright-${VERSION}`;
 const FONTS = 'pagefright-fonts';
 
@@ -15,6 +15,7 @@ const ASSETS = [
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/apple-touch-icon.png',
+  './icons/icon-maskable-512.png',
 ];
 
 self.addEventListener('install', (event) => {
