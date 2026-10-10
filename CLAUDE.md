@@ -110,7 +110,7 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
 - Header: the logo (inline SVG copy of the icon: orange note, "!" in the text color, glow only in dark mode)
   before "Page Fright", with a joke tagline per section (David's call, v53, an exception to the plain-taglines rule): Read "Aaaahhh! Notation!",
   Improv "Supervised Wanking" (guitarists call aimless soloing wanking), Drill "Go Hit the Shed".
-  The Read | Improv | Drill switch is a pill that must NEVER move between sections (header is a grid: its own
+  The Drill | Improv | Read switch (that order, David's call v55; Drill opens first for new visitors, then the last-used section) is a pill that must NEVER move between sections (header is a grid: its own
   column level with the title; on phones title → tagline → switch → settings line). In Read, the Play box comes first (matching Improv),
   then New exercise and Customize, then the score.
 - Improv layout (David liked it, v29): controls row Play, Key, Quick change (right after Key, so it stays on

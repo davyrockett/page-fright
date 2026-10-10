@@ -253,4 +253,4 @@ document.querySelector('.drill-modes').addEventListener('click',e=>{const b=e.ta
 
 showMode(drillMode);
 // Now that every section is set up, open the one asked for (#improv / #drill) or the last one used.
-showView({'#improv':'improv','#drill':'drill'}[location.hash]||store.get('view','read'));
+showView({'#improv':'improv','#drill':'drill'}[location.hash]||store.get('view','drill'));
