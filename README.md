@@ -16,6 +16,7 @@ iPhone and iPad Home Screens and the Mac's Dock, and works with no signal once i
 |---|---|
 | `index.html` | The whole app: exercise generator, notation, playback, settings |
 | `drill.js` | The Drill section: triad shapes on any three strings |
+| `chords.js` | Drill > Chords: voicings of any chord type, worked out by the app |
 | `improv.js` | The Improv section: 12-bar blues backing track and scale shapes on the fretboard |
 | `vendor/vexflow-bravura.js` | [VexFlow](https://www.vexflow.com) 4.2.5, which draws the notation (MIT license, see `vendor/VEXFLOW-LICENSE`) |
 | `sw.js` | The "service worker": saves the app on the device so it works offline |
@@ -67,6 +68,12 @@ coloured by inversion (blue root position, green 1st, purple 2nd; each can be tu
 from the root (C minor = C–E♭–G). Under the fretboard, each shape is also written as a stacked whole-note chord (guitar pitch, spelled from the root,
 coloured by inversion), lined up under its shape. Tap a shape's line or its chord to hear it; **Play** strums every
 shape up the neck.
+
+**Chords** (the second Drill mode): pick a root and a chord type: major/minor/dim/aug/sus, sevenths, sixths and
+added notes, and extended/altered chords (9, 11, 13, 7♭9, 7♯9, 7♯11, maj7♯11…). The app works out playable voicings
+up to the 13th fret (root in the bass, essential tones present, four fingers within four frets, barres allowed) and
+shows them all on the fretboard at once, with each voicing written as a chord underneath. Tap one to hear and
+highlight it; Play steps through them.
 
 ## Publishing a change
 

@@ -301,7 +301,7 @@ function showView(v){
   // Only one thing plays at a time.
   if(v!=='read'&&player.on)stop();
   if(v!=='improv'&&bp.on)bstop();
-  if(v!=='drill'&&typeof dstop==='function')dstop();
+  if(v!=='drill'&&typeof dstop==='function'){dstop();if(typeof cstop==='function')cstop();}
   if(v==='read')describe();else if(v==='improv')describeImprov();else if(typeof describeDrill==='function')describeDrill();
   history.replaceState(null,'',v==='read'?location.pathname+location.search:'#'+v); // #improv / #drill link straight there
 }

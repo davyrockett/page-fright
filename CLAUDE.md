@@ -94,6 +94,12 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
   root letter (`spell()`).
   v42: notation strip under the fretboard (`drawNotation()`): each shape as a stacked whole-note chord at written
   guitar pitch, same width/scroll as the fretboard so it sits under its shape, coloured by inversion, tappable.
+- Drill > Chords (v51, `chords.js`; Triads | Chords switch inside Drill, `drillMode`): root + type (29 types,
+  `CHORD_GROUPS`), voicings found by search (`findVoicings()`): root lowest, required tones present, ≤4 fingers in
+  4 frets, up to the 13th fret (David's call), no open strings inside a barre or sandwiched above fret 3, scored by
+  `VW` weights tuned against 30 classic shapes (25/30 found). Sub-voicings of a shown voicing are dropped. ALL
+  voicings shown at once on the fretboard (lines in alternating colours) with notation underneath (nudged apart
+  when close); David asked for no tab. Note names on by default. chords.js opens the first view at the end.
   drill.js shares improv.js globals (fx, sy, W, H, NUT, FW, TOP, GAP, LAST, pcAt) — avoid reusing their names.
 - Planned (2026-10-09): David will provide a MIDI file of exactly the backing track he wants. Play it with
   the app's own synths, transposed to the chosen key and at the chosen tempo (no recorded audio: he decided

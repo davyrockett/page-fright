@@ -152,15 +152,20 @@ p{margin:0}
 .inv-btn .sw{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:-1px}
 .inv-btn[aria-pressed="false"]{opacity:.55}
 .inv-btn .short{display:none}
+/* Drill > Chords */
+.drill-modes .btn{padding:7px 16px}
+.chord-name{font-family:var(--f-display);font-size:28px;font-weight:800;line-height:1}
+.fretboard .mute{fill:var(--muted);font-size:15px;font-weight:700;text-anchor:middle;dominant-baseline:central;font-family:var(--f-body)}
+.fretboard.focus .mute:not(.on){opacity:.2}
 /* Drill notation strip: same width as the fretboard, so each chord sits under its shape. */
-#dnotation svg{display:block;width:100%;min-width:760px;height:auto}
-#dnotation svg,#dnotation svg [fill]:not([fill="none"]){fill:var(--ink)}
-#dnotation svg,#dnotation svg [stroke]:not([stroke="none"]){stroke:var(--ink)}
-#dnotation .vf-stavenote{cursor:pointer}
-#dnotation .vf-notehead.inv0 *{fill:var(--inv0)!important;stroke:var(--inv0)!important}
-#dnotation .vf-notehead.inv1 *{fill:var(--inv1)!important;stroke:var(--inv1)!important}
-#dnotation .vf-notehead.inv2 *{fill:var(--inv2)!important;stroke:var(--inv2)!important}
-#dnotation.focus .vf-stavenote:not(.on){opacity:.2}
+.notation-strip svg{display:block;width:100%;min-width:760px;height:auto}
+.notation-strip svg,.notation-strip svg [fill]:not([fill="none"]){fill:var(--ink)}
+.notation-strip svg,.notation-strip svg [stroke]:not([stroke="none"]){stroke:var(--ink)}
+.notation-strip .vf-stavenote{cursor:pointer}
+.notation-strip .vf-notehead.inv0 *{fill:var(--inv0)!important;stroke:var(--inv0)!important}
+.notation-strip .vf-notehead.inv1 *{fill:var(--inv1)!important;stroke:var(--inv1)!important}
+.notation-strip .vf-notehead.inv2 *{fill:var(--inv2)!important;stroke:var(--inv2)!important}
+.notation-strip.focus .vf-stavenote:not(.on){opacity:.2}
 @media (max-width:560px){.inv-btn .long{display:none}.inv-btn .short{display:inline}}
 #droot{margin-right:4px}
 .chip{padding:7px 12px;font-size:14px}
@@ -258,6 +263,12 @@ p{margin:0}
   </div>
 
   <div id="drill-view" class="view" hidden>
+    <div class="seg drill-modes" role="tablist" aria-label="Drill">
+      <button type="button" class="btn" role="tab" data-mode="triads">Triads</button>
+      <button type="button" class="btn" role="tab" data-mode="chords">Chords</button>
+    </div>
+
+    <div id="triads-mode" class="view">
     <div class="controls card">
       <button type="button" class="btn primary play" id="dplay" title="Play every shape up the neck (space)"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M3 1.5v13l11-6.5z"/></svg><span>Play</span></button>
       <label class="tempo"><span class="cap">Chord</span><select id="droot" aria-label="Root"></select><select id="dqual" aria-label="Quality"><option value="maj">Major</option><option value="min">Minor</option><option value="dim">Diminished</option><option value="aug">Augmented</option></select></label>
@@ -270,7 +281,7 @@ p{margin:0}
         <button type="button" class="btn" id="dlab" aria-pressed="false" title="Off: intervals (R, 3, 5). On: note names.">Note names</button>
         <div class="seg" role="group" aria-label="Inversions" id="dinv"></div>
       </div>
-      <div class="fb-wrap"><svg id="dfb" class="fretboard" role="img" aria-label="Triad shapes on the fretboard"></svg><div id="dnotation" aria-label="The triads in notation"></div></div>
+      <div class="fb-wrap"><svg id="dfb" class="fretboard" role="img" aria-label="Triad shapes on the fretboard"></svg><div id="dnotation" class="notation-strip" aria-label="The triads in notation"></div></div>
       <p class="cap" id="dnote" hidden></p>
     </div>
 
@@ -279,6 +290,30 @@ p{margin:0}
       <p>Pick a chord and any three strings. The fretboard shows every playable way to play that triad on those strings, up and down the neck: one note on each string, joined by a line colored by inversion. Root position has the root on the lowest of the three strings; 1st inversion has the 3rd there; 2nd inversion has the 5th. Tap the inversion buttons to show or hide each kind.</p>
       <p>Tap a shape's line to hear the chord, or a dot to hear one note. <b>Play</b> (or <b>space</b>) strums every shape in order up the neck. Pick up to three strings; with one or two, the fretboard shows where the chord's notes are on them.</p>
     </details>
+    </div>
+
+    <div id="chords-mode" class="view" hidden>
+      <div class="controls card">
+        <button type="button" class="btn primary play" id="cplay" title="Play each voicing in turn (space)"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M3 1.5v13l11-6.5z"/></svg><span>Play</span></button>
+        <label class="tempo"><span class="cap">Chord</span><select id="croot" aria-label="Root"></select><select id="ctype" aria-label="Chord type"></select></label>
+        <span class="cap status" id="cstatus" aria-live="polite"></span>
+      </div>
+
+      <div class="card scales">
+        <div class="row pick-row">
+          <button type="button" class="btn" id="clab" aria-pressed="true" title="Off: intervals (R, 3, ♭7…). On: note names.">Note names</button>
+          <span class="chord-name" id="cname"></span>
+        </div>
+        <div class="fb-wrap"><svg id="cfb" class="fretboard" role="img" aria-label="Voicings of the chord on the fretboard"></svg><div id="cnotation" class="notation-strip" aria-label="The voicings in notation"></div></div>
+        <p class="cap" id="cnote" hidden></p>
+      </div>
+
+      <details class="notes cap help">
+        <summary>How it works</summary>
+        <p>Pick a root and a chord type. The app works out playable voicings up to the 13th fret and shows them all at once, each one's notes joined by a line, with the voicing written in notation underneath. In every voicing the root is the lowest note, every essential chord tone is there (the 5th is sometimes left out, as guitarists usually do), and the shape fits under four fingers within four frets, barres included.</p>
+        <p>× marks a string not played in the voicing next to it. Tap a voicing's line or its chord to hear it and pick it out; tap the fretboard again to see them all. <b>Play</b> (or <b>space</b>) steps through them.</p>
+      </details>
+    </div>
   </div>
 </div>
 
@@ -833,12 +868,13 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 
 <script src="improv.js"></script>
 <script src="drill.js"></script>
+<script src="chords.js"></script>
 
 <div class="update" id="update-banner" role="status" hidden><span>A new version is ready.</span><button type="button" class="btn primary" id="update-btn">Update</button></div>
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v50';
+window.APP_VERSION = 'v51';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
