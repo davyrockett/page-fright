@@ -76,6 +76,9 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
   major scale, CAGED chord shapes; shapes named E/D/C/A/G, several selectable. Chord tones: blue rings on scale
   notes in the chord; chord tones outside the scale as hollow blue dots labeled by role (R/3/5/♭7); tap I/IV/V
   beside Chord tones to preview a chord. David asked to remove the 12-bar chord chart; don't bring it back.
+- Improv note names are spelled from the scale (C minor: B♭ and E♭, never A♯/D♯): `nameFrom()` / `scaleRoot()`.
+  Minor scales in A♭ are spelled from G♯; the blues ♭5 becomes ♯4 where ♭5 would be C♭/F♭ (F blues: B).
+  Chord tones are spelled from the chord's root (F7 = F A C E♭).
 - Backing track sound: David found it "way too cheesy". v23 made the bass a quiet, round triangle-wave tone;
   v24 (his call) kept that tone but brought back the boogie line (R-3-5-6-♭7-6-5-3 swung 8ths), and replaced
   the rhythm-guitar chops with a soft drawbar organ: a chord on 1 and a push on the "and" of 2. v25 made it

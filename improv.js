@@ -7,6 +7,26 @@ const FLAT_N=['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B'];
 const BKEYS=[4,5,6,7,8,9,10,11,0,1,2,3];            // E first: the guitar's home key
 const FLAT_KEYS=new Set([5,10,3,8,1]);               // F, B♭, E♭, A♭, D♭
 const pcName=(pc,key)=>(FLAT_KEYS.has(key)?FLAT_N:SHARP_N)[((pc%12)+12)%12];
+// Scale notes are spelled from the root's letter, one letter per step (C minor: C D E♭ F G A♭ B♭, never A♯).
+// The root is the key's own name unless the other spelling needs fewer sharps and flats for this scale
+// (A♭ minor would need C♭ and F♭, so the minor scales in that key are spelled from G♯).
+const LETTER_ROW='CDEFGAB', LETTER_STEP=[0,1,1,2,2,3,4,4,5,5,6,6], NAT_PC={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+function nameFrom(root,iv,step=LETTER_STEP[((iv%12)+12)%12]){
+  const L=LETTER_ROW[(LETTER_ROW.indexOf(root[0])+step)%7];
+  const pc=(NAT_PC[root[0]]+(root.match(/♯/g)||[]).length-(root.match(/♭/g)||[]).length+iv+120)%12;
+  let d=((pc-NAT_PC[L])%12+12)%12;if(d>6)d-=12;
+  const name=L+(d>0?'♯':d<0?'♭':'');
+  // The blues note is the ♭5, or the ♯4 when ♭5 would be C♭, F♭ or a double flat (F blues: B, E♭ blues: A).
+  if(iv===6&&step===4&&(Math.abs(d)>1||name==='C♭'||name==='F♭'))return nameFrom(root,iv,3);
+  if(Math.abs(d)>1)return(root.includes('♯')?SHARP_N:FLAT_N)[pc]; // never a double sharp or flat
+  return name;
+}
+const accidentals=(root,ivs)=>ivs.reduce((n,i)=>n+nameFrom(root,i).length-1,0);
+function scaleRoot(){
+  const key=B.key,minorish=['minor','blues','minorScale'].includes(B.scale),parent=minorish?[0,2,3,5,7,8,10]:[0,2,4,5,7,9,11];
+  const first=pcName(key,key),other=(FLAT_KEYS.has(key)?SHARP_N:FLAT_N)[key];
+  return accidentals(other,parent)<accidentals(first,parent)?other:first;
+}
 const INT_N={0:'R',1:'♭2',2:'2',3:'♭3',4:'3',5:'4',6:'♭5',7:'5',8:'♭6',9:'6',10:'♭7',11:'7'};
 
 /* ---------- the form ----------
@@ -173,7 +193,7 @@ const fb=document.getElementById('fb');
 const NUT=46,FW=50,TOP=26,GAP=30,DOT=12.5,W=NUT+LAST*FW+14,H=TOP+5*GAP+38;
 const fx=f=>f===0?NUT-20:NUT+(f-.5)*FW, sy=s=>TOP+(5-s)*GAP;
 function drawBoard(){
-  const key=B.key,sc=SCALES[B.scale],placed=placedShapes();
+  const key=B.key,sc=SCALES[B.scale],placed=placedShapes(),root=scaleRoot();
   const sel=placed.filter(x=>activeShapes().includes(x.name)), any=sel.length>0; // chosen shapes (none = all)
   const step=toneStep(), tones=step===null?null:[0,4,7,10].map(i=>(key+step+i)%12);
   let svg=`<rect class="wood" x="${NUT}" y="${TOP-10}" width="${LAST*FW}" height="${5*GAP+20}" rx="3"/>`;
@@ -194,7 +214,7 @@ function drawBoard(){
   all.forEach(p=>{
     const pc=pcAt(p.s,p.f),iv=((pc-key)%12+12)%12;
     const cls=['dot',iv===0?'root':'',sc.extra!==undefined&&iv===sc.extra?'blue':'',any&&!on.has(p.s+','+p.f)?'dim':''].join(' ');
-    const label=B.lab==='int'?INT_N[iv]:pcName(pc,key);
+    const label=B.lab==='int'?INT_N[iv]:nameFrom(root,iv);
     svg+=`<g class="${cls}" data-s="${p.s}" data-f="${p.f}"><circle cx="${fx(p.f)}" cy="${sy(p.s)}" r="${DOT}"/><text x="${fx(p.f)}" y="${sy(p.s)+.5}">${label}</text></g>`;
     if(tones&&tones.includes(pc)&&!(any&&!on.has(p.s+','+p.f)))svg+=`<circle class="ring" cx="${fx(p.f)}" cy="${sy(p.s)}" r="${DOT+3.5}"/>`;
   });
@@ -206,7 +226,7 @@ function drawBoard(){
     const areas=any?sel.flatMap(x=>x.places.map(pl=>[Math.min(...pl.map(p=>p.f)),Math.max(...pl.map(p=>p.f))])):[[0,LAST]];
     for(let s=0;s<6;s++)for(let f=0;f<=LAST;f++){
       const pc=pcAt(s,f);if(!tones.includes(pc)||inScale.includes(pc)||!areas.some(([a,b])=>f>=a&&f<=b))continue;
-      const label=B.lab==='int'?JOB[((pc-cr)%12+12)%12]:pcName(pc,key);
+      const job=((pc-cr)%12+12)%12,label=B.lab==='int'?JOB[job]:nameFrom(nameFrom(pcName(key,key),step),job);
       svg+=`<g class="dot extra" data-s="${s}" data-f="${f}"><circle cx="${fx(f)}" cy="${sy(s)}" r="${DOT}"/><text x="${fx(f)}" y="${sy(s)+.5}">${label}</text></g>`;
     }
   }
