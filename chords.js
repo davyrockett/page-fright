@@ -27,7 +27,7 @@ const CHORD_GROUPS=[
     ['7s11','7♯11','7 sharp 11',[T.R,T.M3,opt(T.P5),T.m7,T.s11]],['maj7s11','maj7♯11','Major 7 sharp 11',[T.R,T.M3,opt(T.P5),T.M7,T.s11]]]],
 ];
 const CHORD_TYPES=Object.fromEntries(CHORD_GROUPS.flatMap(([,list])=>list.map(([id,sym,name,tones])=>[id,{sym,name,tones}])));
-const CH={root:store.get('croot',0),type:store.get('ctype','maj7'),lab:store.get('clab','note'),sel:-1}; // sel: highlighted voicing (-1 = none)
+const CH={root:store.get('croot',0),type:store.get('ctype','maj7'),lab:store.get('clab','note'),sel:0}; // sel: the voicing shown in colour
 if(!CHORD_TYPES[CH.type])CH.type='maj7';
 
 // Spell a chord tone from the root's letter: C7♯9 has D♯ (a 9th), Cm has E♭, C°7 has B♭♭.
@@ -44,7 +44,7 @@ const chordSymbol=()=>ROOT_SPELL[CH.root]+CHORD_TYPES[CH.type].sym;
    more than four fingers (a barre on the lowest fret counts as one). Then the best one in each area of the neck. */
 const TOP_FRET=13;   // voicings stay at or below the 13th fret
 // How voicings are scored (tuned against well-known shapes like x-3-2-3-1-0 C7 and 0-7-6-7-8-x E7♯9).
-const VW={strings:.39,inner:1.97,topMuted:.12,extras:.64,lowBass:.38,span:.91,finger:.14,openNear:.1,low:.22,doubled:.14,gap:1};
+const VW={strings:.32,inner:.41,topMuted:.1,extras:.44,lowBass:.44,span:.33,finger:.03,openNear:.36,low:.06,doubled:.2,gap:.24,second:.36};
 function findVoicings(){
   const type=CHORD_TYPES[CH.type],root=CH.root;
   const byPc=new Map();type.tones.forEach(t=>{const pc=(root+t[0])%12;if(!byPc.has(pc))byPc.set(pc,t);});
@@ -71,6 +71,8 @@ function findVoicings(){
         const low=fr.length?Math.min(...fr):0;
         // Open strings: fine near the nut; higher up only as the bass note (like the open E under E7♯9).
         if(low>3&&snd.slice(1).some(i=>pick[i]===0))return;
+        // ...and an open bass under a higher shape only on the low E or A string.
+        if(low>4&&pick[snd[0]]===0&&snd[0]>1)return;
         const fingers=fr.filter(f=>f>low).length+(fr.some(f=>f===low)?1:0);
         if(fingers>4)return;
         // Under a barre (one finger across several strings) an open string in between makes no sense
@@ -97,23 +99,28 @@ function findVoicings(){
       for(const f of choices[s]){pick[s]=f;walk(s+1);}
     })(0);
   }
-  // Best first; keep one per area of the neck and bass string, up to eight.
-  const all=[...found.values()].sort((a,b)=>b.score-a.score), keep=[];
+  // Group voicings the way guitarists think of shapes: by where the root sits in the bass (which string and
+  // fret) and whether the shape uses open strings. Keep the best of each group, so the open Cmaj7 (x-3-2-0-0-0)
+  // and the A-shape barre Cmaj7 (x-3-5-4-5-3) both appear even though they're in the same area.
+  const all=[...found.values()].sort((a,b)=>b.score-a.score), keep=[], seen=new Map();
   // Is every note of a also in b, on the same string and fret? (x-x-x-5-5-7 is part of 8-7-5-5-5-7.)
   const partOf=(a,b)=>a.snd.every(s=>b.frets[s]===a.frets[s]);
   for(const v of all){
-    if(keep.length>=8)break;
+    if(keep.length>=10)break;
+    const open=v.snd.slice(1).some(i=>v.frets[i]===0);
+    const group=v.snd[0]+':'+v.frets[v.snd[0]]+':'+(open?'open':'closed');
+    // A second shape in the same group is welcome if it's nearly as good (C°7: x-3-4-2-4-x and x-3-4-5-4-x).
+    const g=seen.get(group);
+    if(g&&(g.n>=2||g.best-v.score>VW.second))continue;
     if(keep.some(k=>partOf(v,k)||partOf(k,v)))continue;
-    if(keep.some(k=>k.snd[0]===v.snd[0]&&Math.abs(k.low-v.low)<3))continue;
-    if(keep.some(k=>Math.abs(k.low-v.low)<2&&k.score-v.score>2))continue;
-    keep.push(v);
+    seen.set(group,{n:(g?.n||0)+1,best:g?.best??v.score});keep.push(v);
   }
   return keep.sort((a,b)=>a.low-b.low||a.snd[0]-b.snd[0]);
 }
 
 /* ---------- drawing ----------
-   Every voicing at once: its notes joined by a line (colours alternate so neighbours stand apart), × beside it
-   for strings not played, and the voicing written as a chord in the strip underneath. */
+   Every voicing is on the board, but only the selected one is in colour (with × for its unplayed strings);
+   the rest are greyed out. Tap a grey one to select it. The notation strip underneath works the same way. */
 const cfb=document.getElementById('cfb'),cnot=document.getElementById('cnotation');
 let voicings=[];
 const toneAt=(s,f)=>{const pc=pcAt(s,f);return CHORD_TYPES[CH.type].tones.find(t=>(CH.root+t[0])%12===pc);};
@@ -132,17 +139,22 @@ function drawChordBoard(){
   for(let s=0;s<6;s++)svg+=`<line class="str" x1="${NUT-34}" x2="${NUT+TOP_FRET*FW}" y1="${sy(s)}" y2="${sy(s)}" stroke-width="${1+s*.35}"/>`;
   voicings.forEach((v,i)=>{
     const pts=v.snd.map(s=>`${fx(v.frets[s])},${sy(s)}`).join(' ');
-    svg+=`<polyline class="shape inv${i%3}${i===on?' on':''}" data-i="${i}" points="${pts}"><title>Voicing ${i+1}</title></polyline>`;
-    // × for unplayed strings, just left of this voicing (at the nut for an open-position voicing).
-    const mx=v.low===0||v.opens&&Math.max(...v.snd.map(s=>v.frets[s]))<=4?fx(0):NUT+(v.low-1)*FW-2;
-    v.frets.forEach((f,s)=>{if(f==='x')svg+=`<text class="mute${i===on?' on':''}" x="${mx}" y="${sy(s)+1}">×</text>`;});
+    svg+=`<polyline class="shape ${i===on?'picked':'other'}" data-i="${i}" points="${pts}"><title>Voicing ${i+1}</title></polyline>`;
   });
+  // Draw the selected voicing's line last so it sits on top, with × for its unplayed strings
+  // (at the nut for an open-position voicing, otherwise just left of the shape).
+  const v0=voicings[on];
+  if(v0){const pts=v0.snd.map(s=>`${fx(v0.frets[s])},${sy(s)}`).join(' ');
+    svg+=`<polyline class="shape picked" data-i="${on}" points="${pts}"><title>Voicing ${on+1}</title></polyline>`;
+    const mx=v0.low===0||v0.opens&&Math.max(...v0.snd.map(s=>v0.frets[s]))<=4?fx(0):NUT+(v0.low-1)*FW-2;
+    v0.frets.forEach((f,s)=>{if(f==='x')svg+=`<text class="mute" x="${mx}" y="${sy(s)+1}">×</text>`;});}
   const dots=new Map();
   voicings.forEach((v,i)=>v.snd.forEach(s=>{const k=s+','+v.frets[s];const d=dots.get(k)||{s,f:v.frets[s],vs:[]};d.vs.push(i);dots.set(k,d);}));
   dots.forEach(d=>{const t=toneAt(d.s,d.f),label=CH.lab==='note'?toneName(CH.root,t):t[2];
-    svg+=`<g class="dot${t[0]===0?' root':''}${d.vs.includes(on)?' on':''}" data-s="${d.s}" data-f="${d.f}"><circle cx="${fx(d.f)}" cy="${sy(d.s)}" r="${DOT}"/><text x="${fx(d.f)}" y="${sy(d.s)+.5}">${label}</text></g>`;});
+    const mine=d.vs.includes(on);
+    svg+=`<g class="dot${t[0]===0&&mine?' root':''}${mine?'':' ghost'}" data-s="${d.s}" data-f="${d.f}" data-v="${d.vs[0]}"><circle cx="${fx(d.f)}" cy="${sy(d.s)}" r="${DOT}"/><text x="${fx(d.f)}" y="${sy(d.s)+.5}">${label}</text></g>`;});
   // Same drawing space as the other fretboards (so sizes match); frets past the 13th are left empty.
-  cfb.setAttribute('viewBox',`0 0 ${CW13} ${H}`);sizeLike(cfb);cfb.innerHTML=svg;cfb.classList.toggle('focus',on>=0);
+  cfb.setAttribute('viewBox',`0 0 ${CW13} ${H}`);sizeLike(cfb);cfb.innerHTML=svg;
   const wrap=cfb.parentElement,v=voicings[on];
   if(v&&wrap.scrollWidth>wrap.clientWidth){const k=cfb.clientWidth/CW13,x=fx(v.low)*k;if(x<wrap.scrollLeft+20||x>wrap.scrollLeft+wrap.clientWidth-160)wrap.scrollLeft=Math.max(0,x-60);}
 }
@@ -178,13 +190,12 @@ function drawChordNotation(){
     note.setStave(stave).setContext(ctx).draw();
   });
   const svg=cnot.querySelector('svg');svg.setAttribute('viewBox',`0 0 ${CW13} ${h}`);svg.removeAttribute('width');svg.removeAttribute('height');svg.style.height='';sizeLike(svg);
-  cnot.querySelectorAll('.vf-stavenote').forEach((el,i)=>{el.dataset.i=i;el.querySelectorAll('.vf-notehead').forEach(nh=>nh.classList.add('inv'+(i%3)));
-    if(i===CH.sel)el.classList.add('on');el.setAttribute('role','img');el.setAttribute('aria-label',`Voicing ${i+1}: ${voicings[i].frets.join(' ')}`);});
-  cnot.classList.toggle('focus',CH.sel>=0);
+  cnot.querySelectorAll('.vf-stavenote').forEach((el,i)=>{el.dataset.i=i;el.classList.add(i===CH.sel?'picked':'other');
+    el.setAttribute('role','img');el.setAttribute('aria-label',`Voicing ${i+1}: ${voicings[i].frets.join(' ')}`);});
 }
 function drawChords(){
   voicings=findVoicings();
-  if(CH.sel>=voicings.length)CH.sel=-1;
+  if(CH.sel<0||CH.sel>=voicings.length)CH.sel=0;
   document.getElementById('cname').textContent=chordSymbol();
   const note=document.getElementById('cnote');note.hidden=voicings.length>0;note.textContent='No playable voicings found for this chord.';
   drawChordBoard();drawChordNotation();describeChords();
@@ -198,8 +209,9 @@ function selectVoicing(i,sound=true){
 }
 cfb.addEventListener('click',e=>{
   const line=e.target.closest('.shape');if(line){if(cp.on)cstop();selectVoicing(+line.dataset.i);return;}
-  const d=e.target.closest('.dot');if(d){pluck(freqOf(STRINGS[+d.dataset.s]+ +d.dataset.f),{dur:1.4});return;}
-  if(CH.sel>=0&&!cp.on)selectVoicing(-1,false);   // tap the empty fretboard to see them all again
+  const d=e.target.closest('.dot');if(!d)return;
+  if(d.classList.contains('ghost')){if(cp.on)cstop();selectVoicing(+d.dataset.v);return;}  // a grey dot picks its voicing
+  pluck(freqOf(STRINGS[+d.dataset.s]+ +d.dataset.f),{dur:1.4});
 });
 cnot.addEventListener('click',e=>{const g=e.target.closest('.vf-stavenote');if(g){if(cp.on)cstop();selectVoicing(+g.dataset.i);}});
 const cp={on:false,timer:0,i:0},cplay=document.getElementById('cplay'),cstatus=document.getElementById('cstatus');
@@ -210,7 +222,7 @@ function cstep(){
   cp.i++;cp.timer=setTimeout(cstep,1500);
 }
 function cstart(){if(!audio()||!voicings.length)return;cp.on=true;cp.i=0;cplay.querySelector('span').textContent='Stop';cplay.querySelector('path').setAttribute('d','M3 3h10v10H3z');cstep();}
-function cstop(){if(!cp.on)return;cp.on=false;clearTimeout(cp.timer);hush();cstatus.textContent='';CH.sel=-1;drawChordBoard();drawChordNotation();cplay.querySelector('span').textContent='Play';cplay.querySelector('path').setAttribute('d','M3 1.5v13l11-6.5z');}
+function cstop(){if(!cp.on)return;cp.on=false;clearTimeout(cp.timer);hush();cstatus.textContent='';cplay.querySelector('span').textContent='Play';cplay.querySelector('path').setAttribute('d','M3 1.5v13l11-6.5z');}
 cplay.onclick=()=>cp.on?cstop():cstart();
 
 /* ---------- controls ---------- */
@@ -218,8 +230,8 @@ const crootSel=document.getElementById('croot'),ctypeSel=document.getElementById
 crootSel.innerHTML=ROOT_SPELL.map((n,r)=>`<option value="${r}">${n}</option>`).join('');
 ctypeSel.innerHTML=CHORD_GROUPS.map(([g,list])=>`<optgroup label="${g}">${list.map(([id,sym,name])=>`<option value="${id}">${name}${sym&&sym!==name?` (${sym})`:''}</option>`).join('')}</optgroup>`).join('');
 crootSel.value=CH.root;ctypeSel.value=CH.type;
-crootSel.onchange=()=>{cstop();CH.root=+crootSel.value;CH.sel=-1;store.set('croot',CH.root);drawChords();};
-ctypeSel.onchange=()=>{cstop();CH.type=ctypeSel.value;CH.sel=-1;store.set('ctype',CH.type);drawChords();};
+crootSel.onchange=()=>{cstop();CH.root=+crootSel.value;CH.sel=0;store.set('croot',CH.root);drawChords();};
+ctypeSel.onchange=()=>{cstop();CH.type=ctypeSel.value;CH.sel=0;store.set('ctype',CH.type);drawChords();};
 const clab=document.getElementById('clab');clab.setAttribute('aria-pressed',CH.lab==='note');
 clab.onclick=()=>{CH.lab=CH.lab==='note'?'int':'note';store.set('clab',CH.lab);clab.setAttribute('aria-pressed',CH.lab==='note');drawChordBoard();};
 function describeChords(){

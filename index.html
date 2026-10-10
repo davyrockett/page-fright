@@ -156,7 +156,11 @@ p{margin:0}
 .drill-modes .btn{padding:7px 16px}
 .chord-name{font-family:var(--f-display);font-size:28px;font-weight:800;line-height:1}
 .fretboard .mute{fill:var(--muted);font-size:15px;font-weight:700;text-anchor:middle;dominant-baseline:central;font-family:var(--f-body)}
-.fretboard.focus .mute:not(.on){opacity:.2}
+.fretboard .shape.picked{stroke:var(--hl);opacity:.75}
+.fretboard .shape.other{stroke:var(--muted);opacity:.18}
+.fretboard .dot.ghost circle{fill:var(--line)}
+.fretboard .dot.ghost text{fill:var(--muted)}
+.notation-strip .vf-stavenote.other{opacity:.25}
 /* Drill notation strip: same width as the fretboard, so each chord sits under its shape. */
 .notation-strip svg{display:block;width:100%;min-width:760px;height:auto}
 .notation-strip svg,.notation-strip svg [fill]:not([fill="none"]){fill:var(--ink)}
@@ -310,8 +314,8 @@ p{margin:0}
 
       <details class="notes cap help">
         <summary>How it works</summary>
-        <p>Pick a root and a chord type. The app works out playable voicings up to the 13th fret and shows them all at once, each one's notes joined by a line, with the voicing written in notation underneath. In every voicing the root is the lowest note, every essential chord tone is there (the 5th is sometimes left out, as guitarists usually do), and the shape fits under four fingers within four frets, barres included.</p>
-        <p>× marks a string not played in the voicing next to it. Tap a voicing's line or its chord to hear it and pick it out; tap the fretboard again to see them all. <b>Play</b> (or <b>space</b>) steps through them.</p>
+        <p>Pick a root and a chord type. The app works out playable voicings up to the 13th fret and shows them on the fretboard, with each voicing written in notation underneath. In every voicing the root is the lowest note, every essential chord tone is there (the 5th is sometimes left out, as guitarists usually do), and the shape fits under four fingers within four frets, barres included.</p>
+        <p>One voicing at a time is shown in colour, with × for the strings it doesn't use; the others are greyed out. Tap a grey shape (or its chord in the notation) to switch to it and hear it. <b>Play</b> (or <b>space</b>) steps through them all.</p>
       </details>
     </div>
   </div>
@@ -874,7 +878,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v51';
+window.APP_VERSION = 'v52';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');

@@ -97,9 +97,12 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
 - Drill > Chords (v51, `chords.js`; Triads | Chords switch inside Drill, `drillMode`): root + type (29 types,
   `CHORD_GROUPS`), voicings found by search (`findVoicings()`): root lowest, required tones present, ≤4 fingers in
   4 frets, up to the 13th fret (David's call), no open strings inside a barre or sandwiched above fret 3, scored by
-  `VW` weights tuned against 30 classic shapes (25/30 found). Sub-voicings of a shown voicing are dropped. ALL
-  voicings shown at once on the fretboard (lines in alternating colours) with notation underneath (nudged apart
-  when close); David asked for no tab. Note names on by default. chords.js opens the first view at the end.
+  `VW` weights tuned against 55 classic shapes (open chords; A-shape, E-shape and D-string movable shapes for
+  maj/m/7/maj7/m7/m7♭5/°7/9/13/7♯9…), 53/55 found. Voicings are grouped like shape families (bass string + fret +
+  open/closed), best one or two per group, up to 10; sub-voicings dropped. David flagged x-3-5-4-5-3 Cmaj7 as a
+  must-have. Display (v52, David's call after "all at once" was confusing): one voicing selected in colour (blue
+  line, × for its muted strings), the rest greyed out; tap a grey one to switch. Notation underneath, selected
+  chord dark, others faded. No tab. Note names on by default. chords.js opens the first view at the end.
   drill.js shares improv.js globals (fx, sy, W, H, NUT, FW, TOP, GAP, LAST, pcAt) — avoid reusing their names.
 - Planned (2026-10-09): David will provide a MIDI file of exactly the backing track he wants. Play it with
   the app's own synths, transposed to the chosen key and at the chosen tempo (no recorded audio: he decided
