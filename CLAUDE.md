@@ -94,15 +94,14 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
   root letter (`spell()`).
   v42: notation strip under the fretboard (`drawNotation()`): each shape as a stacked whole-note chord at written
   guitar pitch, same width/scroll as the fretboard so it sits under its shape, coloured by inversion, tappable.
-- Drill > Chords (v51, `chords.js`; Triads | Chords switch inside Drill, `drillMode`): root + type (29 types,
-  `CHORD_GROUPS`), voicings found by search (`findVoicings()`): root lowest, required tones present, ≤4 fingers in
-  4 frets, up to the 13th fret (David's call), no open strings inside a barre or sandwiched above fret 3, scored by
-  `VW` weights tuned against 55 classic shapes (open chords; A-shape, E-shape and D-string movable shapes for
-  maj/m/7/maj7/m7/m7♭5/°7/9/13/7♯9…), 53/55 found. Voicings are grouped like shape families (bass string + fret +
-  open/closed), best one or two per group, up to 10; sub-voicings dropped. David flagged x-3-5-4-5-3 Cmaj7 as a
-  must-have. Display (v52, David's call after "all at once" was confusing): one voicing selected in colour (blue
-  line, × for its muted strings), the rest greyed out; tap a grey one to switch. Notation underneath, selected
-  chord dark, others faded. No tab. Note names on by default. chords.js opens the first view at the end.
+- Drill > Chords (`chords.js`; Triads | Chords switch inside Drill, `drillMode`). v56 (David's call): the old voicing
+  search is gone; shapes now come only from David's jazz guitar chord book (photos he sent), stored in C in
+  `CHORD_GROUPS` with the book's fingering (`fing`, T = thumb; not shown yet) and moved to any root by `findVoicings()`
+  (lowest placement that fits, board up to fret 15). 20 types: maj7 7 m7 m7♭5 6 m6 °7 (4 shapes each: root on 5th,
+  4th, 6th, and 5th with a skipped string), 9 m9 m11 13, and altered 7♭5 7(♯11) 7♯9 7♯5 7(♭9,♭13) 7♭5(♭9) 7♭5(♯9)
+  7♯5(♭9). Three shapes are rootless as in the book; two show the book's implied root as a dashed circle (`imp`).
+  Add or change shapes only from David's sources. Display (v52): one voicing in colour, the rest greyed out; tap
+  to switch. Notation underneath. Note names on by default.
   drill.js shares improv.js globals (fx, sy, W, H, NUT, FW, TOP, GAP, LAST, pcAt) — avoid reusing their names.
 - Planned (2026-10-09): David will provide a MIDI file of exactly the backing track he wants. Play it with
   the app's own synths, transposed to the chosen key and at the chosen tempo (no recorded audio: he decided

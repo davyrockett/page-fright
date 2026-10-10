@@ -1,32 +1,42 @@
-/* Drill > Chords: pick a root and a chord type; the app finds playable voicings all over the neck and shows
-   each one in notation and tab. Loaded last: it shares the fretboard helpers from improv.js (NUT, FW, TOP, GAP,
+/* Drill > Chords: pick a root and a chord type; the app shows the book's shapes for it, moved to that root,
+   on the fretboard and in notation. Loaded last: it shares the fretboard helpers from improv.js (NUT, FW, TOP, GAP,
    DOT, W, H, fx, sy, LAST, pcAt) and drill.js (ROOT_SPELL, LETTER_PC, LETTERS_UP, STRING_NAMES), and opens the
    first view at the end. */
 
 /* ---------- chord types ----------
-   Each tone: semitones above the root, which scale degree it is (for spelling), its label, and whether it may
-   be left out (the 5th usually can; so can the 9th in 11 and 13 chords). */
-const T={R:[0,1,'R'],M3:[4,3,'3'],m3:[3,3,'♭3'],P5:[7,5,'5'],d5:[6,5,'♭5'],A5:[8,5,'♯5'],M2:[2,2,'2'],P4:[5,4,'4'],
+   Each tone: semitones above the root, which scale degree it is (for spelling), and its label. */
+const T={R:[0,1,'R'],M3:[4,3,'3'],m3:[3,3,'♭3'],P5:[7,5,'5'],d5:[6,5,'♭5'],A5:[8,5,'♯5'],
   m7:[10,7,'♭7'],M7:[11,7,'7'],d7:[9,7,'♭♭7'],M6:[9,6,'6'],M9:[2,2,'9'],b9:[1,2,'♭9'],s9:[3,2,'♯9'],
-  P11:[5,4,'11'],s11:[6,4,'♯11'],M13:[9,6,'13']};
-const opt=t=>[...t,true];
+  P11:[5,4,'11'],s11:[6,4,'♯11'],M13:[9,6,'13'],b13:[8,6,'♭13']};
+/* The shapes, from the Jazz Guitar Chord book David uses (v56, his call: these replace the old search).
+   Written for C, low E string first ('x' = not played), with the book's fingering (T = thumb). Each one moves
+   up or down the neck to any root. `imp`: a rootless shape whose root the book shows as implied (string, fret). */
+const sh=(frets,fing,imp)=>({frets:frets.split('-').map(f=>f==='x'?'x':+f),fing,imp});
 const CHORD_GROUPS=[
-  ['Triads and sus',[['maj','','Major',[T.R,T.M3,T.P5]],['min','m','Minor',[T.R,T.m3,T.P5]],['dim','°','Diminished',[T.R,T.m3,T.d5]],
-    ['aug','+','Augmented',[T.R,T.M3,T.A5]],['sus2','sus2','Sus 2',[T.R,T.M2,T.P5]],['sus4','sus4','Sus 4',[T.R,T.P4,T.P5]]]],
-  ['Sevenths',[['7','7','Dominant 7',[T.R,T.M3,opt(T.P5),T.m7]],['maj7','maj7','Major 7',[T.R,T.M3,opt(T.P5),T.M7]],
-    ['m7','m7','Minor 7',[T.R,T.m3,opt(T.P5),T.m7]],['m7b5','m7♭5','Half-diminished',[T.R,T.m3,T.d5,T.m7]],
-    ['dim7','°7','Diminished 7',[T.R,T.m3,T.d5,T.d7]],['mmaj7','m(maj7)','Minor-major 7',[T.R,T.m3,opt(T.P5),T.M7]],
-    ['7sus4','7sus4','7 sus 4',[T.R,T.P4,opt(T.P5),T.m7]]]],
-  ['Sixths and added notes',[['6','6','Major 6',[T.R,T.M3,opt(T.P5),T.M6]],['m6','m6','Minor 6',[T.R,T.m3,opt(T.P5),T.M6]],
-    ['69','6/9','6/9',[T.R,T.M3,opt(T.P5),T.M6,T.M9]],['add9','add9','Add 9',[T.R,T.M3,opt(T.P5),T.M9]],
-    ['madd9','m(add9)','Minor add 9',[T.R,T.m3,opt(T.P5),T.M9]],['add11','add11','Add 11',[T.R,T.M3,opt(T.P5),T.P11]]]],
-  ['Extended and altered',[['9','9','Dominant 9',[T.R,T.M3,opt(T.P5),T.m7,T.M9]],['maj9','maj9','Major 9',[T.R,T.M3,opt(T.P5),T.M7,T.M9]],
-    ['m9','m9','Minor 9',[T.R,T.m3,opt(T.P5),T.m7,T.M9]],['11','11','Dominant 11',[T.R,opt(T.P5),T.m7,opt(T.M9),T.P11]],
-    ['m11','m11','Minor 11',[T.R,T.m3,opt(T.P5),T.m7,opt(T.M9),T.P11]],['13','13','Dominant 13',[T.R,T.M3,opt(T.P5),T.m7,opt(T.M9),T.M13]],
-    ['7b9','7♭9','7 flat 9',[T.R,T.M3,opt(T.P5),T.m7,T.b9]],['7s9','7♯9','7 sharp 9',[T.R,T.M3,opt(T.P5),T.m7,T.s9]],
-    ['7s11','7♯11','7 sharp 11',[T.R,T.M3,opt(T.P5),T.m7,T.s11]],['maj7s11','maj7♯11','Major 7 sharp 11',[T.R,T.M3,opt(T.P5),T.M7,T.s11]]]],
+  ['Sevenths and sixths',[
+    ['maj7','maj7','Major 7',[T.R,T.M3,T.P5,T.M7],[sh('x-3-5-4-5-x','x1324x'),sh('x-x-10-12-12-12','xx1333'),sh('8-x-9-9-8-x','1x342x'),sh('x-3-x-4-5-3','x1x342')]],
+    ['7','7','Dominant 7',[T.R,T.M3,T.P5,T.m7],[sh('x-3-5-3-5-x','x1314x'),sh('x-x-10-12-11-12','xx1324'),sh('8-x-8-9-8-x','1x243x'),sh('x-3-x-3-5-3','x1x243')]],
+    ['m7','m7','Minor 7',[T.R,T.m3,T.P5,T.m7],[sh('x-3-5-3-4-x','x1312x'),sh('x-x-10-12-11-11','xx1423'),sh('8-x-8-8-8-x','2x333x'),sh('x-3-x-3-4-3','x1x243')]],
+    ['m7b5','m7♭5','Minor 7 flat 5',[T.R,T.m3,T.d5,T.m7],[sh('x-3-4-3-4-x','x1324x'),sh('x-x-10-11-11-11','xx1222'),sh('8-x-8-8-7-x','2x341x'),sh('x-3-x-3-4-2','x2x341')]],
+    ['6','6','Major 6',[T.R,T.M3,T.P5,T.M6],[sh('x-3-5-2-5-x','x2314x'),sh('x-x-10-12-10-12','xx1314'),sh('8-x-7-9-8-x','2x143x'),sh('x-3-x-2-5-3','x2x143')]],
+    ['m6','m6','Minor 6',[T.R,T.m3,T.P5,T.M6],[sh('x-3-5-2-4-x','x2413x'),sh('x-x-10-12-10-11','xx1312'),sh('8-x-7-8-8-x','2x134x'),sh('x-3-x-2-4-3','x2x143')]],
+    ['dim7','°7','Diminished 7',[T.R,T.m3,T.d5,T.d7],[sh('x-3-4-2-4-x','x2314x'),sh('x-x-10-11-10-11','xx1324'),sh('8-x-7-8-7-x','2x131x'),sh('x-3-x-2-4-2','x2x141')]]]],
+  ['Extended',[
+    ['9','9','Dominant 9',[T.R,T.M3,T.P5,T.m7,T.M9],[sh('x-3-2-3-3-x','x2133x'),sh('x-x-10-9-11-10','xx2143'),sh('8-x-8-7-5-x','3x421x'),sh('x-3-x-3-3-0','x2x340')]],
+    ['m9','m9','Minor 9',[T.R,T.m3,T.P5,T.m7,T.M9],[sh('x-3-1-3-3-x','x2134x'),sh('x-x-10-8-11-10','xx2143')]],
+    ['m11','m11','Minor 11',[T.R,T.m3,T.P5,T.m7,T.M9,T.P11],[sh('8-x-8-8-6-x','2x341x'),sh('x-3-x-3-4-1','x2x341')]],
+    ['13','13','Dominant 13',[T.R,T.M3,T.P5,T.m7,T.M9,T.M13],[sh('x-3-2-3-3-5','x21334'),sh('8-x-8-9-10-x','1x234x'),sh('x-3-x-3-5-5','x1x244')]]]],
+  ['Altered dominants',[
+    ['7b5','7♭5','7 flat 5',[T.R,T.M3,T.d5,T.m7],[sh('8-x-8-9-7-x','2x341x'),sh('x-3-x-3-5-2','x2x341')]],
+    ['7s11','7(♯11)','7 sharp 11',[T.R,T.M3,T.P5,T.m7,T.s11],[sh('8-x-8-9-7-x','2x341x'),sh('x-3-x-3-5-2','x2x341')]],
+    ['7s9','7♯9','7 sharp 9',[T.R,T.M3,T.P5,T.m7,T.s9],[sh('x-3-2-3-4-x','x2134x'),sh('x-x-8-9-8-11','xx1214')]],
+    ['7s5','7♯5','7 sharp 5',[T.R,T.M3,T.A5,T.m7],[sh('8-x-8-9-9-x','1x234x'),sh('x-3-x-3-5-4','x1x243')]],
+    ['7b9b13','7(♭9,♭13)','7 flat 9 flat 13',[T.R,T.M3,T.m7,T.b9,T.b13],[sh('8-x-8-9-9-9','1x2333'),sh('x-3-2-3-2-4','x21314')]],
+    ['7b5b9','7♭5(♭9)','7 flat 5 flat 9',[T.R,T.M3,T.d5,T.m7,T.b9],[sh('8-x-8-9-7-9','Tx2314'),sh('x-3-2-3-2-2','x21311')]],
+    ['7b5s9','7♭5(♯9)','7 flat 5 sharp 9',[T.R,T.M3,T.d5,T.m7,T.s9],[sh('x-x-8-9-7-11','xx2314',[0,8]),sh('x-3-2-3-4-2','x21341')]],
+    ['7s5b9','7♯5(♭9)','7 sharp 5 flat 9',[T.R,T.M3,T.A5,T.m7,T.b9],[sh('x-x-8-9-9-9','xx1222',[0,8]),sh('x-3-2-3-2-4','x21314')]]]],
 ];
-const CHORD_TYPES=Object.fromEntries(CHORD_GROUPS.flatMap(([,list])=>list.map(([id,sym,name,tones])=>[id,{sym,name,tones}])));
+const CHORD_TYPES=Object.fromEntries(CHORD_GROUPS.flatMap(([,list])=>list.map(([id,sym,name,tones,shapes])=>[id,{sym,name,tones,shapes}])));
 const CH={root:store.get('croot',0),type:store.get('ctype','maj7'),lab:store.get('clab','note'),sel:0}; // sel: the voicing shown in colour
 if(!CHORD_TYPES[CH.type])CH.type='maj7';
 
@@ -38,84 +48,22 @@ function toneName(root,tone){
 }
 const chordSymbol=()=>ROOT_SPELL[CH.root]+CHORD_TYPES[CH.type].sym;
 
-/* ---------- finding voicings ----------
-   Every way to play the chord with the root as the lowest note, all essential tones present, nothing outside
-   the chord, at least three strings, at most one skipped string in the middle, all within four frets, and no
-   more than four fingers (a barre on the lowest fret counts as one). Then the best one in each area of the neck. */
-const TOP_FRET=13;   // voicings stay at or below the 13th fret
-// How voicings are scored (tuned against well-known shapes like x-3-2-3-1-0 C7 and 0-7-6-7-8-x E7♯9).
-const VW={strings:.32,inner:.41,topMuted:.1,extras:.44,lowBass:.44,span:.33,finger:.03,openNear:.36,low:.06,doubled:.2,gap:.24,second:.36};
+/* ---------- placing the shapes ----------
+   Each C shape moves by the distance from C to the root, as low on the neck as it fits (so D maj7's
+   x-x-10-12-12-12 shape becomes the open x-x-0-2-2-2), never past fret TOP_FRET. */
+const TOP_FRET=15;
 function findVoicings(){
-  const type=CHORD_TYPES[CH.type],root=CH.root;
-  const byPc=new Map();type.tones.forEach(t=>{const pc=(root+t[0])%12;if(!byPc.has(pc))byPc.set(pc,t);});
-  const need=type.tones.filter(t=>!t[3]).map(t=>(root+t[0])%12);
-  const found=new Map();
-  for(let base=0;base<=TOP_FRET-3;base++){
-    const choices=[];
-    for(let s=0;s<6;s++){
-      const c=['x',0];
-      for(let f=Math.max(1,base);f<=base+3;f++)c.push(f);
-      choices.push(c.filter(f=>f==='x'||byPc.has(pcAt(s,f))));
-    }
-    const pick=[];
-    (function walk(s){
-      if(s===6){
-        const snd=pick.map((f,i)=>f==='x'?-1:i).filter(i=>i>=0);
-        if(snd.length<3||pcAt(snd[0],pick[snd[0]])!==root)return;
-        const pcs=snd.map(i=>pcAt(i,pick[i])), set=new Set(pcs);
-        if(!need.every(pc=>set.has(pc)))return;
-        const inner=pick.slice(snd[0],snd.at(-1)+1).filter(f=>f==='x').length;
-        if(inner>1)return;
-        const fr=snd.map(i=>pick[i]).filter(f=>f>0);
-        if(fr.length&&Math.max(...fr)-Math.min(...fr)>3)return;
-        const low=fr.length?Math.min(...fr):0;
-        // Open strings: fine near the nut; higher up only as the bass note (like the open E under E7♯9).
-        if(low>3&&snd.slice(1).some(i=>pick[i]===0))return;
-        // ...and an open bass under a higher shape only on the low E or A string.
-        if(low>4&&pick[snd[0]]===0&&snd[0]>1)return;
-        const fingers=fr.filter(f=>f>low).length+(fr.some(f=>f===low)?1:0);
-        if(fingers>4)return;
-        // Under a barre (one finger across several strings) an open string in between makes no sense
-        // (F as 1-0-3-2-1-1). Open strings outside the barred strings are fine (A as x-0-2-2-2-0).
-        if(low>0){const bar=snd.filter(i=>pick[i]===low);
-          if(bar.length>=2&&snd.some(i=>pick[i]===0&&i>bar[0]&&i<bar.at(-1)))return;}
-        // An open string sandwiched between fretted strings only works near the nut (C as x-3-2-0-1-0),
-        // not under a shape higher up (A7 as 5-0-5-2-2-0).
-        for(let j=1;j<snd.length-1;j++){const i=snd[j];if(pick[i]!==0)continue;
-          const lo=snd.slice(0,j).map(k=>pick[k]).filter(f=>f>0),hi=snd.slice(j+1).map(k=>pick[k]).filter(f=>f>0);
-          if(lo.length&&hi.length&&Math.max(...lo,...hi)>3)return;}
-        const key=pick.join(',');if(found.has(key))return;
-        const extras=type.tones.filter(t=>t[3]&&set.has((root+t[0])%12)).length;
-        const opens=snd.filter(i=>pick[i]===0).length, span=fr.length?Math.max(...fr)-low:0;
-        // Doubling the root or 5th is normal (barre chords do it); doubling the 3rd, 7th or extensions isn't.
-        const fifth=(root+7)%12, doubled=[...set].filter(p=>p!==root&&p!==fifth).reduce((n,p)=>n+pcs.filter(q=>q===p).length-1,0);
-        // A big jump from the open bass up to the shape is harder to hear as one chord.
-        const gap=opens&&pick[snd[0]]===0&&low>4?1:0;
-        const score=snd.length*VW.strings-inner*VW.inner-(5-snd.at(-1))*VW.topMuted+extras*VW.extras+(snd[0]<=1?VW.lowBass:0)
-          -span*VW.span-fingers*VW.finger+(low<=3?opens*VW.openNear:0)-low*VW.low-doubled*VW.doubled-gap*VW.gap;
-        found.set(key,{frets:[...pick],snd,low,score,opens});
-        return;
-      }
-      for(const f of choices[s]){pick[s]=f;walk(s+1);}
-    })(0);
+  const out=[];
+  for(const shape of CHORD_TYPES[CH.type].shapes){
+    const fr=shape.frets.filter(f=>f!=='x'),lo=Math.min(...fr),hi=Math.max(...fr);
+    let k=CH.root;while(lo+k>0&&lo+k-12>=0)k-=12;while(lo+k<0)k+=12;
+    if(hi+k>TOP_FRET)continue;
+    const frets=shape.frets.map(f=>f==='x'?'x':f+k),snd=frets.map((f,i)=>f==='x'?-1:i).filter(i=>i>=0);
+    const played=snd.map(i=>frets[i]),low=Math.min(...played.filter(f=>f>0),99);
+    out.push({frets,snd,fing:shape.fing,low:played.some(f=>f===0)?0:low,opens:played.filter(f=>f===0).length,
+      imp:shape.imp&&shape.imp[1]+k>=0?[shape.imp[0],shape.imp[1]+k]:null});
   }
-  // Group voicings the way guitarists think of shapes: by where the root sits in the bass (which string and
-  // fret) and whether the shape uses open strings. Keep the best of each group, so the open Cmaj7 (x-3-2-0-0-0)
-  // and the A-shape barre Cmaj7 (x-3-5-4-5-3) both appear even though they're in the same area.
-  const all=[...found.values()].sort((a,b)=>b.score-a.score), keep=[], seen=new Map();
-  // Is every note of a also in b, on the same string and fret? (x-x-x-5-5-7 is part of 8-7-5-5-5-7.)
-  const partOf=(a,b)=>a.snd.every(s=>b.frets[s]===a.frets[s]);
-  for(const v of all){
-    if(keep.length>=10)break;
-    const open=v.snd.slice(1).some(i=>v.frets[i]===0);
-    const group=v.snd[0]+':'+v.frets[v.snd[0]]+':'+(open?'open':'closed');
-    // A second shape in the same group is welcome if it's nearly as good (C°7: x-3-4-2-4-x and x-3-4-5-4-x).
-    const g=seen.get(group);
-    if(g&&(g.n>=2||g.best-v.score>VW.second))continue;
-    if(keep.some(k=>partOf(v,k)||partOf(k,v)))continue;
-    seen.set(group,{n:(g?.n||0)+1,best:g?.best??v.score});keep.push(v);
-  }
-  return keep.sort((a,b)=>a.low-b.low||a.snd[0]-b.snd[0]);
+  return out.sort((a,b)=>a.low-b.low||a.snd[0]-b.snd[0]);
 }
 
 /* ---------- drawing ----------
@@ -125,16 +73,16 @@ const cfb=document.getElementById('cfb'),cnot=document.getElementById('cnotation
 let voicings=[];
 const toneAt=(s,f)=>{const pc=pcAt(s,f);return CHORD_TYPES[CH.type].tones.find(t=>(CH.root+t[0])%12===pc);};
 const vMid=v=>v.snd.reduce((a,s)=>a+fx(v.frets[s]),0)/v.snd.length;
-// The board stops at the 13th fret but keeps the same scale as the other fretboards.
+// The board stops at the 15th fret but keeps the same scale as the other fretboards.
 const CW13=NUT+TOP_FRET*FW+14, cScale=CW13/W;
 function sizeLike(el){el.style.width=(cScale*100)+'%';el.style.minWidth=Math.round(760*cScale)+'px';}
 function drawChordBoard(){
   const on=CH.sel;
   let svg=`<rect class="wood" x="${NUT}" y="${TOP-10}" width="${TOP_FRET*FW}" height="${5*GAP+20}" rx="3"/>`;
-  [3,5,7,9].forEach(f=>{svg+=`<circle class="inlay" cx="${fx(f)}" cy="${TOP+2.5*GAP}" r="5"/>`;});
+  [3,5,7,9,15].forEach(f=>{svg+=`<circle class="inlay" cx="${fx(f)}" cy="${TOP+2.5*GAP}" r="5"/>`;});
   svg+=`<circle class="inlay" cx="${fx(12)}" cy="${TOP+1.5*GAP}" r="5"/><circle class="inlay" cx="${fx(12)}" cy="${TOP+3.5*GAP}" r="5"/>`;
   for(let f=1;f<=TOP_FRET;f++)svg+=`<line class="fret" x1="${NUT+f*FW}" x2="${NUT+f*FW}" y1="${TOP-10}" y2="${TOP+5*GAP+10}"/>`;
-  [3,5,7,9,12].forEach(f=>{svg+=`<text class="fnum" x="${fx(f)}" y="${TOP+5*GAP+30}">${f}</text>`;});
+  [3,5,7,9,12,15].forEach(f=>{svg+=`<text class="fnum" x="${fx(f)}" y="${TOP+5*GAP+30}">${f}</text>`;});
   svg+=`<rect class="nut" x="${NUT-4}" y="${TOP-10}" width="5" height="${5*GAP+20}"/>`;
   for(let s=0;s<6;s++)svg+=`<line class="str" x1="${NUT-34}" x2="${NUT+TOP_FRET*FW}" y1="${sy(s)}" y2="${sy(s)}" stroke-width="${1+s*.35}"/>`;
   voicings.forEach((v,i)=>{
@@ -148,12 +96,15 @@ function drawChordBoard(){
     svg+=`<polyline class="shape picked" data-i="${on}" points="${pts}"><title>Voicing ${on+1}</title></polyline>`;
     const mx=v0.low===0||v0.opens&&Math.max(...v0.snd.map(s=>v0.frets[s]))<=4?fx(0):NUT+(v0.low-1)*FW-2;
     v0.frets.forEach((f,s)=>{if(f==='x')svg+=`<text class="mute" x="${mx}" y="${sy(s)+1}">×</text>`;});}
+  // A rootless shape: the book's implied root as a hollow dot (not played).
+  if(v0&&v0.imp){const [is,iff]=v0.imp;
+    svg+=`<g class="dot implied" data-s="${is}" data-f="${iff}"><title>Implied root (not played)</title><circle cx="${fx(iff)}" cy="${sy(is)}" r="${DOT}"/><text x="${fx(iff)}" y="${sy(is)+.5}">${CH.lab==='note'?ROOT_SPELL[CH.root]:'R'}</text></g>`;}
   const dots=new Map();
   voicings.forEach((v,i)=>v.snd.forEach(s=>{const k=s+','+v.frets[s];const d=dots.get(k)||{s,f:v.frets[s],vs:[]};d.vs.push(i);dots.set(k,d);}));
   dots.forEach(d=>{const t=toneAt(d.s,d.f),label=CH.lab==='note'?toneName(CH.root,t):t[2];
     const mine=d.vs.includes(on);
     svg+=`<g class="dot${t[0]===0&&mine?' root':''}${mine?'':' ghost'}" data-s="${d.s}" data-f="${d.f}" data-v="${d.vs[0]}"><circle cx="${fx(d.f)}" cy="${sy(d.s)}" r="${DOT}"/><text x="${fx(d.f)}" y="${sy(d.s)+.5}">${label}</text></g>`;});
-  // Same drawing space as the other fretboards (so sizes match); frets past the 13th are left empty.
+  // Same drawing space as the other fretboards (so sizes match).
   cfb.setAttribute('viewBox',`0 0 ${CW13} ${H}`);sizeLike(cfb);cfb.innerHTML=svg;
   const wrap=cfb.parentElement,v=voicings[on];
   if(v&&wrap.scrollWidth>wrap.clientWidth){const k=cfb.clientWidth/CW13,x=fx(v.low)*k;if(x<wrap.scrollLeft+20||x>wrap.scrollLeft+wrap.clientWidth-160)wrap.scrollLeft=Math.max(0,x-60);}

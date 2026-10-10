@@ -160,6 +160,8 @@ p{margin:0}
 .fretboard .shape.other{stroke:var(--muted);opacity:.18}
 .fretboard .dot.ghost circle{fill:var(--line)}
 .fretboard .dot.ghost text{fill:var(--muted)}
+.fretboard .dot.implied circle{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-dasharray:4 3}
+.fretboard .dot.implied text{fill:var(--accent)}
 .notation-strip .vf-stavenote.other{opacity:.25}
 /* Drill notation strip: same width as the fretboard, so each chord sits under its shape. */
 .notation-strip svg{display:block;width:100%;min-width:760px;height:auto}
@@ -314,7 +316,7 @@ p{margin:0}
 
       <details class="notes cap help">
         <summary>How it works</summary>
-        <p>Pick a root and a chord type. The app works out playable voicings up to the 13th fret and shows them on the fretboard, with each voicing written in notation underneath. In every voicing the root is the lowest note, every essential chord tone is there (the 5th is sometimes left out, as guitarists usually do), and the shape fits under four fingers within four frets, barres included.</p>
+        <p>Pick a root and a chord type. The fretboard shows the standard jazz shapes for that chord (from a jazz guitar chord book), moved to the root you picked, with each one written in notation underneath. Most have the root on the 6th, 5th or 4th string. A few altered chords leave the root out; its place is marked with a dashed circle.</p>
         <p>One voicing at a time is shown in colour, with × for the strings it doesn't use; the others are greyed out. Tap a grey shape (or its chord in the notation) to switch to it and hear it. <b>Play</b> (or <b>space</b>) steps through them all.</p>
       </details>
     </div>
@@ -878,7 +880,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v55';
+window.APP_VERSION = 'v56';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
