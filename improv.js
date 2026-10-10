@@ -291,7 +291,7 @@ function describeImprov(){
 }
 
 /* ---------- Read | Improv | Drill ---------- */
-const TAGLINES={read:'Guitar Sight-Reading Generator',improv:'Guitar Improv Practice',drill:'Guitar Drills'};
+const TAGLINES={read:'Aaaahhh! Notation!',improv:'Supervised wanking',drill:'Go hit the shed'};
 function showView(v){
   if(!TAGLINES[v])v='read';
   for(const k of Object.keys(TAGLINES))document.getElementById(k+'-view').hidden=k!==v;
