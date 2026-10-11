@@ -82,6 +82,10 @@ function findVoicings(){
     if(shape.root!==undefined&&shape.root!==CH.root)continue;   // an open chord only in its own key
     let k=CH.root;while(lo+k>0&&lo+k-12>=0)k-=12;while(lo+k<0)k+=12;
     if(shape.root!==undefined)k=0;
+    // A moved shape may not end up with open strings over a fretted bass note (Dm as 1-x-0-2-3-x): David's call
+    // (v59). Then it goes up an octave instead, if that fits. Open chords with an open bass (E7 0-2-0-1-0-0) are fine.
+    const sandwiched=k=>{const p=shape.frets.filter(f=>f!=='x').map(f=>f+k);return p[0]>0&&p.includes(0);};
+    if(k!==0&&sandwiched(k))k+=12;
     if(hi+k>TOP_FRET)continue;
     const frets=shape.frets.map(f=>f==='x'?'x':f+k),snd=frets.map((f,i)=>f==='x'?-1:i).filter(i=>i>=0);
     const played=snd.map(i=>frets[i]),low=Math.min(...played.filter(f=>f>0),99);
