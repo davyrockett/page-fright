@@ -103,7 +103,8 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
   placement that fits, board up to fret 15; open strings become fretted when moved). v59 (David's call): a moved
   shape never lands with open strings over a fretted bass (Dm 1-x-0-2-3-x); it goes up an octave instead. v60: Csus2
   x-3-0-0-3-3 and x-3-5-5-3-3 added (David's own shapes). v61: Cadd9 8-10-12-9-8-8 and
-  Cm(add9) 8-10-12-8-8-8 (David's; he first called them maj9 and m9, but they have no 7th). 32 types in 5 groups: triads/sus,
+  Cm(add9) 8-10-12-8-8-8 (David's; he first called them maj9 and m9, but they have no 7th). v67: 6/9
+  (x-3-2-2-3-3, 8-7-7-7-8-8, x-x-10-9-10-10; David asked, Claude chose). 33 types in 5 groups: triads/sus,
   sixths/added, sevenths, extended, altered dominants. Some shapes have another tone in the bass or no root, as in
   the books; two jazz-book rootless shapes show the implied root as a dashed circle (`imp`). Add or change shapes
   only from David's sources. Display (v52): one voicing in colour (no × marks for muted strings: removed v64, David's call), the rest greyed out; tap to switch. Notation

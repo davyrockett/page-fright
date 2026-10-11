@@ -70,7 +70,7 @@ coloured by inversion), lined up under its shape. Tap a shape's line or its chor
 shape up the neck.
 
 **Chords** (the second Drill mode): pick a root and a chord type: triads and sus (major, m, +, °, sus2, sus4; the open "cowboy" chords show in their own keys), sixths and
-added notes (6, m6, add9, m(add9)), sevenths (maj7, 7, m7, m7♭5, °7, m(maj7), 7sus4), extended (maj9, 9, m9, 11, m11,
+added notes (6, m6, 6/9, add9, m(add9)), sevenths (maj7, 7, m7, m7♭5, °7, m(maj7), 7sus4), extended (maj9, 9, m9, 11, m11,
 13, maj7♯11) and altered dominants (7♭5, 7♯11, 7♯9, 7♯5, 7(♭9,♭13), 7♭5(♭9), 7♭5(♯9), 7♯5(♭9)). The shapes come
 from David's two chord books (the jazz chord book, then a photo chord book; written in C in `chords.js`, with the
 books' fingering) and are
