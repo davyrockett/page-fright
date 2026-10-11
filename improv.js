@@ -291,7 +291,7 @@ function describeImprov(){
 }
 
 /* ---------- Read | Improv | Drill ---------- */
-const TAGLINES={read:'Aaaahhh! Notation!',improv:'Supervised Wanking',drill:'Go Hit the Shed'};
+const TAGLINES={read:'Aaaahhh! Notation!',improv:'Guided Wanking',drill:'Go Hit the Shed'};
 function showView(v){
   if(!TAGLINES[v])v='read';
   for(const k of Object.keys(TAGLINES))document.getElementById(k+'-view').hidden=k!==v;
