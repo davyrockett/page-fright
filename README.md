@@ -16,7 +16,7 @@ iPhone and iPad Home Screens and the Mac's Dock, and works with no signal once i
 |---|---|
 | `index.html` | The whole app: exercise generator, notation, playback, settings |
 | `drill.js` | The Drill section: triad shapes on any three strings |
-| `chords.js` | Drill > Chords: shapes from David's two chord books for 31 chord types, moved to any root |
+| `chords.js` | Drill > Chords: shapes from David's two chord books (plus major and open chords) for 32 chord types, moved to any root |
 | `improv.js` | The Improv section: 12-bar blues backing track and scale shapes on the fretboard |
 | `vendor/vexflow-bravura.js` | [VexFlow](https://www.vexflow.com) 4.2.5, which draws the notation (MIT license, see `vendor/VEXFLOW-LICENSE`) |
 | `sw.js` | The "service worker": saves the app on the device so it works offline |
@@ -69,7 +69,7 @@ from the root (C minor = C–E♭–G). Under the fretboard, each shape is also 
 coloured by inversion), lined up under its shape. Tap a shape's line or its chord to hear it; **Play** strums every
 shape up the neck.
 
-**Chords** (the second Drill mode): pick a root and a chord type: triads and sus (m, +, °, sus2, sus4), sixths and
+**Chords** (the second Drill mode): pick a root and a chord type: triads and sus (major, m, +, °, sus2, sus4; the open "cowboy" chords show in their own keys), sixths and
 added notes (6, m6, add9, m(add9)), sevenths (maj7, 7, m7, m7♭5, °7, m(maj7), 7sus4), extended (maj9, 9, m9, 11, m11,
 13, maj7♯11) and altered dominants (7♭5, 7♯11, 7♯9, 7♯5, 7(♭9,♭13), 7♭5(♭9), 7♭5(♯9), 7♯5(♭9)). The shapes come
 from David's two chord books (the jazz chord book, then a photo chord book; written in C in `chords.js`, with the

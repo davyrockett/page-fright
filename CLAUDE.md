@@ -96,10 +96,11 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
   guitar pitch, same width/scroll as the fretboard so it sits under its shape, coloured by inversion, tappable.
 - Drill > Chords (`chords.js`; Triads | Chords switch inside Drill, `drillMode`). David's call (v56–v57): no voicing
   search; shapes come only from David's two chord books (photos he sent): the Jazz Guitar Chord book (v56) and a
-  photo chord book with five shapes per chord (pages 2–14 of 14; page 1, probably plain major, never arrived, so
-  there's no major triad yet). Stored in C in `CHORD_GROUPS`, jazz book first, exact repeats dropped, with the
+  photo chord book with five shapes per chord (pages 2–14 of 14). v58: David asked Claude to add the major chords
+  and the open "cowboy" chords: `cow(root,…)` shapes (C A G E D F, Am Em Dm) show only in their own key; major's
+  movable shapes are the A-shape and E-shape barres, the D shape and the top-four-string triad. Stored in C in `CHORD_GROUPS`, jazz book first, exact repeats dropped, with the
   books' fingering (`fing`, 0 open, T thumb; not shown yet); `findVoicings()` moves each to the root (lowest
-  placement that fits, board up to fret 15; open strings become fretted when moved). 31 types in 5 groups: triads/sus,
+  placement that fits, board up to fret 15; open strings become fretted when moved). 32 types in 5 groups: triads/sus,
   sixths/added, sevenths, extended, altered dominants. Some shapes have another tone in the bass or no root, as in
   the books; two jazz-book rootless shapes show the implied root as a dashed circle (`imp`). Add or change shapes
   only from David's sources. Display (v52): one voicing in colour, the rest greyed out; tap to switch. Notation

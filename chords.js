@@ -14,9 +14,16 @@ const T={R:[0,1,'R'],M3:[4,3,'3'],m3:[3,3,'♭3'],P5:[7,5,'5'],d5:[6,5,'♭5'],A
    root. Some have another note in the bass, or no root at all, as in the books. `imp`: a rootless shape whose root
    the book shows as implied (string, fret). */
 const sh=(frets,fing,imp)=>({frets:frets.split('-').map(f=>f==='x'?'x':+f),fing,imp});
+// An open "cowboy" chord: written at its real frets, shown only for its own root (it doesn't move).
+const cow=(root,frets,fing)=>({...sh(frets,fing),root});
 const CHORD_GROUPS=[
   ['Triads and sus',[
-    ['m','m','Minor',[T.R,T.m3,T.P5],[sh('x-3-1-0-1-x','x4102x'),sh('x-3-5-5-4-3','x13421'),sh('8-10-10-8-8-8','134111'),sh('11-x-10-12-13-x','2x134x'),sh('x-x-13-12-13-11','xx3241')]],
+    // Major (v58, David asked Claude to choose these): the open chords, then the standard movable shapes
+    // (A-shape and E-shape barres, D-shape, and the triad on the top four strings).
+    ['maj','','Major',[T.R,T.M3,T.P5],[cow(0,'x-3-2-0-1-0','x32010'),cow(9,'x-0-2-2-2-0','x01230'),cow(7,'3-2-0-0-0-3','210003'),
+      cow(7,'3-2-0-0-3-3','210034'),cow(4,'0-2-2-1-0-0','023100'),cow(2,'x-x-0-2-3-2','xx0132'),cow(5,'x-x-3-2-1-1','xx3211'),
+      sh('x-3-5-5-5-3','x13331'),sh('8-10-10-9-8-8','134211'),sh('x-x-10-12-13-12','xx1342'),sh('x-x-5-5-5-8','xx1114')]],
+    ['m','m','Minor',[T.R,T.m3,T.P5],[cow(9,'x-0-2-2-1-0','x02310'),cow(4,'0-2-2-0-0-0','023000'),cow(2,'x-x-0-2-3-1','xx0231'),sh('x-3-1-0-1-x','x4102x'),sh('x-3-5-5-4-3','x13421'),sh('8-10-10-8-8-8','134111'),sh('11-x-10-12-13-x','2x134x'),sh('x-x-13-12-13-11','xx3241')]],
     ['aug','+','Augmented',[T.R,T.M3,T.A5],[sh('x-3-2-1-1-x','x3211x'),sh('x-3-x-5-5-4','x1x342'),sh('x-x-6-5-5-8','xx2114'),sh('x-x-10-9-9-8','xx4231'),sh('12-x-14-13-13-x','1x432x')]],
     ['dim','°','Diminished',[T.R,T.m3,T.d5],[sh('x-x-4-5-4-2','xx2431'),sh('x-6-4-5-4-x','x3121x'),sh('x-9-10-8-7-x','x3421x'),sh('11-x-13-11-13-x','1x324x'),sh('x-x-13-11-13-11','xx3141')]],
     ['sus2','sus2','Sus 2',[T.R,T.M2,T.P5],[sh('x-3-0-0-1-3','x30014'),sh('x-3-5-7-x-x','x134xx'),sh('x-5-5-5-8-8','x11144'),sh('x-x-10-7-8-10','xx3124'),sh('10-10-12-12-13-x','11334x')]],
@@ -72,7 +79,9 @@ function findVoicings(){
   const out=[];
   for(const shape of CHORD_TYPES[CH.type].shapes){
     const fr=shape.frets.filter(f=>f!=='x'),lo=Math.min(...fr),hi=Math.max(...fr);
+    if(shape.root!==undefined&&shape.root!==CH.root)continue;   // an open chord only in its own key
     let k=CH.root;while(lo+k>0&&lo+k-12>=0)k-=12;while(lo+k<0)k+=12;
+    if(shape.root!==undefined)k=0;
     if(hi+k>TOP_FRET)continue;
     const frets=shape.frets.map(f=>f==='x'?'x':f+k),snd=frets.map((f,i)=>f==='x'?-1:i).filter(i=>i>=0);
     const played=snd.map(i=>frets[i]),low=Math.min(...played.filter(f=>f>0),99);
