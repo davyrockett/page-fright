@@ -90,9 +90,9 @@ const chordSymbol=()=>ROOT_SPELL[CH.root]+TYPES[CH.type].sym;
    x-x-10-12-12-12 shape becomes the open x-x-0-2-2-2), never past fret TOP_FRET. */
 const TOP_FRET=15;
 // Shells (v65, David's call: the root needn't be in the bass): every way to play the three notes, one per string,
-// on the usual string groups (three neighbours, or with one string skipped: 6-4-3, 5-3-2, 4-2-1), within four
-// frets, up to fret TOP_FRET. Open strings only near the nut.
-const SHELL_SETS=[[0,1,2],[1,2,3],[2,3,4],[3,4,5],[0,2,3],[1,3,4],[2,4,5]];
+// on three neighbouring strings (no skipped strings: David's call, v66), within four frets, up to fret TOP_FRET.
+// Open strings only near the nut.
+const SHELL_SETS=[[0,1,2],[1,2,3],[2,3,4],[3,4,5]];
 function shellVoicings(){
   const want=TYPES[CH.type].tones.map(t=>(CH.root+t[0])%12).sort((a,b)=>a-b).join(),out=[];
   for(const set of SHELL_SETS){
