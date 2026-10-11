@@ -5,32 +5,48 @@
 
 /* ---------- chord types ----------
    Each tone: semitones above the root, which scale degree it is (for spelling), and its label. */
-const T={R:[0,1,'R'],M3:[4,3,'3'],m3:[3,3,'♭3'],P5:[7,5,'5'],d5:[6,5,'♭5'],A5:[8,5,'♯5'],
+const T={R:[0,1,'R'],M3:[4,3,'3'],m3:[3,3,'♭3'],P5:[7,5,'5'],d5:[6,5,'♭5'],A5:[8,5,'♯5'],M2:[2,2,'2'],P4:[5,4,'4'],
   m7:[10,7,'♭7'],M7:[11,7,'7'],d7:[9,7,'♭♭7'],M6:[9,6,'6'],M9:[2,2,'9'],b9:[1,2,'♭9'],s9:[3,2,'♯9'],
   P11:[5,4,'11'],s11:[6,4,'♯11'],M13:[9,6,'13'],b13:[8,6,'♭13']};
-/* The shapes, from the Jazz Guitar Chord book David uses (v56, his call: these replace the old search).
-   Written for C, low E string first ('x' = not played), with the book's fingering (T = thumb). Each one moves
-   up or down the neck to any root. `imp`: a rootless shape whose root the book shows as implied (string, fret). */
+/* The shapes, only from David's two chord books (photos he sent): the Jazz Guitar Chord book first (v56), then
+   the photo chord book's five shapes per chord (v57), exact repeats left out. Written for C, low E string first
+   ('x' = not played, 0 = open), with the book's fingering (T = thumb). Each one moves up or down the neck to any
+   root. Some have another note in the bass, or no root at all, as in the books. `imp`: a rootless shape whose root
+   the book shows as implied (string, fret). */
 const sh=(frets,fing,imp)=>({frets:frets.split('-').map(f=>f==='x'?'x':+f),fing,imp});
 const CHORD_GROUPS=[
-  ['Sevenths and sixths',[
-    ['maj7','maj7','Major 7',[T.R,T.M3,T.P5,T.M7],[sh('x-3-5-4-5-x','x1324x'),sh('x-x-10-12-12-12','xx1333'),sh('8-x-9-9-8-x','1x342x'),sh('x-3-x-4-5-3','x1x342')]],
-    ['7','7','Dominant 7',[T.R,T.M3,T.P5,T.m7],[sh('x-3-5-3-5-x','x1314x'),sh('x-x-10-12-11-12','xx1324'),sh('8-x-8-9-8-x','1x243x'),sh('x-3-x-3-5-3','x1x243')]],
-    ['m7','m7','Minor 7',[T.R,T.m3,T.P5,T.m7],[sh('x-3-5-3-4-x','x1312x'),sh('x-x-10-12-11-11','xx1423'),sh('8-x-8-8-8-x','2x333x'),sh('x-3-x-3-4-3','x1x243')]],
-    ['m7b5','m7♭5','Minor 7 flat 5',[T.R,T.m3,T.d5,T.m7],[sh('x-3-4-3-4-x','x1324x'),sh('x-x-10-11-11-11','xx1222'),sh('8-x-8-8-7-x','2x341x'),sh('x-3-x-3-4-2','x2x341')]],
-    ['6','6','Major 6',[T.R,T.M3,T.P5,T.M6],[sh('x-3-5-2-5-x','x2314x'),sh('x-x-10-12-10-12','xx1314'),sh('8-x-7-9-8-x','2x143x'),sh('x-3-x-2-5-3','x2x143')]],
-    ['m6','m6','Minor 6',[T.R,T.m3,T.P5,T.M6],[sh('x-3-5-2-4-x','x2413x'),sh('x-x-10-12-10-11','xx1312'),sh('8-x-7-8-8-x','2x134x'),sh('x-3-x-2-4-3','x2x143')]],
-    ['dim7','°7','Diminished 7',[T.R,T.m3,T.d5,T.d7],[sh('x-3-4-2-4-x','x2314x'),sh('x-x-10-11-10-11','xx1324'),sh('8-x-7-8-7-x','2x131x'),sh('x-3-x-2-4-2','x2x141')]]]],
+  ['Triads and sus',[
+    ['m','m','Minor',[T.R,T.m3,T.P5],[sh('x-3-1-0-1-x','x4102x'),sh('x-3-5-5-4-3','x13421'),sh('8-10-10-8-8-8','134111'),sh('11-x-10-12-13-x','2x134x'),sh('x-x-13-12-13-11','xx3241')]],
+    ['aug','+','Augmented',[T.R,T.M3,T.A5],[sh('x-3-2-1-1-x','x3211x'),sh('x-3-x-5-5-4','x1x342'),sh('x-x-6-5-5-8','xx2114'),sh('x-x-10-9-9-8','xx4231'),sh('12-x-14-13-13-x','1x432x')]],
+    ['dim','°','Diminished',[T.R,T.m3,T.d5],[sh('x-x-4-5-4-2','xx2431'),sh('x-6-4-5-4-x','x3121x'),sh('x-9-10-8-7-x','x3421x'),sh('11-x-13-11-13-x','1x324x'),sh('x-x-13-11-13-11','xx3141')]],
+    ['sus2','sus2','Sus 2',[T.R,T.M2,T.P5],[sh('x-3-0-0-1-3','x30014'),sh('x-3-5-7-x-x','x134xx'),sh('x-5-5-5-8-8','x11144'),sh('x-x-10-7-8-10','xx3124'),sh('10-10-12-12-13-x','11334x')]],
+    ['sus4','sus4','Sus 4',[T.R,T.P4,T.P5],[sh('x-3-3-0-1-1','x34011'),sh('3-3-5-5-6-x','11334x'),sh('x-x-5-5-6-8','xx1124'),sh('8-8-10-10-8-8','113411'),sh('x-x-10-12-13-13','xx1344')]]]],
+  ['Sixths and added notes',[
+    ['6','6','Major 6',[T.R,T.M3,T.P5,T.M6],[sh('x-3-5-2-5-x','x2314x'),sh('x-x-10-12-10-12','xx1314'),sh('8-x-7-9-8-x','2x143x'),sh('x-3-x-2-5-3','x2x143'),sh('x-3-2-2-1-0','x42310'),sh('x-3-5-5-5-5','x13333'),sh('x-x-10-9-10-8','xx3241'),sh('x-12-x-12-13-12','x1x243')]],
+    ['m6','m6','Minor 6',[T.R,T.m3,T.P5,T.M6],[sh('x-3-5-2-4-x','x2413x'),sh('x-x-10-12-10-11','xx1312'),sh('8-x-7-8-8-x','2x134x'),sh('x-3-x-2-4-3','x2x143'),sh('x-3-1-2-1-3','x31214'),sh('x-x-5-5-4-5','xx2314'),sh('11-x-10-12-10-x','2x131x'),sh('x-x-13-14-13-15','xx1213')]],
+    ['add9','add9','Add 9',[T.R,T.M3,T.P5,T.M9],[sh('x-3-2-0-3-3','x21034'),sh('x-3-5-7-5-3','x12431'),sh('x-5-5-5-5-x','x1111x'),sh('x-7-x-7-8-8','x1x234'),sh('x-x-10-12-13-10','xx1341')]],
+    ['madd9','m(add9)','Minor add 9',[T.R,T.m3,T.P5,T.M9],[sh('x-3-1-0-3-3','x21034'),sh('x-6-5-5-3-x','x4231x'),sh('x-6-x-7-8-8','x1x244'),sh('x-x-10-8-8-10','xx3114'),sh('x-x-12-12-13-11','xx2341')]]]],
+  ['Sevenths',[
+    ['maj7','maj7','Major 7',[T.R,T.M3,T.P5,T.M7],[sh('x-3-5-4-5-x','x1324x'),sh('x-x-10-12-12-12','xx1333'),sh('8-x-9-9-8-x','1x342x'),sh('x-3-x-4-5-3','x1x342'),sh('x-3-2-0-0-0','x32000'),sh('x-3-5-4-5-3','x13241'),sh('x-x-5-5-5-7','xx1113')]],
+    ['7','7','Dominant 7',[T.R,T.M3,T.P5,T.m7],[sh('x-3-5-3-5-x','x1314x'),sh('x-x-10-12-11-12','xx1324'),sh('8-x-8-9-8-x','1x243x'),sh('x-3-x-3-5-3','x1x243'),sh('x-3-2-3-1-0','x32410'),sh('x-3-5-3-5-3','x13141'),sh('x-x-5-5-5-6','xx1112'),sh('8-10-8-9-8-8','131211')]],
+    ['m7','m7','Minor 7',[T.R,T.m3,T.P5,T.m7],[sh('x-3-5-3-4-x','x1312x'),sh('x-x-10-12-11-11','xx1423'),sh('8-x-8-8-8-x','2x333x'),sh('x-3-x-3-4-3','x1x243'),sh('3-x-1-3-1-x','3x141x'),sh('x-3-5-3-4-3','x13121'),sh('11-x-10-12-11-x','2x143x')]],
+    ['m7b5','m7♭5','Minor 7 flat 5',[T.R,T.m3,T.d5,T.m7],[sh('x-3-4-3-4-x','x1324x'),sh('x-x-10-11-11-11','xx1222'),sh('8-x-8-8-7-x','2x341x'),sh('x-3-x-3-4-2','x2x341'),sh('2-x-1-3-1-x','2x141x'),sh('x-6-8-5-7-x','x2413x')]],
+    ['dim7','°7','Diminished 7',[T.R,T.m3,T.d5,T.d7],[sh('x-3-4-2-4-x','x2314x'),sh('x-x-10-11-10-11','xx1324'),sh('8-x-7-8-7-x','2x131x'),sh('x-3-x-2-4-2','x2x141'),sh('x-x-1-2-1-2','xx1324'),sh('x-3-4-2-4-2','x23141'),sh('x-6-7-5-7-x','x2314x')]],
+    ['mmaj7','m(maj7)','Minor major 7',[T.R,T.m3,T.P5,T.M7],[sh('x-3-1-0-0-3','x31004'),sh('x-3-5-4-4-3','x14231'),sh('8-x-9-8-8-x','1x423x'),sh('11-x-10-12-12-x','2x134x'),sh('x-14-13-12-13-x','x4213x')]],
+    ['7sus4','7sus4','7 sus 4',[T.R,T.P4,T.P5,T.m7],[sh('x-3-3-3-1-x','x2341x'),sh('x-3-5-3-6-3','x13141'),sh('x-x-5-5-6-6','xx1122'),sh('8-10-8-10-8-8','131411'),sh('x-x-10-12-11-13','xx1324')]]]],
   ['Extended',[
-    ['9','9','Dominant 9',[T.R,T.M3,T.P5,T.m7,T.M9],[sh('x-3-2-3-3-x','x2133x'),sh('x-x-10-9-11-10','xx2143'),sh('8-x-8-7-5-x','3x421x'),sh('x-3-x-3-3-0','x2x340')]],
-    ['m9','m9','Minor 9',[T.R,T.m3,T.P5,T.m7,T.M9],[sh('x-3-1-3-3-x','x2134x'),sh('x-x-10-8-11-10','xx2143')]],
-    ['m11','m11','Minor 11',[T.R,T.m3,T.P5,T.m7,T.M9,T.P11],[sh('8-x-8-8-6-x','2x341x'),sh('x-3-x-3-4-1','x2x341')]],
-    ['13','13','Dominant 13',[T.R,T.M3,T.P5,T.m7,T.M9,T.M13],[sh('x-3-2-3-3-5','x21334'),sh('8-x-8-9-10-x','1x234x'),sh('x-3-x-3-5-5','x1x244')]]]],
+    ['maj9','maj9','Major 9',[T.R,T.M3,T.P5,T.M7,T.M9],[sh('x-3-2-4-3-x','x2143x'),sh('x-7-9-7-8-7','x14121'),sh('x-x-10-9-12-10','xx2143'),sh('x-15-12-12-12-12','x31111'),sh('x-14-14-16-15-15','x11322')]],
+    ['9','9','Dominant 9',[T.R,T.M3,T.P5,T.m7,T.M9],[sh('x-3-2-3-3-x','x2133x'),sh('x-x-10-9-11-10','xx2143'),sh('8-x-8-7-5-x','3x421x'),sh('x-3-x-3-3-0','x2x340'),sh('x-3-2-3-3-3','x21333'),sh('x-7-8-7-8-x','x1324x'),sh('8-10-8-9-8-10','131214')]],
+    ['m9','m9','Minor 9',[T.R,T.m3,T.P5,T.m7,T.M9],[sh('x-3-1-3-3-x','x2134x'),sh('x-x-10-8-11-10','xx2143'),sh('x-3-1-3-3-3','x21333'),sh('x-6-x-7-8-6','x1x342'),sh('8-10-8-8-8-10','131114'),sh('x-x-13-15-15-15','xx1333')]],
+    ['11','11','Dominant 11',[T.R,T.M3,T.P5,T.m7,T.M9,T.P11],[sh('x-3-2-3-1-1','x32411'),sh('x-3-3-3-5-3','x11131'),sh('x-7-x-5-6-6','x4x123'),sh('x-x-10-10-11-12','xx1123'),sh('13-13-14-15-13-13','112311')]],
+    ['m11','m11','Minor 11',[T.R,T.m3,T.P5,T.m7,T.M9,T.P11],[sh('8-x-8-8-6-x','2x341x'),sh('x-3-x-3-4-1','x2x341'),sh('x-3-1-3-1-1','x31411'),sh('x-3-3-3-4-3','x11121'),sh('x-x-10-10-11-11','xx1122')]],
+    ['13','13','Dominant 13',[T.R,T.M3,T.P5,T.m7,T.M9,T.M13],[sh('x-3-2-3-3-5','x21334'),sh('8-x-8-9-10-x','1x234x'),sh('x-3-x-3-5-5','x1x244'),sh('x-1-2-2-1-x','x1342x'),sh('8-10-8-9-10-8','131241'),sh('x-x-14-15-13-17','xx2314')]],
+    ['maj7s11','maj7♯11','Major 7 sharp 11',[T.R,T.M3,T.P5,T.M7,T.s11],[sh('x-3-2-0-0-2','x31002'),sh('x-3-4-4-5-3','x12341'),sh('x-x-4-5-5-7','xx1224'),sh('8-x-9-9-7-x','2x341x'),sh('x-x-10-11-12-12','xx1233')]]]],
   ['Altered dominants',[
-    ['7b5','7♭5','7 flat 5',[T.R,T.M3,T.d5,T.m7],[sh('8-x-8-9-7-x','2x341x'),sh('x-3-x-3-5-2','x2x341')]],
-    ['7s11','7(♯11)','7 sharp 11',[T.R,T.M3,T.P5,T.m7,T.s11],[sh('8-x-8-9-7-x','2x341x'),sh('x-3-x-3-5-2','x2x341')]],
-    ['7s9','7♯9','7 sharp 9',[T.R,T.M3,T.P5,T.m7,T.s9],[sh('x-3-2-3-4-x','x2134x'),sh('x-x-8-9-8-11','xx1214')]],
-    ['7s5','7♯5','7 sharp 5',[T.R,T.M3,T.A5,T.m7],[sh('8-x-8-9-9-x','1x234x'),sh('x-3-x-3-5-4','x1x243')]],
+    ['7b5','7♭5','7 flat 5',[T.R,T.M3,T.d5,T.m7],[sh('8-x-8-9-7-x','2x341x'),sh('x-3-x-3-5-2','x2x341'),sh('2-x-2-3-1-x','2x341x'),sh('x-3-4-3-5-x','x1214x'),sh('6-x-4-5-5-x','4x123x'),sh('x-x-10-11-11-12','xx1223')]],
+    ['7s11','7(♯11)','7 sharp 11',[T.R,T.M3,T.P5,T.m7,T.s11],[sh('8-x-8-9-7-x','2x341x'),sh('x-3-x-3-5-2','x2x341'),sh('2-x-2-3-1-x','2x341x'),sh('x-3-4-3-5-x','x1214x'),sh('6-x-4-5-5-x','4x123x'),sh('x-x-10-11-11-12','xx1223')]],
+    ['7s9','7♯9','7 sharp 9',[T.R,T.M3,T.P5,T.m7,T.s9],[sh('x-3-2-3-4-x','x2134x'),sh('x-x-8-9-8-11','xx1214'),sh('x-7-8-8-8-8','x13333'),sh('8-10-8-9-8-11','131214'),sh('x-x-10-9-11-11','xx2134'),sh('x-x-13-12-11-12','xx4213')]],
+    ['7s5','7♯5','7 sharp 5',[T.R,T.M3,T.A5,T.m7],[sh('8-x-8-9-9-x','1x234x'),sh('x-3-x-3-5-4','x1x243'),sh('x-x-2-3-1-4','xx2314'),sh('x-3-6-3-5-4','x14132'),sh('6-x-6-5-5-x','2x311x'),sh('x-x-10-13-11-12','xx1423')]],
     ['7b9b13','7(♭9,♭13)','7 flat 9 flat 13',[T.R,T.M3,T.m7,T.b9,T.b13],[sh('8-x-8-9-9-9','1x2333'),sh('x-3-2-3-2-4','x21314')]],
     ['7b5b9','7♭5(♭9)','7 flat 5 flat 9',[T.R,T.M3,T.d5,T.m7,T.b9],[sh('8-x-8-9-7-9','Tx2314'),sh('x-3-2-3-2-2','x21311')]],
     ['7b5s9','7♭5(♯9)','7 flat 5 sharp 9',[T.R,T.M3,T.d5,T.m7,T.s9],[sh('x-x-8-9-7-11','xx2314',[0,8]),sh('x-3-2-3-4-2','x21341')]],
@@ -60,6 +76,7 @@ function findVoicings(){
     if(hi+k>TOP_FRET)continue;
     const frets=shape.frets.map(f=>f==='x'?'x':f+k),snd=frets.map((f,i)=>f==='x'?-1:i).filter(i=>i>=0);
     const played=snd.map(i=>frets[i]),low=Math.min(...played.filter(f=>f>0),99);
+    if(out.some(v=>v.frets.join()===frets.join()))continue;  // two shapes landing on the same frets
     out.push({frets,snd,fing:shape.fing,low:played.some(f=>f===0)?0:low,opens:played.filter(f=>f===0).length,
       imp:shape.imp&&shape.imp[1]+k>=0?[shape.imp[0],shape.imp[1]+k]:null});
   }

@@ -316,7 +316,7 @@ p{margin:0}
 
       <details class="notes cap help">
         <summary>How it works</summary>
-        <p>Pick a root and a chord type. The fretboard shows the standard jazz shapes for that chord (from a jazz guitar chord book), moved to the root you picked, with each one written in notation underneath. Most have the root on the 6th, 5th or 4th string. A few altered chords leave the root out; its place is marked with a dashed circle.</p>
+        <p>Pick a root and a chord type. The fretboard shows that chord's shapes from two chord books, moved to the root you picked, with each one written in notation underneath. Most have the root in the bass; some have another chord tone there, and a few leave the root out (where the book marks it, its place is a dashed circle).</p>
         <p>One voicing at a time is shown in colour, with × for the strings it doesn't use; the others are greyed out. Tap a grey shape (or its chord in the notation) to switch to it and hear it. <b>Play</b> (or <b>space</b>) steps through them all.</p>
       </details>
     </div>
@@ -880,7 +880,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v56';
+window.APP_VERSION = 'v57';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
