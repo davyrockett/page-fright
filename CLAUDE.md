@@ -101,7 +101,8 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
   movable shapes are the A-shape and E-shape barres, the D shape and the top-four-string triad. Stored in C in `CHORD_GROUPS`, jazz book first, exact repeats dropped, with the
   books' fingering (`fing`, 0 open, T thumb; not shown yet); `findVoicings()` moves each to the root (lowest
   placement that fits, board up to fret 15; open strings become fretted when moved). v59 (David's call): a moved
-  shape never lands with open strings over a fretted bass (Dm 1-x-0-2-3-x); it goes up an octave instead. 32 types in 5 groups: triads/sus,
+  shape never lands with open strings over a fretted bass (Dm 1-x-0-2-3-x); it goes up an octave instead. v60: Csus2
+  x-3-0-0-3-3 and x-3-5-5-3-3 added (David's own shapes). 32 types in 5 groups: triads/sus,
   sixths/added, sevenths, extended, altered dominants. Some shapes have another tone in the bass or no root, as in
   the books; two jazz-book rootless shapes show the implied root as a dashed circle (`imp`). Add or change shapes
   only from David's sources. Display (v52): one voicing in colour, the rest greyed out; tap to switch. Notation
