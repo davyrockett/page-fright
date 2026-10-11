@@ -111,7 +111,7 @@ function findVoicings(){
 }
 
 /* ---------- drawing ----------
-   Every voicing is on the board, but only the selected one is in colour (with × for its unplayed strings);
+   Every voicing is on the board, but only the selected one is in colour;
    the rest are greyed out. Tap a grey one to select it. The notation strip underneath works the same way. */
 const cfb=document.getElementById('cfb'),cnot=document.getElementById('cnotation');
 let voicings=[];
@@ -133,13 +133,11 @@ function drawChordBoard(){
     const pts=v.snd.map(s=>`${fx(v.frets[s])},${sy(s)}`).join(' ');
     svg+=`<polyline class="shape ${i===on?'picked':'other'}" data-i="${i}" points="${pts}"><title>Voicing ${i+1}</title></polyline>`;
   });
-  // Draw the selected voicing's line last so it sits on top, with × for its unplayed strings
-  // (at the nut for an open-position voicing, otherwise just left of the shape).
+  // Draw the selected voicing's line last so it sits on top. No × marks for unplayed strings (David's call, v64:
+  // they landed in inconsistent places); a string without a coloured dot isn't played.
   const v0=voicings[on];
   if(v0){const pts=v0.snd.map(s=>`${fx(v0.frets[s])},${sy(s)}`).join(' ');
-    svg+=`<polyline class="shape picked" data-i="${on}" points="${pts}"><title>Voicing ${on+1}</title></polyline>`;
-    const mx=v0.low===0||v0.opens&&Math.max(...v0.snd.map(s=>v0.frets[s]))<=4?fx(0):NUT+(v0.low-1)*FW-2;
-    v0.frets.forEach((f,s)=>{if(f==='x')svg+=`<text class="mute" x="${mx}" y="${sy(s)+1}">×</text>`;});}
+    svg+=`<polyline class="shape picked" data-i="${on}" points="${pts}"><title>Voicing ${on+1}</title></polyline>`;}
   // A rootless shape: the book's implied root as a hollow dot (not played).
   if(v0&&v0.imp){const [is,iff]=v0.imp;
     svg+=`<g class="dot implied" data-s="${is}" data-f="${iff}"><title>Implied root (not played)</title><circle cx="${fx(iff)}" cy="${sy(is)}" r="${DOT}"/><text x="${fx(iff)}" y="${sy(is)+.5}">${CH.lab==='note'?ROOT_SPELL[CH.root]:'R'}</text></g>`;}

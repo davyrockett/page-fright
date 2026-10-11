@@ -106,7 +106,7 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
   Cm(add9) 8-10-12-8-8-8 (David's; he first called them maj9 and m9, but they have no 7th). 32 types in 5 groups: triads/sus,
   sixths/added, sevenths, extended, altered dominants. Some shapes have another tone in the bass or no root, as in
   the books; two jazz-book rootless shapes show the implied root as a dashed circle (`imp`). Add or change shapes
-  only from David's sources. Display (v52): one voicing in colour, the rest greyed out; tap to switch. Notation
+  only from David's sources. Display (v52): one voicing in colour (no × marks for muted strings: removed v64, David's call), the rest greyed out; tap to switch. Notation
   underneath. Note names on by default.
 - Drill > Shells (v63, David's request; Claude chose the shapes, David may send book pages to replace or add):
   Triads | Chords | Shells switch. Shells reuse the Chords screen (`#chords-mode`) with `SHELL_GROUPS` instead of
