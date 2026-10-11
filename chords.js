@@ -59,7 +59,21 @@ const CHORD_GROUPS=[
     ['7b5s9','7♭5(♯9)','7 flat 5 sharp 9',[T.R,T.M3,T.d5,T.m7,T.s9],[sh('x-x-8-9-7-11','xx2314',[0,8]),sh('x-3-2-3-4-2','x21341')]],
     ['7s5b9','7♯5(♭9)','7 sharp 5 flat 9',[T.R,T.M3,T.A5,T.m7,T.b9],[sh('x-x-8-9-9-9','xx1222',[0,8]),sh('x-3-2-3-2-4','x21314')]]]],
 ];
-const CHORD_TYPES=Object.fromEntries(CHORD_GROUPS.flatMap(([,list])=>list.map(([id,sym,name,tones,shapes])=>[id,{sym,name,tones,shapes}])));
+/* Drill > Shells (v63; David asked Claude to start the list): three-note shells, the root plus the 3rd and the 7th (or
+   6th), no 5th. For each chord: root on the 6th string (R-7-3, then R-3-7), on the 5th (R-7-3, R-3-7) and on the 4th
+   (R-3-7 on D G B, R-7-3 on D B E). m7♭5 uses R-♭5-♭7; °7 and 6 use R-6-3. */
+const SHELL_GROUPS=[
+  ['Shells',[
+    ['maj7','maj7','Major 7',[T.R,T.M3,T.M7],[sh('8-x-9-9-x-x','1x34xx'),sh('8-7-9-x-x-x','213xxx'),sh('x-3-x-4-5-x','x1x23x'),sh('x-3-2-4-x-x','x214xx'),sh('x-x-10-9-12-x','xx214x'),sh('x-x-10-x-12-12','xx1x34')]],
+    ['7','7','Dominant 7',[T.R,T.M3,T.m7],[sh('8-x-8-9-x-x','1x23xx'),sh('8-7-8-x-x-x','213xxx'),sh('x-3-x-3-5-x','x1x24x'),sh('x-3-2-3-x-x','x213xx'),sh('x-x-10-9-11-x','xx213x'),sh('x-x-10-x-11-12','xx1x23')]],
+    ['m7','m7','Minor 7',[T.R,T.m3,T.m7],[sh('8-x-8-8-x-x','2x34xx'),sh('8-6-8-x-x-x','213xxx'),sh('x-3-x-3-4-x','x2x34x'),sh('x-3-1-3-x-x','x314xx'),sh('x-x-10-8-11-x','xx314x'),sh('x-x-10-x-11-11','xx1x23')]],
+    ['m7b5','m7♭5','Minor 7 flat 5',[T.R,T.d5,T.m7],[sh('8-9-8-x-x-x','132xxx'),sh('x-3-4-3-x-x','x132xx'),sh('x-x-10-11-11-x','xx123x')]],
+    ['dim7','°7','Diminished 7',[T.R,T.m3,T.d7],[sh('8-x-7-8-x-x','2x13xx'),sh('x-3-x-2-4-x','x2x14x'),sh('x-x-10-x-10-11','xx1x12')]],
+    ['6','6','Major 6',[T.R,T.M3,T.M6],[sh('8-x-7-9-x-x','2x14xx'),sh('x-3-x-2-5-x','x2x14x'),sh('x-x-10-x-10-12','xx1x13')]]]],
+];
+const typesOf=groups=>Object.fromEntries(groups.flatMap(([,list])=>list.map(([id,sym,name,tones,shapes])=>[id,{sym,name,tones,shapes}])));
+const CHORD_TYPES=typesOf(CHORD_GROUPS),SHELL_TYPES=typesOf(SHELL_GROUPS);
+let TYPES=CHORD_TYPES;   // the list in use: CHORD_TYPES in Chords, SHELL_TYPES in Shells
 const CH={root:store.get('croot',0),type:store.get('ctype','maj7'),lab:store.get('clab','note'),sel:0}; // sel: the voicing shown in colour
 if(!CHORD_TYPES[CH.type])CH.type='maj7';
 
@@ -69,7 +83,7 @@ function toneName(root,tone){
   let diff=(((root+tone[0])%12-LETTER_PC[letter])%12+12)%12;if(diff>6)diff-=12;
   return letter+(diff>0?'♯'.repeat(diff):'♭'.repeat(-diff));
 }
-const chordSymbol=()=>ROOT_SPELL[CH.root]+CHORD_TYPES[CH.type].sym;
+const chordSymbol=()=>ROOT_SPELL[CH.root]+TYPES[CH.type].sym;
 
 /* ---------- placing the shapes ----------
    Each C shape moves by the distance from C to the root, as low on the neck as it fits (so D maj7's
@@ -77,7 +91,7 @@ const chordSymbol=()=>ROOT_SPELL[CH.root]+CHORD_TYPES[CH.type].sym;
 const TOP_FRET=15;
 function findVoicings(){
   const out=[];
-  for(const shape of CHORD_TYPES[CH.type].shapes){
+  for(const shape of TYPES[CH.type].shapes){
     const fr=shape.frets.filter(f=>f!=='x'),lo=Math.min(...fr),hi=Math.max(...fr);
     if(shape.root!==undefined&&shape.root!==CH.root)continue;   // an open chord only in its own key
     let k=CH.root;while(lo+k>0&&lo+k-12>=0)k-=12;while(lo+k<0)k+=12;
@@ -101,7 +115,7 @@ function findVoicings(){
    the rest are greyed out. Tap a grey one to select it. The notation strip underneath works the same way. */
 const cfb=document.getElementById('cfb'),cnot=document.getElementById('cnotation');
 let voicings=[];
-const toneAt=(s,f)=>{const pc=pcAt(s,f);return CHORD_TYPES[CH.type].tones.find(t=>(CH.root+t[0])%12===pc);};
+const toneAt=(s,f)=>{const pc=pcAt(s,f);return TYPES[CH.type].tones.find(t=>(CH.root+t[0])%12===pc);};
 const vMid=v=>v.snd.reduce((a,s)=>a+fx(v.frets[s]),0)/v.snd.length;
 // The board stops at the 15th fret but keeps the same scale as the other fretboards.
 const CW13=NUT+TOP_FRET*FW+14, cScale=CW13/W;
@@ -209,25 +223,36 @@ cplay.onclick=()=>cp.on?cstop():cstart();
 /* ---------- controls ---------- */
 const crootSel=document.getElementById('croot'),ctypeSel=document.getElementById('ctype');
 crootSel.innerHTML=ROOT_SPELL.map((n,r)=>`<option value="${r}">${n}</option>`).join('');
-ctypeSel.innerHTML=CHORD_GROUPS.map(([g,list])=>`<optgroup label="${g}">${list.map(([id,sym,name])=>`<option value="${id}">${name}${sym&&sym!==name?` (${sym})`:''}</option>`).join('')}</optgroup>`).join('');
-crootSel.value=CH.root;ctypeSel.value=CH.type;
+// Fill the type list for Chords or Shells; each keeps its own last pick (ctype / stype).
+const typeKey=()=>drillMode==='shells'?'stype':'ctype';
+function fillTypes(groups){
+  ctypeSel.innerHTML=groups.map(([g,list])=>`<optgroup label="${g}">${list.map(([id,sym,name])=>`<option value="${id}">${name}${sym&&sym!==name?` (${sym})`:''}</option>`).join('')}</optgroup>`).join('');
+  CH.type=store.get(typeKey(),'maj7');if(!TYPES[CH.type])CH.type='maj7';
+  ctypeSel.value=CH.type;CH.sel=0;
+}
+crootSel.value=CH.root;
 crootSel.onchange=()=>{cstop();CH.root=+crootSel.value;CH.sel=0;store.set('croot',CH.root);drawChords();};
-ctypeSel.onchange=()=>{cstop();CH.type=ctypeSel.value;CH.sel=0;store.set('ctype',CH.type);drawChords();};
+ctypeSel.onchange=()=>{cstop();CH.type=ctypeSel.value;CH.sel=0;store.set(typeKey(),CH.type);drawChords();};
 const clab=document.getElementById('clab');clab.setAttribute('aria-pressed',CH.lab==='note');
 clab.onclick=()=>{CH.lab=CH.lab==='note'?'int':'note';store.set('clab',CH.lab);clab.setAttribute('aria-pressed',CH.lab==='note');drawChordBoard();};
 function describeChords(){
-  if(document.getElementById('drill-view').hidden||drillMode!=='chords')return;
-  document.getElementById('subtitle').textContent=`Chords · ${chordSymbol()} · ${voicings.length} voicing${voicings.length===1?'':'s'}`;
+  if(document.getElementById('drill-view').hidden||drillMode==='triads')return;
+  document.getElementById('subtitle').textContent=`${drillMode==='shells'?'Shells':'Chords'} · ${chordSymbol()} · ${voicings.length} voicing${voicings.length===1?'':'s'}`;
 }
 
-/* ---------- Triads | Chords ---------- */
+/* ---------- Triads | Chords | Shells ----------
+   Shells uses the Chords screen with its own list of chords. */
 let drillMode=store.get('dmode','triads');
 function showMode(m){
-  drillMode=m==='chords'?'chords':'triads';store.set('dmode',drillMode);
+  drillMode=['chords','shells'].includes(m)?m:'triads';store.set('dmode',drillMode);
   document.getElementById('triads-mode').hidden=drillMode!=='triads';
-  document.getElementById('chords-mode').hidden=drillMode!=='chords';
+  document.getElementById('chords-mode').hidden=drillMode==='triads';
+  if(drillMode!=='triads'){
+    TYPES=drillMode==='shells'?SHELL_TYPES:CHORD_TYPES;fillTypes(drillMode==='shells'?SHELL_GROUPS:CHORD_GROUPS);
+    document.getElementById('chelp-chords').hidden=drillMode!=='chords';document.getElementById('chelp-shells').hidden=drillMode!=='shells';
+  }
   document.querySelectorAll('.drill-modes [data-mode]').forEach(b=>{b.setAttribute('aria-pressed',b.dataset.mode===drillMode);b.setAttribute('aria-selected',b.dataset.mode===drillMode);});
-  if(drillMode==='chords'){dstop();drawChords();}else{cstop();drawDrill();}
+  if(drillMode!=='triads'){cstop();dstop();drawChords();}else{cstop();drawDrill();}
   describeDrill();
 }
 document.querySelector('.drill-modes').addEventListener('click',e=>{const b=e.target.closest('[data-mode]');if(b)showMode(b.dataset.mode);});

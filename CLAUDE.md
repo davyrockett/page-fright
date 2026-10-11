@@ -108,6 +108,10 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
   the books; two jazz-book rootless shapes show the implied root as a dashed circle (`imp`). Add or change shapes
   only from David's sources. Display (v52): one voicing in colour, the rest greyed out; tap to switch. Notation
   underneath. Note names on by default.
+- Drill > Shells (v63, David's request; Claude chose the shapes, David may send book pages to replace or add):
+  Triads | Chords | Shells switch. Shells reuse the Chords screen (`#chords-mode`) with `SHELL_GROUPS` instead of
+  `CHORD_GROUPS` (`TYPES` points at the list in use; type pick saved as `stype` vs `ctype`). Three-note shells:
+  maj7, 7, m7 (R-7-3 and R-3-7 with root on 6th, 5th, 4th strings), m7♭5 (R-♭5-♭7), °7 and 6 (R-6-3).
   drill.js shares improv.js globals (fx, sy, W, H, NUT, FW, TOP, GAP, LAST, pcAt) — avoid reusing their names.
 - Planned (2026-10-09): David will provide a MIDI file of exactly the backing track he wants. Play it with
   the app's own synths, transposed to the chosen key and at the chosen tempo (no recorded audio: he decided

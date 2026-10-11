@@ -78,6 +78,9 @@ moved to the chosen root, as low on the neck as they fit (up to the 15th fret). 
 others greyed out, each written as a chord underneath. Rootless shapes show the implied root as a dashed circle.
 Tap one to hear and highlight it; Play steps through them.
 
+**Shells** (the third Drill mode): three-note shell chords (root, 3rd and 7th, or 6th; no 5th) for maj7, 7, m7,
+m7♭5, °7 and 6, with the root on the 6th, 5th and 4th strings. Same screen as Chords.
+
 ## Publishing a change
 
 1. Edit the files.
