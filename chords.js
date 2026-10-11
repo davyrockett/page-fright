@@ -89,7 +89,31 @@ const chordSymbol=()=>ROOT_SPELL[CH.root]+TYPES[CH.type].sym;
    Each C shape moves by the distance from C to the root, as low on the neck as it fits (so D maj7's
    x-x-10-12-12-12 shape becomes the open x-x-0-2-2-2), never past fret TOP_FRET. */
 const TOP_FRET=15;
+// Shells (v65, David's call: the root needn't be in the bass): every way to play the three notes, one per string,
+// on the usual string groups (three neighbours, or with one string skipped: 6-4-3, 5-3-2, 4-2-1), within four
+// frets, up to fret TOP_FRET. Open strings only near the nut.
+const SHELL_SETS=[[0,1,2],[1,2,3],[2,3,4],[3,4,5],[0,2,3],[1,3,4],[2,4,5]];
+function shellVoicings(){
+  const want=TYPES[CH.type].tones.map(t=>(CH.root+t[0])%12).sort((a,b)=>a-b).join(),out=[];
+  for(const set of SHELL_SETS){
+    const pick=[];
+    (function walk(j){
+      if(j===3){
+        const pcs=set.map((s,i)=>pcAt(s,pick[i])).sort((a,b)=>a-b).join();if(pcs!==want)return;
+        const fz=pick.filter(f=>f>0);
+        if(fz.length&&Math.max(...fz)-Math.min(...fz)>3)return;
+        if(pick.includes(0)&&fz.length&&Math.max(...fz)>4)return;
+        const frets=['x','x','x','x','x','x'];set.forEach((s,i)=>frets[s]=pick[i]);
+        out.push({frets,snd:[...set],fing:'',low:pick.includes(0)?0:Math.min(...fz),opens:pick.filter(f=>f===0).length,imp:null});
+        return;
+      }
+      for(let f=0;f<=TOP_FRET;f++){pick[j]=f;walk(j+1);}
+    })(0);
+  }
+  return out.sort((a,b)=>a.low-b.low||a.snd[0]-b.snd[0]);
+}
 function findVoicings(){
+  if(TYPES===SHELL_TYPES)return shellVoicings();
   const out=[];
   for(const shape of TYPES[CH.type].shapes){
     const fr=shape.frets.filter(f=>f!=='x'),lo=Math.min(...fr),hi=Math.max(...fr);

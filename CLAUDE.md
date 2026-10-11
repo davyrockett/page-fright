@@ -112,6 +112,9 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
   Triads | Chords | Shells switch. Shells reuse the Chords screen (`#chords-mode`) with `SHELL_GROUPS` instead of
   `CHORD_GROUPS` (`TYPES` points at the list in use; type pick saved as `stype` vs `ctype`). Three-note shells:
   maj7, 7, m7 (R-7-3 and R-3-7 with root on 6th, 5th, 4th strings), m7♭5 (R-♭5-♭7), °7 and 6 (R-6-3).
+  v65 (David's call: the root needn't be in the bass): shells are no longer a fixed list; `shellVoicings()`
+  finds every arrangement of the three notes, one per string, on string groups 6-5-4 5-4-3 4-3-2 3-2-1 and
+  6-4-3 5-3-2 4-2-1, within 4 frets, up to fret 15 (`SHELL_GROUPS` shapes now only define each type's notes).
   drill.js shares improv.js globals (fx, sy, W, H, NUT, FW, TOP, GAP, LAST, pcAt) — avoid reusing their names.
 - Planned (2026-10-09): David will provide a MIDI file of exactly the backing track he wants. Play it with
   the app's own synths, transposed to the chosen key and at the chosen tempo (no recorded audio: he decided

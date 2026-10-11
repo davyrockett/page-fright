@@ -79,7 +79,8 @@ others greyed out, each written as a chord underneath. Rootless shapes show the 
 Tap one to hear and highlight it; Play steps through them.
 
 **Shells** (the third Drill mode): three-note shell chords (root, 3rd and 7th, or 6th; no 5th) for maj7, 7, m7,
-m7♭5, °7 and 6, with the root on the 6th, 5th and 4th strings. Same screen as Chords.
+m7♭5, °7 and 6: every arrangement of the three notes (any of them in the bass) on three neighbouring strings
+or with one string skipped (6-4-3, 5-3-2, 4-2-1). Same screen as Chords.
 
 ## Publishing a change
 
