@@ -67,11 +67,11 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
 - Rhythms: whole/half/quarter/eighth/sixteenth + Dotted + Rests, built from beat "cells" (`CELLS`); two-beat
   cells start on beat 1 or 3; never two rests in a row.
 - Double stops: intervals chosen in Customize (v71, David's request: 2nds 3rds 4ths 5ths 6ths 7ths octaves; default
-  3rds and 5ths; `GEN.dints`), on neighboring strings or skipping one string (`stringSets()`). Triple stops: major or
-  minor close triads, inversions chosen in Customize (root / 1st / 2nd; default root; `GEN.tinv`, `TRIAD_INVS`), on
-  neighboring strings. Checked by `playable()`; no tritone anywhere (so no diminished triads). The interval and
-  inversion rows show only when that texture is on.
-- Accidentals (v71, toggle in Customize > Notes, off by default): some single notes become chromatic approach notes a
+  3rds and 5ths; `GEN.dints`), on neighboring strings or skipping one string (`stringSets()`). Triple stops (v72, David's
+  call): no separate options; two of the chosen intervals stacked (3rds+3rds = triad, 3rds+4ths = inversion), on
+  neighboring strings; a texture that can't be built (e.g. octaves only) is dropped. Checked by `playable()`; no
+  tritone anywhere. The Intervals row shows only when double or triple stops are on.
+- Accidentals (v71; v72 moved to Customize > Key, off by default): some single notes become chromatic approach notes a
   half step below or above the next note (`approach()`), spelled from the neighbouring letter; drawn with
   `VF.Accidental.applyAccidentals` per measure (adds naturals too).
 - Tab (toggle, or T): fingering is chosen for the whole exercise (`fingering()`, a cheapest-route search over

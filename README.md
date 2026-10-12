@@ -43,9 +43,12 @@ iPhone and iPad Home Screens and the Mac's Dock, and works with no signal once i
 - **Rhythm** (in Customize): any mix of whole, half, quarter, eighth and sixteenth notes, plus Dotted and Rests.
   Measures are built from common one- and two-beat patterns (two-beat ones start on beat 1 or 3), and
   eighths/sixteenths are beamed by the beat.
-- **Notes** (in Customize): single notes, double stops (3rds and perfect 5ths) and/or triple stops (close-position
-  triads). Chords are always on neighboring strings and are checked to be playable in the chosen positions
-  (or within a 5-fret stretch on the whole neck). The diminished 5th B–F is left out.
+- **Notes** (in Customize): single notes, double stops and/or triple stops. **Intervals** (2nds to octaves,
+  default 3rds and 5ths) sets the double stops; triple stops stack two of them (3rds + 3rds make a triad).
+  Chords are on neighboring strings (double stops may skip one) and are checked to be playable in the chosen
+  positions (or within a 5-fret stretch on the whole neck). The diminished 5th is left out.
+- **Accidentals** (in Customize, under Key): some notes become sharps, flats or naturals outside the key, each
+  leading by a half step into the next note.
 
 ## Improv
 
