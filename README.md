@@ -80,7 +80,8 @@ Tap one to hear and highlight it; Play steps through them.
 
 **Shells** (the third Drill mode): three-note shell chords (root, 3rd and 7th, or 6th; no 5th) for maj7, 7, m7,
 m7♭5, °7 and 6: every arrangement of the three notes (any of them in the bass) on three neighbouring strings
-(no skipped strings). Same screen as Chords.
+(no skipped strings), plus extended shells with no root (3rd, 7th and a 9th, 11th, 13th or altered note).
+Same screen as Chords.
 
 ## Publishing a change
 

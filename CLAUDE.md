@@ -117,6 +117,8 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
   v65 (David's call: the root needn't be in the bass): shells are no longer a fixed list; `shellVoicings()`
   finds every arrangement of the three notes, one per string, on string groups 6-5-4 5-4-3 4-3-2 3-2-1
   (skipped-string groups removed v66, David's call), within 4 frets, up to fret 15 (`SHELL_GROUPS` shapes now only define each type's notes).
+  v69 (David asked for 9s, 11s, 13s): an "Extended shells (no root)" group: 3rd, 7th and extension, rootless
+  (maj9 9 m9 m11 13 maj7♯11 7♯11 7♭9 7♯9 7♭13), found by the same generator.
   drill.js shares improv.js globals (fx, sy, W, H, NUT, FW, TOP, GAP, LAST, pcAt) — avoid reusing their names.
 - Planned (2026-10-09): David will provide a MIDI file of exactly the backing track he wants. Play it with
   the app's own synths, transposed to the chosen key and at the chosen tempo (no recorded audio: he decided

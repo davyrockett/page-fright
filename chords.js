@@ -74,6 +74,19 @@ const SHELL_GROUPS=[
     ['m7b5','m7♭5','Minor 7 flat 5',[T.R,T.d5,T.m7],[sh('8-9-8-x-x-x','132xxx'),sh('x-3-4-3-x-x','x132xx'),sh('x-x-10-11-11-x','xx123x')]],
     ['dim7','°7','Diminished 7',[T.R,T.m3,T.d7],[sh('8-x-7-8-x-x','2x13xx'),sh('x-3-x-2-4-x','x2x14x'),sh('x-x-10-x-10-11','xx1x12')]],
     ['6','6','Major 6',[T.R,T.M3,T.M6],[sh('8-x-7-9-x-x','2x14xx'),sh('x-3-x-2-5-x','x2x14x'),sh('x-x-10-x-10-12','xx1x13')]]]],
+  // Extended shells (v69, David asked for 9s, 11s and 13s): the jazz comping way, three notes with no root (the bass
+  // player has it): the 3rd, the 7th and the extension. Found by shellVoicings() like the others.
+  ['Extended shells (no root)',[
+    ['emaj9','maj9','Major 9',[T.M3,T.M7,T.M9],[]],
+    ['e9','9','Dominant 9',[T.M3,T.m7,T.M9],[]],
+    ['em9','m9','Minor 9',[T.m3,T.m7,T.M9],[]],
+    ['em11','m11','Minor 11',[T.m3,T.m7,T.P11],[]],
+    ['e13','13','Dominant 13',[T.M3,T.m7,T.M13],[]],
+    ['emaj7s11','maj7♯11','Major 7 sharp 11',[T.M3,T.M7,T.s11],[]],
+    ['e7s11','7♯11','7 sharp 11',[T.M3,T.m7,T.s11],[]],
+    ['e7b9','7♭9','7 flat 9',[T.M3,T.m7,T.b9],[]],
+    ['e7s9','7♯9','7 sharp 9',[T.M3,T.m7,T.s9],[]],
+    ['e7b13','7♭13','7 flat 13',[T.M3,T.m7,T.b13],[]]]],
 ];
 const typesOf=groups=>Object.fromEntries(groups.flatMap(([,list])=>list.map(([id,sym,name,tones,shapes])=>[id,{sym,name,tones,shapes}])));
 const CHORD_TYPES=typesOf(CHORD_GROUPS),SHELL_TYPES=typesOf(SHELL_GROUPS);
