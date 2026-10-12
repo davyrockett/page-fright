@@ -71,21 +71,27 @@ def glow(canvas: Image.Image, layer: Image.Image, pos, strength: float, radius: 
 
 def draw(size: int = 1024) -> Image.Image:
     s = 1024
-    img = Image.new("RGBA", (s, s), BG + (255,))
+    img = Image.new("RGBA", (s, s), (0, 0, 0, 0))
     note = fit(note_layer(), 830)            # the note fills most of the height
     bang = fit(bang_layer(), 600)
     nx, ny = 74, (s - note.height) // 2 + 10
     bx, by = s - 70 - bang.width, (s - bang.height) // 2 + 30
     glow(img, note, (nx, ny), strength=1.15, radius=40)
     glow(img, bang, (bx, by), strength=0.9, radius=30)
-    return img.convert("RGB")
+    # Shrink the whole drawing toward the centre so the note has the same height and margins as the "1"
+    # in the First Frets icon (about 61% of the icon's height, ~100px of space above and below at 512px).
+    k = 0.755
+    small = img.resize((round(s * k), round(s * k)), Image.LANCZOS)
+    out = Image.new("RGBA", (s, s), BG + (255,))
+    out.alpha_composite(small, ((s - small.width) // 2, (s - small.height) // 2))
+    return out.convert("RGB")
 
 
 def maskable() -> Image.Image:
     """Android crops icons to a circle, so this copy has the drawing shrunk to fit inside it."""
-    art = draw(1024).resize((740, 740), Image.LANCZOS)
+    art = draw(1024).resize((970, 970), Image.LANCZOS)
     img = Image.new("RGB", (1024, 1024), BG)
-    img.paste(art, (142, 142))
+    img.paste(art, (27, 27))
     return img
 
 
