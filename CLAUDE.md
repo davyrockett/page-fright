@@ -66,8 +66,14 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
 - Keys: C G D A E F B♭ E♭ A♭ major, multi-select, one picked per exercise; starts and ends on the home note.
 - Rhythms: whole/half/quarter/eighth/sixteenth + Dotted + Rests, built from beat "cells" (`CELLS`); two-beat
   cells start on beat 1 or 3; never two rests in a row.
-- Double stops = 3rds and perfect 5ths; triple stops = close triads; on neighboring strings, checked by
-  `playable()`; no diminished 5th.
+- Double stops: intervals chosen in Customize (v71, David's request: 2nds 3rds 4ths 5ths 6ths 7ths octaves; default
+  3rds and 5ths; `GEN.dints`), on neighboring strings or skipping one string (`stringSets()`). Triple stops: major or
+  minor close triads, inversions chosen in Customize (root / 1st / 2nd; default root; `GEN.tinv`, `TRIAD_INVS`), on
+  neighboring strings. Checked by `playable()`; no tritone anywhere (so no diminished triads). The interval and
+  inversion rows show only when that texture is on.
+- Accidentals (v71, toggle in Customize > Notes, off by default): some single notes become chromatic approach notes a
+  half step below or above the next note (`approach()`), spelled from the neighbouring letter; drawn with
+  `VF.Accidental.applyAccidentals` per measure (adds naturals too).
 - Tab (toggle, or T): fingering is chosen for the whole exercise (`fingering()`, a cheapest-route search over
   hand positions). Whole neck settles around **5th position** (David is getting comfortable there),
   reach-back beats an open string, avoid high frets on the thick strings.

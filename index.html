@@ -111,6 +111,7 @@ p{margin:0}
 .set-row>div:first-child{flex:1 1 220px;min-width:0}
 .settings .set-row+.set-row{border-top:1px solid var(--line);padding-top:14px}
 .seg{display:flex;gap:6px;flex-wrap:wrap}
+.sub-opts{display:grid;gap:6px;padding-left:12px;border-left:2px solid var(--line)}
 @media (max-width:560px){.status{margin-left:0;flex-basis:100%}.tempo input{width:120px}}
 /* Read | Improv switch */
 .views{display:inline-flex;gap:2px;padding:4px;border-radius:999px;background:var(--sunk);border:1px solid var(--line)}
@@ -376,10 +377,13 @@ const posRange=p=>[OPEN_LOW+reach(p)[0],OPEN_HIGH+reach(p)[1]];
 const WHOLE=[52,96];
 // Can these notes (ascending MIDI) be played at once on neighboring strings, low note on the lower string?
 // With positions chosen, all fretted notes must fit in one of them; on the whole neck, within a 5-fret stretch.
+// Two-note chords may also skip a string (6ths and octaves are played that way).
+const stringSets=n=>{const o=[];for(let s0=0;s0+n<=6;s0++)o.push(Array.from({length:n},(_,i)=>s0+i));
+  if(n===2)for(let s0=0;s0+2<6;s0++)o.push([s0,s0+2]);return o;};
 function playable(midis,sel){
   const windows=sel.length?sel.map(reach):[[0,22]];
-  for(let s0=0;s0+midis.length<=6;s0++){
-    const f=midis.map((m,i)=>m-STRINGS[s0+i]);
+  for(const ss of stringSets(midis.length)){
+    const f=midis.map((m,i)=>m-STRINGS[ss[i]]);
     const fretted=f.filter(x=>x>0);
     const stretchOk=!fretted.length||Math.max(...fretted)-Math.min(...fretted)<=4;
     if(stretchOk&&windows.some(([lo,hi])=>f.every(x=>x>=0&&(x===0?lo===0:x>=lo&&x<=hi))))return true;
@@ -436,20 +440,41 @@ const TEXTURES={single:'Single notes',double:'Double stops',triple:'Triple stops
 function pickWeighted(pairs){let t=Math.random()*pairs.reduce((s,p)=>s+p[1],0);for(const [v,w] of pairs){if((t-=w)<=0)return v;}return pairs[0][0];}
 const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
 // The chord with `top` (a scale index) as its highest note, as scale indexes low to high, or null if it won't work.
-// Double stops: a 3rd or a perfect 5th. Triple stops: a triad in close position (3rd + 3rd, perfect 5th outside).
-// The diminished 5th is left out of both.
+// Double stops: the intervals chosen in Customize (2nds to octaves; default 3rds and 5ths). Triple stops: major or
+// minor triads in close position, in the inversions chosen (default root position). The tritone (diminished 5th /
+// augmented 4th) is left out of both, so no diminished triads either.
+const INTERVALS={2:'2nds',3:'3rds',4:'4ths',5:'5ths',6:'6ths',7:'7ths',8:'Octaves'};
+const TRIAD_INVS={root:'Root position',inv1:'1st inversion',inv2:'2nd inversion'};
+const INV_SHAPE={root:[-4,-2,0],inv1:[-5,-3,0],inv2:[-5,-2,0]};
+let GEN={dints:[3,5],tinv:['root']};   // read from Customize when an exercise is made
 function chordOn(SC,top,type,lo,hi,sel){
-  const shapes=type==='single'?[[0]]:type==='double'?shuffle([[-2,0],[-4,0]]):[[-4,-2,0]];
+  const shapes=type==='single'?[[0]]:type==='double'?shuffle(GEN.dints.map(n=>[1-n,0])):shuffle(GEN.tinv.map(k=>INV_SHAPE[k]));
   for(const sh of shapes){
     const idx=sh.map(d=>top+d);
     if(idx[0]<lo||top>hi)continue;
     const m=idx.map(i=>SC[i].midi);
-    if(sh[0]===-4&&m.at(-1)-m[0]!==7)continue;
+    if(m.some((a,i)=>m.some((b,j)=>j>i&&(b-a)%12===6)))continue;
     if(playable(m,sel))return idx;
   }
   return null;
 }
+// Accidentals: turn a single note into a chromatic approach note, a half step below or above the next note
+// (C♯ to D, E♭ to D), spelled from the neighbouring letter. Only when it isn't already in the key.
+function approach(SC,keyName,toIdx,fromMidi,lo,hi,sel){
+  const t=SC[toIdx],pcs=new Set(SC.map(n=>n.midi%12));
+  const dirs=fromMidi<t.midi?[-1,1]:[1,-1];
+  for(const d of dirs){
+    const m=t.midi+d;if(pcs.has(m%12)||m<SC[lo].midi||m>SC[hi].midi||!playable([m],sel))continue;
+    const L=LETTERS[(LETTERS.indexOf(t.letter)+(d<0?6:1))%7];
+    const oct=Math.floor((m-STEPS[L]+1)/12)-1,alt=m-(12*(oct+1)+STEPS[L]);
+    if(Math.abs(alt)>1)continue;
+    if(alt===0&&alterIn(keyName,L)===0)continue;
+    return {key:`${L}${alt>0?'#':alt<0?'b':''}/${oct}`,midi:m};
+  }
+  return null;
+}
 function generate(sel=store.get('positions',[]),tex=store.get('textures',['single']),keys=store.get('keys',['C'])){
+  GEN={dints:store.get('dints',[3,5]),tinv:store.get('tinv',['root'])};
   const key=keys[Math.floor(Math.random()*keys.length)], SC=scaleOf(key), home=key[0].toLowerCase();
   const [loM,hiM]=span(sel);
   const idx=SC.map((n,i)=>n.midi>=loM&&n.midi<=hiM?i:-1).filter(i=>i>=0), lo=idx[0], hi=idx.at(-1);
@@ -486,6 +511,12 @@ function generate(sel=store.get('positions',[]),tex=store.get('textures',['singl
     last=pick.at(-1)-pos;pos=pick.at(-1);out.push(pick);
   }
   sounding.forEach((e,i)=>{e.keys=out[i].map(j=>SC[j].key);});
+  // Accidentals: some single notes (never the first or last) become chromatic approach notes to the next one.
+  if(store.get('accidentals',false))for(let i=1;i<N-1;i++){
+    if(out[i].length!==1||out[i+1].length!==1||Math.random()>.22)continue;
+    const a=approach(SC,key,out[i+1][0],SC[out[i-1].at(-1)].midi,lo,hi,sel);
+    if(a)sounding[i].keys=[a.key];
+  }
   return {key,events,sel};
 }
 
@@ -501,19 +532,19 @@ function index(){let t=0;onsets=[];measureOf=[];exercise.events.forEach(e=>{onse
    Most notes can be played in several places, so the whole exercise is fingered at once: the hand sits at a
    fret ("hand position", covering 4 frets) and we pick the route with the fewest and smallest shifts.
    With positions chosen, the hand stays in them. On the whole neck it stays near 5th position (HOME) when it can.
-   Chords stay on neighboring strings, as generated. */
+   Chords stay on neighboring strings, as generated (a double stop may skip one string). */
 const HOME=5;
 let fing=[];
 function fingering(x){
   const sel=x.sel||[];
   // The ways to play these notes: each note on its own string, neighboring strings, low note on the lower string.
   const ways=midis=>{const out=[];
-    for(let s0=0;s0+midis.length<=6;s0++){
-      const f=midis.map((m,i)=>m-STRINGS[s0+i]);
+    for(const ss of stringSets(midis.length)){
+      const f=midis.map((m,i)=>m-STRINGS[ss[i]]);
       if(f.some(v=>v<0||v>22))continue;
       const fr=f.filter(v=>v>0);
       if(fr.length&&Math.max(...fr)-Math.min(...fr)>4)continue;
-      out.push({strs:midis.map((_,i)=>s0+i),frets:f,lo:fr.length?Math.min(...fr):null,hi:fr.length?Math.max(...fr):null,open:fr.length<f.length});
+      out.push({strs:[...ss],frets:f,lo:fr.length?Math.min(...fr):null,hi:fr.length?Math.max(...fr):null,open:fr.length<f.length});
     }
     return out;};
   // Hand positions to choose from, and what each costs for a given way of playing the notes.
@@ -613,6 +644,7 @@ function render(){
         return n;});
       const beams=VF.Beam.generateBeams(notes,{groups:[new VF.Fraction(1,4)]});
       const voice=new VF.Voice({num_beats:BEATS,beat_value:4}).addTickables(notes);
+      VF.Accidental.applyAccidentals([voice],key);   // sharps, flats and naturals for notes outside the key, per measure
       let tv=null;
       if(tab){
         const tnotes=inM.map(i=>{const e=ev[i],[base,dots]=VF_DUR[e.d],dur=base+(dots?'d':'');
@@ -818,7 +850,7 @@ const ORD=n=>n===1?'1st':n+'th';
 function describe(){
   const sel=store.get('positions',[]), tex=store.get('textures',['single']);
   const cap=t=>t.toLowerCase().replace(/^./,c=>c.toUpperCase());
-  const texName=cap(tex.map(t=>TEXTURES[t]).join(' + '));
+  const texName=cap(tex.map(t=>TEXTURES[t]).join(' + '))+(store.get('accidentals',false)?', accidentals':'');
   const rh=store.get('rhythms',['quarter']);
   const rhName=cap(rh.map(r=>RHYTHMS[r]).join(' + ')+' notes')+(store.get('dotted',false)?', dotted':'')+(store.get('rests',false)?', rests':'');
   document.getElementById('subtitle').textContent=`${keyLabel(exercise.key)} major · ${rhName} · ${texName} · ${sel.length?sel.map(ORD).join(' + ')+(sel.length>1?' positions':' position'):'Whole neck'}`;
@@ -834,6 +866,7 @@ function multi(storeKey,def,order){
       if(!next.length)return false;store.set(storeKey,next);return true;}};
 }
 const keySel=multi('keys',['C'],Object.keys(KEYS)), rhySel=multi('rhythms',['quarter'],Object.keys(RHYTHMS)), texSel=multi('textures',['single'],Object.keys(TEXTURES));
+const dintSel=multi('dints',[3,5],Object.keys(INTERVALS).map(Number)), tinvSel=multi('tinv',['root'],Object.keys(TRIAD_INVS));
 const customPop=Popup('Customize',()=>{
   const btns=(attr,pairs)=>pairs.map(([v,t])=>`<button type="button" class="btn" data-${attr}="${v}">${t}</button>`).join('');
   const el=h(`<div class="settings">
@@ -842,8 +875,13 @@ const customPop=Popup('Customize',()=>{
     <div class="set-row"><div><b>Rhythm</b><p class="cap">The note lengths to use. Dotted adds dotted halves, dotted quarter + eighth, and dotted eighth + sixteenth (each needs the matching lengths turned on). Rests turns some notes into rests.</p></div></div>
     <div class="seg" role="group" aria-label="Note lengths">${btns('rhy',Object.entries(RHYTHMS))}</div>
     <div class="seg" role="group" aria-label="Rhythm extras">${btns('flag',[['dotted','Dotted'],['rests','Rests']])}</div>
-    <div class="set-row"><div><b>Notes</b><p class="cap">Double stops are 3rds and 5ths. Triple stops are three-note chords stacked in 3rds. Both are always on neighboring strings and fit your positions. Choose more than one to mix them.</p></div></div>
+    <div class="set-row"><div><b>Notes</b><p class="cap">Choose more than one to mix them. Every chord fits your positions. Accidentals adds some sharps, flats and naturals outside the key, each leading by a half step into the next note.</p></div></div>
     <div class="seg" role="group" aria-label="Notes">${btns('tex',Object.entries(TEXTURES))}</div>
+    <div class="seg" role="group" aria-label="Accidentals">${btns('flag',[['accidentals','Accidentals']])}</div>
+    <div class="sub-opts" data-for="double"><p class="cap"><b>Double stop intervals</b> (6ths, 7ths and octaves may skip a string)</p>
+      <div class="seg" role="group" aria-label="Double stop intervals">${btns('dint',Object.entries(INTERVALS))}</div></div>
+    <div class="sub-opts" data-for="triple"><p class="cap"><b>Triple stops</b>: major and minor triads on neighboring strings</p>
+      <div class="seg" role="group" aria-label="Triple stop inversions">${btns('tinv',Object.entries(TRIAD_INVS))}</div></div>
     <div class="set-row"><div><b>Positions</b><p class="cap">Only use notes you can play without leaving the positions you choose. A position is named for its lowest fret and covers four frets, plus the index finger's reach back one fret; 1st position uses the open strings. Choose several to combine them, or Whole neck for everything.</p></div></div>
     <div class="seg" role="group" aria-label="Positions">
       <button type="button" class="btn" data-whole>Whole neck</button>
@@ -857,10 +895,16 @@ const customPop=Popup('Customize',()=>{
     press('[data-key]',b=>keySel.get().includes(b.dataset.key));
     press('[data-rhy]',b=>rhySel.get().includes(b.dataset.rhy));
     press('[data-tex]',b=>texSel.get().includes(b.dataset.tex));
-    press('[data-flag]',b=>store.get(b.dataset.flag,false));};
+    press('[data-flag]',b=>store.get(b.dataset.flag,false));
+    press('[data-dint]',b=>dintSel.get().includes(+b.dataset.dint));
+    press('[data-tinv]',b=>tinvSel.get().includes(b.dataset.tinv));
+    // The interval and inversion choices only show when double or triple stops are on.
+    el.querySelectorAll('.sub-opts').forEach(d=>d.hidden=!texSel.get().includes(d.dataset.for));};
   el.addEventListener('click',e=>{
-    const b=e.target.closest('button[data-key],button[data-rhy],button[data-tex],button[data-flag],button[data-pos],button[data-whole]');if(!b)return;
+    const b=e.target.closest('button[data-key],button[data-rhy],button[data-tex],button[data-flag],button[data-pos],button[data-whole],button[data-dint],button[data-tinv]');if(!b)return;
     const d=b.dataset;
+    if(d.dint&&!dintSel.toggle(+d.dint))return;
+    if(d.tinv&&!tinvSel.toggle(d.tinv))return;
     if(d.key&&!keySel.toggle(d.key))return;
     if(d.rhy&&!rhySel.toggle(d.rhy))return;
     if(d.tex&&!texSel.toggle(d.tex))return;
@@ -882,7 +926,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v70';
+window.APP_VERSION = 'v71';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
