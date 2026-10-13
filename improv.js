@@ -309,11 +309,12 @@ function pressAll(){
   document.getElementById('bfeel').value=B.feel;
   document.getElementById('bscale').value=B.scale;
   document.getElementById('btrack').value=B.track;
-  // Mode buttons: only for Modes. Tempo, Feel and Quick change only matter for the blues.
+  // Mode buttons: only for Modes. Tempo, Feel and Quick change only matter for the blues, so on the drone they're
+  // greyed out (not hidden) and nothing else moves.
   const md=document.getElementById('bmodes');md.hidden=B.scale!=='modes';
   md.querySelectorAll('[data-md]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.md===B.mode));
-  const blues=B.track==='blues';document.getElementById('bquick').hidden=!blues;
-  document.getElementById('btempo').closest('label').hidden=!blues;document.getElementById('bfeel').closest('label').hidden=!blues;
+  const blues=B.track==='blues';
+  [document.getElementById('bquick'),document.getElementById('btempo').closest('label'),document.getElementById('bfeel').closest('label')].forEach(el=>greyOut(el,!blues));
   document.getElementById('blab').setAttribute('aria-pressed',B.lab==='note');
   document.getElementById('bshapes').setAttribute('aria-pressed',B.shapesOn);const sh=document.getElementById('bshape');sh.classList.toggle('off',!B.shapesOn);sh.setAttribute('aria-hidden',!B.shapesOn); // invisible but still takes its space, so nothing jumps
   document.querySelectorAll('#bshape [data-sh]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.sh==='all'?!B.shapes.length:B.shapes.includes(b.dataset.sh)));
@@ -327,6 +328,7 @@ document.getElementById('bscale').onchange=e=>{
   if(B.scale==='modes'&&was!=='modes')setTrack('drone');else if(was==='modes'&&B.scale!=='modes')setTrack('blues');
   drawShapes();drawChips();drawBoard();scrollToShape();describeImprov();};
 document.getElementById('bmodes').innerHTML=Object.entries(MODES).map(([k,m])=>`<button type="button" class="btn" data-md="${k}" title="${m.name}">${m.short}</button>`).join('');
+function greyOut(el,off){el.classList.toggle('greyed',off);el.setAttribute('aria-disabled',off);el.querySelectorAll('input,select').forEach(i=>i.disabled=off);if(el.matches('button'))el.disabled=off;}
 function setTrack(t){
   if(t===B.track)return;const playing=bp.on;if(playing)bstop();
   B.track=t;store.set('btrack',t);pressAll();if(playing)bstart();
@@ -353,8 +355,8 @@ document.getElementById('improv-view').addEventListener('click',e=>{
 });
 // The I, IV and V chords beside Chord tones: tap one to see its tones; the one playing is outlined.
 function drawChips(){
-  const el=document.getElementById('bchips'),hide=!B.tones||B.track==='drone'; // the I/IV/V chords are for the blues
-  el.classList.toggle('off',hide);el.setAttribute('aria-hidden',hide);
+  const el=document.getElementById('bchips');el.classList.toggle('off',!B.tones);el.setAttribute('aria-hidden',!B.tones);
+  greyOut(el,B.track==='drone');   // the I/IV/V chords are for the blues: greyed out on the drone
   const now=bp.on&&bp.bar>=0?form()[bp.bar]:null;
   el.innerHTML=[0,5,7].map(st=>`<button type="button" class="btn chip${st===now?' now':''}" data-chip="${st}" aria-pressed="${B.preview===st}" title="Show the tones of ${pcName(B.key+st,B.key)}7">${pcName(B.key+st,B.key)}7</button>`).join('');
 }

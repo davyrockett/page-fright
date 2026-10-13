@@ -169,6 +169,8 @@ p{margin:0}
 .mode-row{flex-wrap:nowrap}
 @media (max-width:560px){.mode-row{gap:4px}.mode-row .btn{padding:6px 5px;font-size:13px;min-width:0;flex:1 1 0}}
 .fretboard .dot.color circle{stroke:var(--inv2);stroke-width:3.5}
+/* Controls that don't apply right now (e.g. Tempo on the drone): greyed out in place, so nothing moves. */
+.greyed{opacity:.35;pointer-events:none}
 /* Drill notation strip: same width as the fretboard, so each chord sits under its shape. */
 .notation-strip svg{display:block;width:100%;min-width:760px;height:auto}
 .notation-strip svg,.notation-strip svg [fill]:not([fill="none"]){fill:var(--ink)}
@@ -928,7 +930,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v73';
+window.APP_VERSION = 'v74';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
