@@ -82,6 +82,11 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
   major scale, CAGED chord shapes; shapes named E/D/C/A/G, several selectable. Chord tones: blue rings on scale
   notes in the chord; chord tones outside the scale as hollow blue dots labeled by role (R/3/5/♭7); tap I/IV/V
   beside Chord tones to preview a chord. David asked to remove the 12-bar chord chart; don't bring it back.
+- Improv modes (v70, David picked layout "C"): "Modes" in the scale list shows a row of mode buttons
+  (Ion…Loc, `MODES`, own row so nothing jumps); shapes = 5-note box + 2 notes; colour note (Dorian ♮6, Lydian ♯4,
+  Mixolydian ♭7, Phrygian ♭2, Aeolian ♭6, Locrian ♭5, Ionian 7) ringed purple; Lydian labels/spells ♯4. Track
+  select: 12-bar blues | Drone (root+5th pad; root+octave for Locrian). Picking Modes switches to Drone, leaving
+  switches back. Tempo/Feel/Quick change and the I/IV/V chips hide on Drone; chord-tone rings = home chord.
 - Improv note names are spelled from the scale (C minor: B♭ and E♭, never A♯/D♯): `nameFrom()` / `scaleRoot()`.
   Minor scales in A♭ are spelled from G♯; the blues ♭5 becomes ♯4 where ♭5 would be C♭/F♭ (F blues: B).
   Chord tones are spelled from the chord's root (F7 = F A C E♭).

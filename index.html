@@ -164,6 +164,11 @@ p{margin:0}
 .fretboard .dot.implied circle{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-dasharray:4 3}
 .fretboard .dot.implied text{fill:var(--accent)}
 .notation-strip .vf-stavenote.other{opacity:.25}
+/* Improv modes: the mode buttons and the colour note (the note that gives each mode its sound). */
+.mode-row .btn{padding:6px 10px;font-size:14px;min-width:44px}
+.mode-row{flex-wrap:nowrap}
+@media (max-width:560px){.mode-row{gap:4px}.mode-row .btn{padding:6px 5px;font-size:13px;min-width:0;flex:1 1 0}}
+.fretboard .dot.color circle{stroke:var(--inv2);stroke-width:3.5}
 /* Drill notation strip: same width as the fretboard, so each chord sits under its shape. */
 .notation-strip svg{display:block;width:100%;min-width:760px;height:auto}
 .notation-strip svg,.notation-strip svg [fill]:not([fill="none"]){fill:var(--ink)}
@@ -249,6 +254,7 @@ p{margin:0}
       <button type="button" class="btn" id="bquick" aria-pressed="false" title="IV chord in bar 2">Quick change</button>
       <label class="tempo"><span class="cap">Tempo</span><input type="range" id="btempo" min="50" max="180" step="2"><output id="btempo-val"></output></label>
       <label class="tempo"><span class="cap">Feel</span><select id="bfeel" aria-label="Feel"><option value="shuffle">Shuffle</option><option value="straight">Straight</option></select></label>
+      <label class="tempo"><span class="cap">Track</span><select id="btrack" aria-label="Backing track"><option value="blues">12-bar blues</option><option value="drone">Drone</option></select></label>
       <span class="cap status" id="bstatus" aria-live="polite"></span>
     </div>
 
@@ -259,13 +265,14 @@ p{margin:0}
         <div class="row tones"><button type="button" class="btn" id="btones" aria-pressed="true">Chord tones</button><div class="seg" id="bchips" role="group" aria-label="Preview a chord's tones"></div></div>
         <div class="row shapes-group"><button type="button" class="btn" id="bshapes" aria-pressed="false" title="Highlight scale shapes">Shapes</button><div class="seg" role="group" aria-label="Shapes" id="bshape"></div></div>
       </div>
+      <div class="seg mode-row" role="group" aria-label="Mode" id="bmodes" hidden></div>
       <div class="fb-wrap"><svg id="fb" class="fretboard" role="img" aria-label="Fretboard"></svg></div>
     </div>
 
     <details class="notes cap help">
       <summary>How it works</summary>
       <p>The backing track is 12-bar blues: drums, a boogie bass line, and organ. Quick change moves to the IV chord in bar 2. Play counts you in for one measure, then loops until you stop it.</p>
-      <p>Orange dots are the root. With <b>Chord tones</b> on, notes of the chord being played get a blue ring while the track runs, so you can aim for them as the chords change. Chord tones that aren't in the scale (like the IV chord's major 3rd over minor pentatonic) show as hollow blue dots, labeled by their part in the chord: R, 3, 5 or ♭7. Tap a chord beside Chord tones to see its tones any time (tap it again to go back to following the track); the chord being played is outlined in blue. Tap a dot to hear it. <b>Space</b> plays or stops.</p>
+      <p>Orange dots are the root. With <b>Chord tones</b> on, notes of the chord being played get a blue ring while the track runs, so you can aim for them as the chords change. Chord tones that aren't in the scale (like the IV chord's major 3rd over minor pentatonic) show as hollow blue dots, labeled by their part in the chord: R, 3, 5 or ♭7. Pick <b>Modes</b> to play the seven modes: tap Ion, Dor, Phr, Lyd, Mix, Aeo or Loc. Each mode's color note (the one that gives it its sound, like Dorian's 6 or Lydian's ♯4) has a purple ring, and the backing switches to a <b>Drone</b> on the root (you can pick the blues under Track instead). Over the drone, Chord tones rings the mode's home chord while it plays. Tap a chord beside Chord tones to see its tones any time (tap it again to go back to following the track); the chord being played is outlined in blue. Tap a dot to hear it. <b>Space</b> plays or stops.</p>
     </details>
   </div>
 
@@ -921,7 +928,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v72';
+window.APP_VERSION = 'v73';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');

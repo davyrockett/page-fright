@@ -23,17 +23,36 @@ function nameFrom(root,iv,step=LETTER_STEP[((iv%12)+12)%12]){
 }
 const accidentals=(root,ivs)=>ivs.reduce((n,i)=>n+nameFrom(root,i).length-1,0);
 function scaleRoot(){
-  const key=B.key,minorish=['minor','blues','minorScale'].includes(B.scale),parent=minorish?[0,2,3,5,7,8,10]:[0,2,4,5,7,9,11];
+  const key=B.key,minorish=['minor','blues','minorScale'].includes(B.scale),parent=B.scale==='modes'?MODES[B.mode].iv:minorish?[0,2,3,5,7,8,10]:[0,2,4,5,7,9,11];
   const first=pcName(key,key),other=(FLAT_KEYS.has(key)?SHARP_N:FLAT_N)[key];
   return accidentals(other,parent)<accidentals(first,parent)?other:first;
 }
 const INT_N={0:'R',1:'♭2',2:'2',3:'♭3',4:'3',5:'4',6:'♭5',7:'5',8:'♭6',9:'6',10:'♭7',11:'7'};
+/* ---------- modes ----------
+   Each mode's shapes are a 5-note box from the mode plus its two other notes, like the major and minor scale
+   shapes. "color" is the note that gives the mode its sound (ringed on the fretboard); "triad" is its home chord. */
+const MODES={
+  ionian:{name:'Ionian',short:'Ion',iv:[0,2,4,5,7,9,11],base:[0,2,4,7,9],add:[5,11],color:11,triad:[0,4,7]},
+  dorian:{name:'Dorian',short:'Dor',iv:[0,2,3,5,7,9,10],base:[0,3,5,7,10],add:[2,9],color:9,triad:[0,3,7]},
+  phrygian:{name:'Phrygian',short:'Phr',iv:[0,1,3,5,7,8,10],base:[0,3,5,7,10],add:[1,8],color:1,triad:[0,3,7]},
+  lydian:{name:'Lydian',short:'Lyd',iv:[0,2,4,6,7,9,11],base:[0,2,4,7,9],add:[6,11],color:6,triad:[0,4,7]},
+  mixolydian:{name:'Mixolydian',short:'Mix',iv:[0,2,4,5,7,9,10],base:[0,2,4,7,9],add:[5,10],color:10,triad:[0,4,7]},
+  aeolian:{name:'Aeolian',short:'Aeo',iv:[0,2,3,5,7,8,10],base:[0,3,5,7,10],add:[2,8],color:8,triad:[0,3,7]},
+  locrian:{name:'Locrian',short:'Loc',iv:[0,1,3,5,6,8,10],base:[0,3,5,8,10],add:[1,6],color:6,triad:[0,3,6]},
+};
+const curScale=()=>B.scale==='modes'?MODES[B.mode]:SCALES[B.scale];
+// Lydian's raised 4th is a ♯4 (F♯ in C), not a ♭5.
+const sharp4=()=>B.scale==='modes'&&B.mode==='lydian';
+const ivLabel=iv=>iv===6&&sharp4()?'♯4':INT_N[iv];
+const ivName=(root,iv)=>iv===6&&sharp4()?nameFrom(root,6,3):nameFrom(root,iv);
 
 /* ---------- the form ----------
    Chords as steps above the key: 0 = I, 5 = IV, 7 = V. Bar 12 is the turnaround (V). */
 const FORM=[0,0,0,0,5,5,0,0,7,5,0,7], QUICK=[0,5,0,0,5,5,0,0,7,5,0,7];
 const B={key:store.get('bkey',9),bpm:store.get('btempo',92),feel:store.get('bfeel','shuffle'),quick:store.get('bquick',false),
-  scale:store.get('bscale','minor'),shapes:store.get('bshapes',[]),lab:store.get('blab','int'),tones:store.get('btones',true)};
+  scale:store.get('bscale','minor'),shapes:store.get('bshapes',[]),lab:store.get('blab','int'),tones:store.get('btones',true),
+  mode:store.get('bmode','dorian'),track:store.get('btrack','blues')};
+if(!MODES[B.mode])B.mode='dorian';
 B.shapesOn=store.get('bshapesOn',B.shapes.length>0); // the Shapes button only shows or hides the shape buttons
 const activeShapes=()=>B.shapes;                      // picks stay highlighted either way
 const form=()=>B.quick?QUICK:FORM;
@@ -73,6 +92,36 @@ function organ(pc,at,dur){
   live.add(g);setTimeout(()=>live.delete(g),(end-c.currentTime+.5)*1000); // so Stop fades it out
 }
 
+/* ---------- drone ----------
+   A soft pad on the root and 5th (root and octave for Locrian, whose 5th is flat), slowly swelling, for as
+   long as it plays. Changing key retunes it. */
+const droneTriad=()=>B.scale==='modes'?MODES[B.mode].triad:['minor','blues','minorScale'].includes(B.scale)?[0,3,7]:[0,4,7];
+const droneIv=()=>B.scale==='modes'&&B.mode==='locrian'?[0,12,24]:[0,7,12];
+let DRONE=null;
+function droneStart(){
+  const c=AC,g=c.createGain(),f=c.createBiquadFilter(),lfo=c.createOscillator(),depth=c.createGain();
+  f.type='lowpass';f.frequency.value=900;
+  g.gain.setValueAtTime(0,c.currentTime);g.gain.linearRampToValueAtTime(.09,c.currentTime+1.2);
+  lfo.frequency.value=.12;depth.gain.value=.025;lfo.connect(depth);depth.connect(g.gain);lfo.start();
+  g.connect(f);f.connect(OUT);
+  const oscs=[];
+  droneIv().forEach((iv,i)=>[['sine',1],['triangle',.35]].forEach(([type,a])=>{
+    const o=c.createOscillator(),og=c.createGain();o.type=type;og.gain.value=a*(i===0?1:.6);
+    o.connect(og);og.connect(g);o.start();oscs.push({o,iv});}));
+  DRONE={g,oscs,lfo};droneTune();live.add(g);
+}
+function droneTune(){
+  if(!DRONE)return;const base=40+((B.key-4)%12+12)%12;   // root between low E and D♯
+  const ivs=droneIv();
+  DRONE.oscs.forEach((x,n)=>x.o.frequency.setTargetAtTime(440*Math.pow(2,(base+ivs[Math.floor(n/2)]-69)/12),AC.currentTime,.05));
+}
+function droneRevoice(){droneStop();droneStart();}
+function droneStop(){
+  if(!DRONE)return;const d=DRONE,t=AC.currentTime;DRONE=null;
+  d.g.gain.cancelScheduledValues(t);d.g.gain.setTargetAtTime(0,t,.25);
+  setTimeout(()=>{d.oscs.forEach(x=>x.o.stop());d.lfo.stop();live.delete(d.g);},1500);
+}
+
 /* ---------- playback ---------- */
 const bp={on:false,start:0,spb:.6,next:0,timer:0,raf:0,bar:-1};
 const BCOUNT=4; // count-in beats
@@ -107,18 +156,21 @@ function bframe(){
   bp.raf=requestAnimationFrame(bframe);
 }
 function showBar(){
+  if(B.track==='drone'){bstatus.textContent=bp.on?`Drone on ${scaleRoot()}`:'';drawChips();drawBoard();return;}
   bstatus.textContent=bp.bar>=0?`Bar ${bp.bar+1} of 12 · ${chordName(bp.bar)}`:'';
   drawChips();drawBoard();
 }
 function bstart(){
   const c=audio();if(!c)return;
   if(typeof player!=='undefined'&&player.on)stop(); // the reading player
+  if(B.track==='drone'){bp.on=true;droneStart();bstatus.textContent=`Drone on ${scaleRoot()}`;
+    bplay.querySelector('span').textContent='Stop';bplay.querySelector('path').setAttribute('d','M3 3h10v10H3z');drawBoard();return;}
   bp.on=true;bp.spb=60/B.bpm;bp.start=c.currentTime+.15;bp.next=0;bp.bar=-1;
   bschedule();bp.timer=setInterval(bschedule,40);bp.raf=requestAnimationFrame(bframe);
   bplay.querySelector('span').textContent='Stop';bplay.querySelector('path').setAttribute('d','M3 3h10v10H3z');
 }
 function bstop(){
-  bp.on=false;clearInterval(bp.timer);cancelAnimationFrame(bp.raf);hush();bp.bar=-1;showBar();
+  bp.on=false;clearInterval(bp.timer);cancelAnimationFrame(bp.raf);droneStop();hush();bp.bar=-1;showBar();
   bplay.querySelector('span').textContent='Play';bplay.querySelector('path').setAttribute('d','M3 1.5v13l11-6.5z');
 }
 bplay.onclick=()=>bp.on?bstop():bstart();
@@ -136,6 +188,7 @@ const SCALES={
   minorScale:{name:'Minor scale',iv:[0,2,3,5,7,8,10],base:'minor',add:[2,8]},
   major:{name:'Major pentatonic',iv:[0,2,4,7,9]},
   majorScale:{name:'Major scale',iv:[0,2,4,5,7,9,11],base:'major',add:[5,11]},
+  modes:{name:'Modes'},   // the mode itself is picked with the buttons below the scale list (MODES)
   caged:{name:'CAGED chords',iv:[0,4,7]},
 };
 const LAST=17; // frets shown
@@ -150,12 +203,12 @@ function placements(notes){
   return out;
 }
 function shapes(){
-  const key=B.key,sc=SCALES[B.scale];
+  const key=B.key,sc=curScale();
   if(B.scale==='caged'){
     return Object.entries(CAGED).map(([L,t])=>{const sh=((key-t.pc)%12+12)%12;
       return {name:L,notes:t.f.map((f,s)=>f===null?null:{s,f:f+sh}).filter(Boolean)};});
   }
-  const iv=SCALES[sc.base||B.scale].iv, pcs=iv.map(i=>(key+i)%12);
+  const iv=Array.isArray(sc.base)?sc.base:SCALES[sc.base||B.scale].iv, pcs=iv.map(i=>(key+i)%12);
   const pitches=[];for(let m=40;m<130;m++)if(pcs.includes(m%12))pitches.push(m);
   return iv.map((_,k)=>{
     const f0=((pcs[k]-STRINGS[0])%12+12)%12, i0=pitches.indexOf(STRINGS[0]+f0);
@@ -193,9 +246,11 @@ const fb=document.getElementById('fb');
 const NUT=46,FW=50,TOP=26,GAP=30,DOT=12.5,W=NUT+LAST*FW+14,H=TOP+5*GAP+38;
 const fx=f=>f===0?NUT-20:NUT+(f-.5)*FW, sy=s=>TOP+(5-s)*GAP;
 function drawBoard(){
-  const key=B.key,sc=SCALES[B.scale],placed=placedShapes(),root=scaleRoot();
+  const key=B.key,sc=curScale(),placed=placedShapes(),root=scaleRoot();
   const sel=placed.filter(x=>activeShapes().includes(x.name)), any=sel.length>0; // chosen shapes (none = all)
-  const step=toneStep(), tones=step===null?null:[0,4,7,10].map(i=>(key+step+i)%12);
+  // Chord tones: over the blues, the I/IV/V chord (tapped or playing); over the drone, the mode's home chord.
+  const drone=B.track==='drone', step=drone?(B.tones&&bp.on?0:null):toneStep();  // like the blues: only while it plays
+  const chordIv=drone?droneTriad():[0,4,7,10], tones=step===null?null:chordIv.map(i=>(key+step+i)%12);
   let svg=`<rect class="wood" x="${NUT}" y="${TOP-10}" width="${LAST*FW}" height="${5*GAP+20}" rx="3"/>`;
   // The chosen shapes' areas, under the fret lines so those still show
   sel.forEach(x=>x.places.forEach(pl=>{const fr=pl.map(p=>p.f),lo=Math.min(...fr),hi=Math.max(...fr);
@@ -213,8 +268,8 @@ function drawBoard(){
   if(B.scale!=='caged'){const iv=sc.iv.map(i=>(key+i)%12);for(let s=0;s<6;s++)for(let f=0;f<=LAST;f++)if(iv.includes(pcAt(s,f)))all.set(s+','+f,{s,f});}
   all.forEach(p=>{
     const pc=pcAt(p.s,p.f),iv=((pc-key)%12+12)%12;
-    const cls=['dot',iv===0?'root':'',sc.extra!==undefined&&iv===sc.extra?'blue':'',any&&!on.has(p.s+','+p.f)?'dim':''].join(' ');
-    const label=B.lab==='int'?INT_N[iv]:nameFrom(root,iv);
+    const cls=['dot',iv===0?'root':'',sc.extra!==undefined&&iv===sc.extra?'blue':'',sc.color!==undefined&&iv===sc.color?'color':'',any&&!on.has(p.s+','+p.f)?'dim':''].join(' ');
+    const label=B.lab==='int'?ivLabel(iv):ivName(root,iv);
     svg+=`<g class="${cls}" data-s="${p.s}" data-f="${p.f}"><circle cx="${fx(p.f)}" cy="${sy(p.s)}" r="${DOT}"/><text x="${fx(p.f)}" y="${sy(p.s)+.5}">${label}</text></g>`;
     if(tones&&tones.includes(pc)&&!(any&&!on.has(p.s+','+p.f)))svg+=`<circle class="ring" cx="${fx(p.f)}" cy="${sy(p.s)}" r="${DOT+3.5}"/>`;
   });
@@ -222,7 +277,7 @@ function drawBoard(){
   // labeled by their job in the chord. Only with Chord tones on, for a tapped chord or the one playing,
   // and only inside the chosen shapes (or anywhere with All shapes).
   if(tones){
-    const cr=(key+step)%12, inScale=sc.iv.map(i=>(key+i)%12), JOB={0:'R',4:'3',7:'5',10:'♭7'};
+    const cr=(key+step)%12, inScale=sc.iv.map(i=>(key+i)%12), JOB={0:'R',3:'♭3',4:'3',6:'♭5',7:'5',10:'♭7'};
     const areas=any?sel.flatMap(x=>x.places.map(pl=>[Math.min(...pl.map(p=>p.f)),Math.max(...pl.map(p=>p.f))])):[[0,LAST]];
     for(let s=0;s<6;s++)for(let f=0;f<=LAST;f++){
       const pc=pcAt(s,f);if(!tones.includes(pc)||inScale.includes(pc)||!areas.some(([a,b])=>f>=a&&f<=b))continue;
@@ -244,7 +299,7 @@ fb.addEventListener('click',e=>{const g=e.target.closest('.dot');if(!g)return;
 const keySelect=document.getElementById('bkey');
 keySelect.innerHTML=BKEYS.map(k=>`<option value="${k}">${pcName(k,k)}</option>`).join('');
 keySelect.value=B.key;
-keySelect.onchange=()=>{B.key=+keySelect.value;store.set('bkey',B.key);drawShapes();drawChips();drawBoard();scrollToShape();describeImprov();};
+keySelect.onchange=()=>{B.key=+keySelect.value;store.set('bkey',B.key);droneTune();if(DRONE)bstatus.textContent=`Drone on ${scaleRoot()}`;drawShapes();drawChips();drawBoard();scrollToShape();describeImprov();};
 const bt=document.getElementById('btempo'),btv=document.getElementById('btempo-val');
 bt.value=B.bpm;btv.textContent=B.bpm+' bpm';
 bt.oninput=()=>{const nb=+bt.value;btv.textContent=nb+' bpm';
@@ -253,6 +308,12 @@ bt.oninput=()=>{const nb=+bt.value;btv.textContent=nb+' bpm';
 function pressAll(){
   document.getElementById('bfeel').value=B.feel;
   document.getElementById('bscale').value=B.scale;
+  document.getElementById('btrack').value=B.track;
+  // Mode buttons: only for Modes. Tempo, Feel and Quick change only matter for the blues.
+  const md=document.getElementById('bmodes');md.hidden=B.scale!=='modes';
+  md.querySelectorAll('[data-md]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.md===B.mode));
+  const blues=B.track==='blues';document.getElementById('bquick').hidden=!blues;
+  document.getElementById('btempo').closest('label').hidden=!blues;document.getElementById('bfeel').closest('label').hidden=!blues;
   document.getElementById('blab').setAttribute('aria-pressed',B.lab==='note');
   document.getElementById('bshapes').setAttribute('aria-pressed',B.shapesOn);const sh=document.getElementById('bshape');sh.classList.toggle('off',!B.shapesOn);sh.setAttribute('aria-hidden',!B.shapesOn); // invisible but still takes its space, so nothing jumps
   document.querySelectorAll('#bshape [data-sh]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.sh==='all'?!B.shapes.length:B.shapes.includes(b.dataset.sh)));
@@ -260,7 +321,17 @@ function pressAll(){
   document.getElementById('btones').setAttribute('aria-pressed',B.tones);
 }
 document.getElementById('bscale').innerHTML=Object.entries(SCALES).map(([k,v])=>`<option value="${k}">${v.name}</option>`).join('');
-document.getElementById('bscale').onchange=e=>{B.scale=e.target.value;store.set('bscale',B.scale);drawShapes();drawBoard();scrollToShape();};
+document.getElementById('bscale').onchange=e=>{
+  const was=B.scale;B.scale=e.target.value;store.set('bscale',B.scale);
+  // Modes come with the drone (the blues only suits a couple of them); leaving Modes brings the blues back.
+  if(B.scale==='modes'&&was!=='modes')setTrack('drone');else if(was==='modes'&&B.scale!=='modes')setTrack('blues');
+  drawShapes();drawChips();drawBoard();scrollToShape();describeImprov();};
+document.getElementById('bmodes').innerHTML=Object.entries(MODES).map(([k,m])=>`<button type="button" class="btn" data-md="${k}" title="${m.name}">${m.short}</button>`).join('');
+function setTrack(t){
+  if(t===B.track)return;const playing=bp.on;if(playing)bstop();
+  B.track=t;store.set('btrack',t);pressAll();if(playing)bstart();
+}
+document.getElementById('btrack').onchange=e=>{setTrack(e.target.value);drawChips();drawBoard();describeImprov();};
 document.getElementById('bfeel').onchange=e=>{B.feel=e.target.value;store.set('bfeel',B.feel);describeImprov();};
 function drawShapes(){
   const names=placedShapes().map(x=>x.name);
@@ -274,6 +345,7 @@ document.getElementById('improv-view').addEventListener('click',e=>{
   else if(b.id==='bshapes'){B.shapesOn=!B.shapesOn;store.set('bshapesOn',B.shapesOn);}
   else if(d.sh){B.shapes=d.sh==='all'?[]:B.shapes.includes(d.sh)?B.shapes.filter(n=>n!==d.sh):[...B.shapes,d.sh];store.set('bshapes',B.shapes);}
   else if(b.id==='bquick'){B.quick=!B.quick;store.set('bquick',B.quick);}
+  else if(d.md){B.mode=d.md;store.set('bmode',B.mode);droneTune();if(DRONE)droneRevoice();drawShapes();}
   else if(b.id==='btones'){B.tones=!B.tones;store.set('btones',B.tones);if(!B.tones)B.preview=null;drawChips();}
   else if(d.chip!==undefined){const st=+d.chip;B.preview=B.preview===st?null:st;drawChips();}
   else return;
@@ -281,13 +353,16 @@ document.getElementById('improv-view').addEventListener('click',e=>{
 });
 // The I, IV and V chords beside Chord tones: tap one to see its tones; the one playing is outlined.
 function drawChips(){
-  const el=document.getElementById('bchips');el.classList.toggle('off',!B.tones);el.setAttribute('aria-hidden',!B.tones);
+  const el=document.getElementById('bchips'),hide=!B.tones||B.track==='drone'; // the I/IV/V chords are for the blues
+  el.classList.toggle('off',hide);el.setAttribute('aria-hidden',hide);
   const now=bp.on&&bp.bar>=0?form()[bp.bar]:null;
   el.innerHTML=[0,5,7].map(st=>`<button type="button" class="btn chip${st===now?' now':''}" data-chip="${st}" aria-pressed="${B.preview===st}" title="Show the tones of ${pcName(B.key+st,B.key)}7">${pcName(B.key+st,B.key)}7</button>`).join('');
 }
 function describeImprov(){
   if(document.getElementById('improv-view').hidden)return;
-  document.getElementById('subtitle').textContent=`12-bar blues in ${pcName(B.key,B.key)} · ${B.bpm} bpm · ${B.feel==='shuffle'?'Shuffle':'Straight'}${B.quick?' · Quick change':''}`;
+  const sc=B.scale==='modes'?`${scaleRoot()} ${MODES[B.mode].name}`:`${scaleRoot()} ${SCALES[B.scale].name.toLowerCase()}`;
+  document.getElementById('subtitle').textContent=B.track==='drone'?`Drone on ${scaleRoot()} · ${sc}`
+    :`12-bar blues in ${pcName(B.key,B.key)} · ${B.bpm} bpm · ${B.feel==='shuffle'?'Shuffle':'Straight'}${B.quick?' · Quick change':''}`;
 }
 
 /* ---------- Read | Improv | Drill ---------- */
