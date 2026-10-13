@@ -358,23 +358,23 @@ function drawChips(){
   // The I/IV/V chords are for the blues, so on the drone they're hidden (David preferred hiding these).
   const el=document.getElementById('bchips'),hide=!B.tones||B.track==='drone';
   el.classList.toggle('off',hide);el.setAttribute('aria-hidden',hide);
-  keepLines();
   const now=bp.on&&bp.bar>=0?form()[bp.bar]:null;
   el.innerHTML=[0,5,7].map(st=>`<button type="button" class="btn chip${st===now?' now':''}" data-chip="${st}" aria-pressed="${B.preview===st}" title="Show the tones of ${pcName(B.key+st,B.key)}7">${pcName(B.key+st,B.key)}7</button>`).join('');
+  keepLines();
 }
-// On the drone the chord buttons are hidden, but the row keeps the line breaks it has on the blues (so Chord tones
-// keeps its own line wherever it had one, and nothing moves when the track changes). Measure the row with the
-// buttons present but invisible, then hide them and add the breaks.
+// Whenever the chord buttons are hidden (Chord tones off, or the drone), the row keeps the line breaks it has with
+// them showing: if Chord tones + chords needs its own line, Chord tones sits there even when off, so clicking it
+// never makes it jump down. Measure the row with the buttons present but invisible, then hide them and add the breaks.
 function keepLines(){
   const el=document.getElementById('bchips'),tones=document.querySelector('.pick-row .tones'),shapes=document.querySelector('.pick-row .shapes-group');
   if(!el||!tones)return;
-  tones.classList.remove('own-line');shapes.classList.remove('own-line');
-  if(!(B.tones&&B.track==='drone')||!el.closest('.pick-row').offsetParent)return;
+  tones.style.minWidth='';shapes.classList.remove('own-line');
+  if(!el.classList.contains('off')||!el.closest('.pick-row').offsetParent)return;
   el.classList.remove('off');el.style.visibility='hidden';
-  const top=x=>x.getBoundingClientRect().top, sc=top(document.getElementById('bscale')),tn=top(tones),sh=top(shapes);
+  const box=x=>x.getBoundingClientRect(), sc=box(document.getElementById('bscale')).top,tn=box(tones),sh=box(shapes).top;
   el.classList.add('off');el.style.visibility='';
-  tones.classList.toggle('own-line',tn>sc+8&&sh>tn+8);   // Chord tones had a line to itself
-  shapes.classList.toggle('own-line',sh>tn+8);           // Shapes started a new line
+  if(tn.top>sc+8)tones.style.minWidth=tn.width+'px';   // Chord tones + chords needed a new line: keep that line
+  shapes.classList.toggle('own-line',sh>tn.top+8);      // Shapes started a new line
 }
 {let w=0;new ResizeObserver(es=>{const nw=Math.round(es[0].contentRect.width);if(nw!==w){w=nw;keepLines();}}).observe(document.querySelector('#improv-view .scales'));}
 function describeImprov(){
