@@ -92,6 +92,7 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
   (drone, or Chord tones off) the row keeps the lines it has with them showing (`keepLines()`): if Chord tones + chips
   needs a new line, Chord tones sits on it even when off. RULE (David): clicking Chord tones must never make it jump
   down a line. Chord-tone rings = home chord.
+  Chord tones is GREYED OUT while Modes is selected (David, for now); its on/off setting is kept for other scales.
 - Improv note names are spelled from the scale (C minor: B♭ and E♭, never A♯/D♯): `nameFrom()` / `scaleRoot()`.
   Minor scales in A♭ are spelled from G♯; the blues ♭5 becomes ♯4 where ♭5 would be C♭/F♭ (F blues: B).
   Chord tones are spelled from the chord's root (F7 = F A C E♭).

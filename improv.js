@@ -58,7 +58,8 @@ const activeShapes=()=>B.shapes;                      // picks stay highlighted 
 const form=()=>B.quick?QUICK:FORM;
 // Which chord's tones to show (steps above the key): a tapped chord, else the one playing, else none.
 B.preview=null;
-const toneStep=()=>!B.tones?null:B.preview!==null?B.preview:bp.on&&bp.bar>=0?form()[bp.bar]:null;
+const tonesOn=()=>B.tones&&B.scale!=='modes';  // Chord tones is greyed out for Modes (for now)
+const toneStep=()=>!tonesOn()?null:B.preview!==null?B.preview:bp.on&&bp.bar>=0?form()[bp.bar]:null;
 const chordName=bar=>pcName(B.key+form()[bar],B.key)+'7';
 
 /* ---------- sounds ---------- */
@@ -249,7 +250,7 @@ function drawBoard(){
   const key=B.key,sc=curScale(),placed=placedShapes(),root=scaleRoot();
   const sel=placed.filter(x=>activeShapes().includes(x.name)), any=sel.length>0; // chosen shapes (none = all)
   // Chord tones: over the blues, the I/IV/V chord (tapped or playing); over the drone, the mode's home chord.
-  const drone=B.track==='drone', step=drone?(B.tones&&bp.on?0:null):toneStep();  // like the blues: only while it plays
+  const drone=B.track==='drone', step=drone?(tonesOn()&&bp.on?0:null):toneStep();  // like the blues: only while it plays
   const chordIv=drone?droneTriad():[0,4,7,10], tones=step===null?null:chordIv.map(i=>(key+step+i)%12);
   let svg=`<rect class="wood" x="${NUT}" y="${TOP-10}" width="${LAST*FW}" height="${5*GAP+20}" rx="3"/>`;
   // The chosen shapes' areas, under the fret lines so those still show
@@ -319,14 +320,14 @@ function pressAll(){
   document.getElementById('bshapes').setAttribute('aria-pressed',B.shapesOn);const sh=document.getElementById('bshape');sh.classList.toggle('off',!B.shapesOn);sh.setAttribute('aria-hidden',!B.shapesOn); // invisible but still takes its space, so nothing jumps
   document.querySelectorAll('#bshape [data-sh]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.sh==='all'?!B.shapes.length:B.shapes.includes(b.dataset.sh)));
   document.getElementById('bquick').setAttribute('aria-pressed',B.quick);
-  document.getElementById('btones').setAttribute('aria-pressed',B.tones);
+  const bt=document.getElementById('btones');bt.setAttribute('aria-pressed',tonesOn());greyOut(bt,B.scale==='modes');
 }
 document.getElementById('bscale').innerHTML=Object.entries(SCALES).map(([k,v])=>`<option value="${k}">${v.name}</option>`).join('');
 document.getElementById('bscale').onchange=e=>{
   const was=B.scale;B.scale=e.target.value;store.set('bscale',B.scale);
   // Modes come with the drone (the blues only suits a couple of them); leaving Modes brings the blues back.
   if(B.scale==='modes'&&was!=='modes')setTrack('drone');else if(was==='modes'&&B.scale!=='modes')setTrack('blues');
-  drawShapes();drawChips();drawBoard();scrollToShape();describeImprov();};
+  pressAll();drawShapes();drawChips();drawBoard();scrollToShape();describeImprov();};
 document.getElementById('bmodes').innerHTML=Object.entries(MODES).map(([k,m])=>`<button type="button" class="btn" data-md="${k}" title="${m.name}">${m.short}</button>`).join('');
 function greyOut(el,off){el.classList.toggle('greyed',off);el.setAttribute('aria-disabled',off);el.querySelectorAll('input,select').forEach(i=>i.disabled=off);if(el.matches('button'))el.disabled=off;}
 function setTrack(t){
@@ -356,7 +357,7 @@ document.getElementById('improv-view').addEventListener('click',e=>{
 // The I, IV and V chords beside Chord tones: tap one to see its tones; the one playing is outlined.
 function drawChips(){
   // The I/IV/V chords are for the blues, so on the drone they're hidden (David preferred hiding these).
-  const el=document.getElementById('bchips'),hide=!B.tones||B.track==='drone';
+  const el=document.getElementById('bchips'),hide=!tonesOn()||B.track==='drone';
   el.classList.toggle('off',hide);el.setAttribute('aria-hidden',hide);
   const now=bp.on&&bp.bar>=0?form()[bp.bar]:null;
   el.innerHTML=[0,5,7].map(st=>`<button type="button" class="btn chip${st===now?' now':''}" data-chip="${st}" aria-pressed="${B.preview===st}" title="Show the tones of ${pcName(B.key+st,B.key)}7">${pcName(B.key+st,B.key)}7</button>`).join('');
