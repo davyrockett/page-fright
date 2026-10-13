@@ -355,8 +355,9 @@ document.getElementById('improv-view').addEventListener('click',e=>{
 });
 // The I, IV and V chords beside Chord tones: tap one to see its tones; the one playing is outlined.
 function drawChips(){
-  const el=document.getElementById('bchips');el.classList.toggle('off',!B.tones);el.setAttribute('aria-hidden',!B.tones);
-  greyOut(el,B.track==='drone');   // the I/IV/V chords are for the blues: greyed out on the drone
+  // The I/IV/V chords are for the blues, so on the drone they're hidden (David preferred hiding these).
+  const el=document.getElementById('bchips'),hide=!B.tones||B.track==='drone';
+  el.classList.toggle('off',hide);el.setAttribute('aria-hidden',hide);
   const now=bp.on&&bp.bar>=0?form()[bp.bar]:null;
   el.innerHTML=[0,5,7].map(st=>`<button type="button" class="btn chip${st===now?' now':''}" data-chip="${st}" aria-pressed="${B.preview===st}" title="Show the tones of ${pcName(B.key+st,B.key)}7">${pcName(B.key+st,B.key)}7</button>`).join('');
 }
