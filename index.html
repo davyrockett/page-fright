@@ -190,6 +190,9 @@ p{margin:0}
 .pick-row .tones{flex-wrap:nowrap}
 #bchips{flex-wrap:nowrap}
 #bchips.off{display:none} /* closes up: Shapes, after it, slides left */
+/* On the drone, keep the lines the row has on the blues: a group that had its own line spans the row
+   (improv.js sets .own-line). */
+.pick-row .own-line{flex-basis:100%}
 #blab,#btones,#bshapes{padding:7px 13px;font-size:14px}
 #bshape.off{visibility:hidden}
 /* The Shapes button and its shape buttons always share one line, so the space kept for them never leaves a gap. */
@@ -930,7 +933,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v75';
+window.APP_VERSION = 'v76';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');

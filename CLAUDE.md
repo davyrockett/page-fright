@@ -88,7 +88,8 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
   (Ion…Loc, `MODES`, own row so nothing jumps); shapes = 5-note box + 2 notes; colour note (Dorian ♮6, Lydian ♯4,
   Mixolydian ♭7, Phrygian ♭2, Aeolian ♭6, Locrian ♭5, Ionian 7) ringed purple; Lydian labels/spells ♯4. Track
   select: 12-bar blues | Drone (root+5th pad; root+octave for Locrian). Picking Modes switches to Drone, leaving
-  switches back. Tempo/Feel/Quick change are GREYED OUT on Drone (David: hiding them made things jump); the I/IV/V chips are HIDDEN on Drone (his later call); chord-tone rings = home chord.
+  switches back. Tempo/Feel/Quick change are GREYED OUT on Drone (David: hiding them made things jump); the I/IV/V chips are HIDDEN on Drone (his later call), but the row keeps the line breaks it has on the blues
+  (`keepLines()`), so Chord tones keeps its own line wherever it would have one; chord-tone rings = home chord.
 - Improv note names are spelled from the scale (C minor: B♭ and E♭, never A♯/D♯): `nameFrom()` / `scaleRoot()`.
   Minor scales in A♭ are spelled from G♯; the blues ♭5 becomes ♯4 where ♭5 would be C♭/F♭ (F blues: B).
   Chord tones are spelled from the chord's root (F7 = F A C E♭).
