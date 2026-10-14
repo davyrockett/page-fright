@@ -57,6 +57,7 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
 - `index.html` holds the Read section (generator, VexFlow drawing, tab, playback, Customize, Settings).
 - Customize (Read): Key / Rhythm / Notes / Positions are collapsible cards (`.csec` details): icon tile, title, a live
   summary of what's chosen, round chevron that turns orange when open. Every section starts closed each time
+  (Notes: the Intervals buttons always show, greyed out with Single notes only; they used to be hidden.)
   Customize opens (David).
 - Tuner: tuning-fork button beside the gear opens a pop-up (index.html, `Tuner()`). Rebuilt Oct 2026 after David found
   the First Frets (YIN) version unreliable: McLeod Pitch Method (normalized square difference, first key maximum within

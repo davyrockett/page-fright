@@ -1096,8 +1096,8 @@ const customPop=Popup('Customize',()=>{
     press('[data-tex]',b=>texSel.get().includes(b.dataset.tex));
     press('[data-flag]',b=>store.get(b.dataset.flag,false));
     press('[data-dint]',b=>dintSel.get().includes(+b.dataset.dint));
-    // The interval choices only show when double or triple stops are on.
-    el.querySelector('.sub-opts').hidden=!texSel.get().some(t=>t!=='single');
+    // The interval choices only matter for double or triple stops: greyed out (not hidden) with single notes only.
+    greyOut(el.querySelector('.sub-opts'),!texSel.get().some(t=>t!=='single'));
     // What's chosen, shown under each heading.
     const sum=(id,t)=>{el.querySelector(`[data-sec="${id}"] .csec-sum`).textContent=t;},on=f=>store.get(f,false);
     sum('key',[...keySel.get().map(keyLabel),...(on('accidentals')?['accidentals']:[])].join(' · '));
@@ -1130,7 +1130,7 @@ document.getElementById('custom-open').onclick=()=>{customPop.open();document.qu
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v88';
+window.APP_VERSION = 'v89';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
