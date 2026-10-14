@@ -55,6 +55,9 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
 - **Test locally:** `python3 -m http.server 8769` in this folder, then open http://localhost:8769/. The service
   worker caches aggressively: unregister it and clear caches before re-checking a change.
 - `index.html` holds the Read section (generator, VexFlow drawing, tab, playback, Customize, Settings).
+- Customize (Read): Key / Rhythm / Notes / Positions are collapsible cards (`.csec` details): icon tile, title, a live
+  summary of what's chosen, round chevron that turns orange when open. Every section starts closed each time
+  Customize opens (David).
 - Tuner: tuning-fork button beside the gear opens a pop-up (index.html, `Tuner()`). Rebuilt Oct 2026 after David found
   the First Frets (YIN) version unreliable: McLeod Pitch Method (normalized square difference, first key maximum within
   7% of the top), mic filtered to 60–1100 Hz, gate = 1.4x the quietest recent level (not a fixed level, so quiet

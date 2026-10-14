@@ -128,6 +128,25 @@ p{margin:0}
 .gauge.intune .needle,.gauge.intune .note{stroke:var(--good);fill:var(--good)}
 .tl-msg{min-height:3.9em;line-height:1.3;font-weight:600}.tl-msg.ok{color:var(--good)}
 .sub-opts{display:grid;gap:6px;padding-left:12px;border-left:2px solid var(--line)}
+/* Customize: each section is a card that opens and closes. The heading shows an icon, the section name and what's
+   chosen right now, so the closed list still tells you everything. */
+.csecs{display:flex;flex-direction:column;gap:10px}
+.csec{background:var(--surface);border:1.5px solid var(--line);border-radius:14px;transition:border-color .15s,box-shadow .15s}
+.csec:hover{border-color:var(--accent)}
+.csec[open]{border-color:var(--accent);box-shadow:0 4px 14px rgba(0,0,0,.08)}
+.csec>summary{list-style:none;display:flex;align-items:center;gap:12px;padding:10px 12px;cursor:pointer;user-select:none;-webkit-user-select:none;border-radius:12px}
+.csec>summary::-webkit-details-marker{display:none}
+.csec>summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.csec-ic{flex:none;width:40px;height:40px;border-radius:11px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent-ink);font-size:22px;font-weight:700;line-height:1}
+.csec-ic svg{width:22px;height:22px}
+.csec-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.csec-t b{font-family:var(--f-display);font-weight:800;font-size:21px;letter-spacing:.02em;text-transform:uppercase;line-height:1}
+.csec-sum{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.csec-chev{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--sunk);color:var(--muted);transition:transform .2s,background .2s,color .2s}
+.csec[open] .csec-chev{transform:rotate(180deg);background:var(--accent);color:#1E1B18}
+.csec-body{display:flex;flex-direction:column;gap:10px;padding:2px 14px 14px}
+.csec[open] .csec-body{animation:csec-in .18s ease-out}
+@keyframes csec-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 @media (max-width:560px){.status{margin-left:0;flex-basis:100%}.tempo input{width:120px}}
 /* Read | Improv switch */
 /* A recessed track with the chosen section raised out of it, so the switch has some depth. */
@@ -1048,22 +1067,25 @@ const keySel=multi('keys',['C'],Object.keys(KEYS)), rhySel=multi('rhythms',['qua
 const dintSel=multi('dints',[3,5],Object.keys(INTERVALS).map(Number));
 const customPop=Popup('Customize',()=>{
   const btns=(attr,pairs)=>pairs.map(([v,t])=>`<button type="button" class="btn" data-${attr}="${v}">${t}</button>`).join('');
-  const el=h(`<div class="settings">
-    <div class="set-row"><div><b>Key</b><p class="cap">Major keys. Choose several and each new exercise picks one of them. It starts and ends on the key's home note. Accidentals adds some sharps, flats and naturals outside the key, each leading by a half step into the next note.</p></div></div>
+  const CHEV='<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>';
+  const sec=(id,icon,title,body)=>`<details class="csec" data-sec="${id}"><summary><span class="csec-ic" aria-hidden="true">${icon}</span><span class="csec-t"><b>${title}</b><span class="csec-sum"></span></span><span class="csec-chev" aria-hidden="true">${CHEV}</span></summary><div class="csec-body">${body}</div></details>`;
+  const FRETS='<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/><path d="M6 4v16M12 4v16M18 4v16" stroke-width="1.4"/></g><circle cx="9" cy="12" r="2.4" fill="currentColor"/></svg>';
+  const el=h(`<div class="settings csecs">
+    ${sec('key','♯','Key',`<p class="cap">Major keys. Choose several and each new exercise picks one of them. It starts and ends on the key's home note. Accidentals adds some sharps, flats and naturals outside the key, each leading by a half step into the next note.</p>
     <div class="seg" role="group" aria-label="Key">${btns('key',Object.keys(KEYS).map(k=>[k,keyLabel(k)]))}</div>
-    <div class="seg" role="group" aria-label="Accidentals">${btns('flag',[['accidentals','Accidentals']])}</div>
-    <div class="set-row"><div><b>Rhythm</b><p class="cap">The note lengths to use. Dotted adds dotted halves, dotted quarter + eighth, and dotted eighth + sixteenth (each needs the matching lengths turned on). Rests turns some notes into rests.</p></div></div>
+    <div class="seg" role="group" aria-label="Accidentals">${btns('flag',[['accidentals','Accidentals']])}</div>`)}
+    ${sec('rhy','♩','Rhythm',`<p class="cap">The note lengths to use. Dotted adds dotted halves, dotted quarter + eighth, and dotted eighth + sixteenth (each needs the matching lengths turned on). Rests turns some notes into rests.</p>
     <div class="seg" role="group" aria-label="Note lengths">${btns('rhy',Object.entries(RHYTHMS))}</div>
-    <div class="seg" role="group" aria-label="Rhythm extras">${btns('flag',[['dotted','Dotted'],['rests','Rests']])}</div>
-    <div class="set-row"><div><b>Notes</b><p class="cap">Choose more than one to mix them. Every chord fits your positions.</p></div></div>
+    <div class="seg" role="group" aria-label="Rhythm extras">${btns('flag',[['dotted','Dotted'],['rests','Rests']])}</div>`)}
+    ${sec('tex','♫','Notes',`<p class="cap">Choose more than one to mix them. Every chord fits your positions.</p>
     <div class="seg" role="group" aria-label="Notes">${btns('tex',Object.entries(TEXTURES))}</div>
     <div class="sub-opts"><p class="cap"><b>Intervals</b>: double stops use these. Triple stops stack two of them on neighboring strings (3rds + 3rds make a triad, 3rds + 4ths an inversion). Double stop 6ths, 7ths and octaves may skip a string.</p>
-      <div class="seg" role="group" aria-label="Intervals">${btns('dint',Object.entries(INTERVALS))}</div></div>
-    <div class="set-row"><div><b>Positions</b><p class="cap">Only use notes you can play without leaving the positions you choose. A position is named for its lowest fret and covers four frets, plus the index finger's reach back one fret; 1st position uses the open strings. Choose several to combine them, or Whole neck for everything.</p></div></div>
+      <div class="seg" role="group" aria-label="Intervals">${btns('dint',Object.entries(INTERVALS))}</div></div>`)}
+    ${sec('pos',FRETS,'Positions',`<p class="cap">Only use notes you can play without leaving the positions you choose. A position is named for its lowest fret and covers four frets, plus the index finger's reach back one fret; 1st position uses the open strings. Choose several to combine them, or Whole neck for everything.</p>
     <div class="seg" role="group" aria-label="Positions">
       <button type="button" class="btn" data-whole>Whole neck</button>
       ${POSITIONS.map(p=>`<button type="button" class="btn" data-pos="${p}">${ORD(p)}</button>`).join('')}
-    </div>
+    </div>`)}
     <p class="cap">Changes make a new exercise right away.</p></div>`);
   const press=(sel,on)=>el.querySelectorAll(sel).forEach(b=>b.setAttribute('aria-pressed',on(b)));
   const mark=()=>{const sel=store.get('positions',[]);
@@ -1075,7 +1097,14 @@ const customPop=Popup('Customize',()=>{
     press('[data-flag]',b=>store.get(b.dataset.flag,false));
     press('[data-dint]',b=>dintSel.get().includes(+b.dataset.dint));
     // The interval choices only show when double or triple stops are on.
-    el.querySelector('.sub-opts').hidden=!texSel.get().some(t=>t!=='single');};
+    el.querySelector('.sub-opts').hidden=!texSel.get().some(t=>t!=='single');
+    // What's chosen, shown under each heading.
+    const sum=(id,t)=>{el.querySelector(`[data-sec="${id}"] .csec-sum`).textContent=t;},on=f=>store.get(f,false);
+    sum('key',[...keySel.get().map(keyLabel),...(on('accidentals')?['accidentals']:[])].join(' · '));
+    sum('rhy',[...Object.keys(RHYTHMS).filter(r=>rhySel.get().includes(r)).map(r=>RHYTHMS[r]),...(on('dotted')?['dotted']:[]),...(on('rests')?['rests']:[])].join(' · '));
+    const tx=Object.keys(TEXTURES).filter(t=>texSel.get().includes(t));
+    sum('tex',tx.map(t=>TEXTURES[t]).join(' · ')+(tx.some(t=>t!=='single')?' · '+dintSel.get().slice().sort((a,b)=>a-b).map(i=>INTERVALS[i]).join(', '):''));
+    sum('pos',sel.length?sel.map(ORD).join(' · ')+(sel.length>1?' positions':' position'):'Whole neck');};
   el.addEventListener('click',e=>{
     const b=e.target.closest('button[data-key],button[data-rhy],button[data-tex],button[data-flag],button[data-pos],button[data-whole],button[data-dint]');if(!b)return;
     const d=b.dataset;
@@ -1090,7 +1119,7 @@ const customPop=Popup('Customize',()=>{
   });
   mark();return el;
 });
-document.getElementById('custom-open').onclick=()=>customPop.open();
+document.getElementById('custom-open').onclick=()=>{customPop.open();document.querySelectorAll('.csec').forEach(d=>d.open=false);};  // always opens with every section closed
 </script>
 
 <script src="improv.js"></script>
@@ -1101,7 +1130,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v87';
+window.APP_VERSION = 'v88';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
