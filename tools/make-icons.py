@@ -7,7 +7,7 @@ from PIL import Image, ImageDraw, ImageFilter
 OUT = Path(__file__).resolve().parent.parent / "icons"
 BG = (21, 19, 16)          # dark page background
 PAPER = (240, 235, 227)    # cream text color
-ACCENT = (238, 154, 69)    # the app's orange
+ACCENT = (255, 148, 51)    # the app's orange (dark-mode shade, on the dark icon)
 
 
 def bezier(p0, p1, p2, p3, n=40):

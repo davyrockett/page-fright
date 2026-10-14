@@ -58,6 +58,8 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
   the pop-up or leaving the app turns the mic off.
   Play pitch: a steady drone (softened sawtooth, David: not guitar-like, easy to tune to) on the picked string until
   turned off; switching strings glides to the new note; greyed out on Auto. Pop-ups close with an × icon.
+- Section switch (Drill | Improv | Read) has depth: a recessed track with the chosen section raised (David asked when
+  the palette changed). Palette: bright orange #F57C14 / dark #FF9433, grey text #676767 / #A3A3A3.
   `improv.js` holds the Improv section and shares globals from index.html (`store`, `h`, `audio`, `OUT`, `pluck`,
   `tick`, `hush`, `STRINGS`, `player`, `stop`, `describe`). Notation uses vendored VexFlow 4.2.5; CSS recolors it.
 - localStorage keys start with `sr.` (from the old name, Sight Reading); keep that so settings survive.
