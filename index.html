@@ -938,15 +938,20 @@ function Tuner(){
     setNeedle(0,true);gauge.classList.remove('intune');picks.forEach(b=>b.classList.remove('heard'));
   }
   go.onclick=()=>running?(stop(),say('Tuner stopped.')):start();
-  // Play pitch: plucks the picked string's note every couple of seconds until turned off. Needs a string, so it's
-  // greyed out on Auto.
-  let pt=0;
-  const ring=()=>{pluck(TSTR[target].freq,{dur:2.6,vol:.6});pt=setTimeout(ring,2400);};
-  const quiet=()=>{clearTimeout(pt);pt=0;play.setAttribute('aria-pressed',false);};
+  // Play pitch: a steady drone on the picked string's note until turned off (a bright-ish sawtooth, softened, so
+  // even the low E is clear on phone speakers and beats are easy to hear). Needs a string: greyed out on Auto.
+  let pt=null;
+  const ring=()=>{const c=audio();if(!c)return;const t=c.currentTime,f=TSTR[target].freq;
+    if(pt){pt.o.frequency.setTargetAtTime(f,t,.02);return;}
+    const o=c.createOscillator(),lp=c.createBiquadFilter(),g=c.createGain();o.type='sawtooth';o.frequency.value=f;
+    lp.type='lowpass';lp.frequency.value=1400;lp.Q.value=.3;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.22,t+.08);
+    o.connect(lp);lp.connect(g);g.connect(OUT);o.start(t);pt={o,g};};
+  const quiet=()=>{if(pt&&AC){const t=AC.currentTime;pt.g.gain.cancelScheduledValues(t);pt.g.gain.setTargetAtTime(0,t,.04);pt.o.stop(t+.3);}
+    pt=null;play.setAttribute('aria-pressed',false);};
   const playable=()=>{greyOut(play,!target);if(!target)quiet();};
   play.onclick=()=>{if(pt)quiet();else{play.setAttribute('aria-pressed',true);ring();}};
   el.querySelector('.strsel').addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(!b)return;target=+b.dataset.s;hist=[];
-    picks.forEach(x=>x.setAttribute('aria-pressed',x===b));playable();if(pt){clearTimeout(pt);ring();}});
+    picks.forEach(x=>x.setAttribute('aria-pressed',x===b));playable();if(pt)ring();});
   setNeedle(0,true);playable();
   return {el,stop:()=>{quiet();if(running){stop();say('Tap Start, then pluck one string at a time.');}}};
 }
@@ -1032,7 +1037,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v80';
+window.APP_VERSION = 'v81';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
