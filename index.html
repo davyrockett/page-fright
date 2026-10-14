@@ -898,39 +898,75 @@ function Tuner(){
         noteT=el.querySelector('.note'),centsT=el.querySelector('.cents'),picks=el.querySelectorAll('.strpick .btn');
   needle.style.transformOrigin='150px 150px';
   const play=el.querySelector('.tl-play');
-  let target=0,stream=null,srcNode=null,an=null,buf=null,raf=0,hist=[],lastHeard=0,running=false;
-  const say=(t,cls='')=>{msg.className='tl-msg '+cls;msg.textContent=t;};
+  let target=0,stream=null,srcNode=null,chain=[],an=null,buf=null,timer=0,running=false;
+  let hist=[],shownStr=0,pendStr=0,pendN=0,needleC=0,lastHeard=0,lastF=0,floor=.002,lastMsg='';
+  const say=(t,cls='')=>{if(t+cls===lastMsg)return;lastMsg=t+cls;msg.className='tl-msg '+cls;msg.textContent=t;};
   const setNeedle=(c,dim)=>{needle.style.transform=`rotate(${Math.max(-62,Math.min(62,c/50*60))}deg)`;needle.style.opacity=dim?.35:1;};
-  // YIN pitch detection on a 2× downsampled buffer (good for 60–1000 Hz, light enough for phones).
+  /* Pitch: the McLeod Pitch Method (what the better web tuners use). The normalized square-difference function
+     peaks at the string's period; its first peak within 7% of the highest one is the pitch, which avoids the
+     octave-low and octave-high mistakes, and the peak's height (0–1) says how clear the note is. The mic signal is
+     filtered to the guitar's range first (see start). Returns [Hz, clarity, level] or null. */
   function detect(x,sr){
-    let rms=0;for(let i=0;i<x.length;i++)rms+=x[i]*x[i];rms=Math.sqrt(rms/x.length);if(rms<.008)return 0;
-    const n=x.length>>1,y=new Float32Array(n);for(let i=0;i<n;i++)y[i]=(x[2*i]+x[2*i+1])*.5;const fs=sr/2;
-    const maxT=Math.min(Math.floor(fs/60),n>>1),minT=Math.floor(fs/1000),W=n-maxT,d=new Float32Array(maxT+1);
-    for(let t=1;t<=maxT;t++){let sum=0;for(let i=0;i<W;i++){const v=y[i]-y[i+t];sum+=v*v;}d[t]=sum;}
-    let run=0,best=-1;d[0]=1;for(let t=1;t<=maxT;t++){run+=d[t];d[t]=run?d[t]*t/run:1;}
-    for(let t=minT;t<=maxT;t++){if(d[t]<.15){while(t+1<=maxT&&d[t+1]<d[t])t++;best=t;break;}}
-    if(best<0){let m=1;for(let t=minT;t<=maxT;t++)if(d[t]<m){m=d[t];best=t;}if(m>.35)return 0;}
-    const a=d[best-1]??d[best],b=d[best],c=d[best+1]??d[best],den=a-2*b+c,shift=den?.5*(a-c)/den:0;
-    return fs/(best+shift);
+    const N=x.length;let ss=0;for(let i=0;i<N;i++)ss+=x[i]*x[i];const rms=Math.sqrt(ss/N);
+    if(rms<Math.max(.0004,floor*2))return [0,0,rms];
+    const minT=Math.floor(sr/1050),maxT=Math.min(Math.ceil(sr/62),N>>1),nsdf=new Float32Array(maxT+2);
+    let m=2*ss;
+    for(let t=0;t<=maxT+1;t++){
+      if(t>0)m-=x[t-1]*x[t-1]+x[N-t]*x[N-t];
+      let r=0;for(let i=0,L=N-t;i<L;i++)r+=x[i]*x[i+t];
+      nsdf[t]=m>0?2*r/m:0;
+    }
+    // Key maxima: the highest point of each positive stretch after the first negative dip.
+    const peaks=[];let t=1;while(t<=maxT&&nsdf[t]>0)t++;
+    for(;t<=maxT;t++){
+      if(nsdf[t]>0){let best=t;while(t<=maxT&&nsdf[t]>0){if(nsdf[t]>nsdf[best])best=t;t++;}if(best>=minT&&best<maxT)peaks.push(best);}
+    }
+    if(!peaks.length)return [0,0,rms];
+    let top=0;for(const p of peaks)top=Math.max(top,nsdf[p]);
+    const p=peaks.find(q=>nsdf[q]>=.93*top);
+    const a=nsdf[p-1],b=nsdf[p],c=nsdf[p+1],den=a-2*b+c,shift=den?.5*(a-c)/den:0;
+    return [sr/(p+shift),b-.25*(a-c)*shift,rms];
   }
-  function show(f){
-    let s=target;if(!s){let bd=9;for(let k=1;k<=6;k++){const dd=Math.abs(Math.log2(f/TSTR[k].freq));if(dd<bd){bd=dd;s=k;}}}
-    const c=1200*Math.log2(f/TSTR[s].freq),ac=Math.abs(c);
+  const nearest=f=>{let s=1,bd=9;for(let k=1;k<=6;k++){const d=Math.abs(Math.log2(f/TSTR[k].freq));if(d<bd){bd=d;s=k;}}return s;};
+  function show(s,c){
+    const ac=Math.abs(c);
+    needleC+=(c-needleC)*.35;                 // ease the needle so it doesn't twitch
     noteT.textContent=TSTR[s].name;centsT.textContent=`${c>0?'+':''}${Math.round(c)} cents`;
-    setNeedle(c,false);gauge.classList.toggle('intune',ac<=5);
+    setNeedle(needleC,false);gauge.classList.toggle('intune',ac<=4);
     picks.forEach(b=>b.classList.toggle('heard',!target&&+b.dataset.s===s));
-    if(ac<=5)say(`${TSTR[s].name} string: in tune.`,'ok');
+    if(ac<=4)say(`${TSTR[s].name} string: in tune.`,'ok');
     else if(c<-100)say(`Way too low for the ${TSTR[s].name} string. Keep tightening, slowly.`);
     else if(c>100)say(`Way too high for the ${TSTR[s].name} string. Loosen it below the note, then tighten up to it.`);
     else if(c<0)say('Flat. Tighten slowly up to the note.');
     else say('Sharp. Loosen below the note, then tighten back up to it.');
   }
-  function loop(){
-    raf=requestAnimationFrame(loop);
-    an.getFloatTimeDomainData(buf);const f=detect(buf,AC.sampleRate),now=performance.now();
-    if(f>60&&f<1000){hist.push(f);if(hist.length>5)hist.shift();const m=[...hist].sort((a,b)=>a-b)[hist.length>>1];lastHeard=now;show(m);}
-    else if(now-lastHeard>700){hist=[];setNeedle(0,true);gauge.classList.remove('intune');centsT.textContent='';noteT.textContent='–';
-      picks.forEach(b=>b.classList.remove('heard'));say('Listening… pluck one string and let it ring.');}
+  function tick(){
+    an.getFloatTimeDomainData(buf);
+    const [f0,clar,rms]=detect(buf,AC.sampleRate),now=performance.now();
+    // The room's background level: follows the quietest moments, creeping up slowly if the room gets louder.
+    floor=rms<floor?rms:Math.min(floor*1.0015,.02);
+    let f=f0;
+    if(f&&clar>=.86&&f>62&&f<1050){
+      // Octave mistakes: with a string picked, fold the reading into that string's octave. On Auto, a jump of
+      // exactly one octave from the note just heard is a mistake (no two strings are an octave apart).
+      if(target){const r=TSTR[target].freq;while(f/r>1.5)f/=2;while(r/f>1.5)f*=2;}
+      else if(lastF&&now-lastHeard<600){const o=Math.log2(f/lastF);if(Math.abs(o-1)<.06)f/=2;else if(Math.abs(o+1)<.06)f*=2;}
+      lastF=f;
+      // Auto: switch strings only after the new string is heard a few times in a row.
+      let s=target;
+      if(!s){const n=nearest(f);if(!shownStr||n===shownStr){s=n;pendN=0;}else if(n===pendStr&&++pendN>=3){s=n;pendN=0;hist=[];}else{if(n!==pendStr){pendStr=n;pendN=1;}s=shownStr;}}
+      if(s!==shownStr){hist=[];needleC=1200*Math.log2(f/TSTR[s].freq);}
+      shownStr=s;
+      const c=1200*Math.log2(f/TSTR[s].freq);
+      if(Math.abs(c)<600||target){hist.push(c);if(hist.length>7)hist.shift();}
+      const med=[...hist].sort((x,y)=>x-y)[hist.length>>1];
+      if(hist.length){lastHeard=now;show(s,med);}
+    }else{
+      if(now-lastHeard>2200&&lastHeard!==-1){         // hold the last reading a while as the string fades
+        lastHeard=-1;hist=[];shownStr=0;pendN=0;lastF=0;setNeedle(0,true);gauge.classList.remove('intune');centsT.textContent='';noteT.textContent='–';
+        picks.forEach(b=>b.classList.remove('heard'));say('Listening… pluck one string and let it ring.');
+      }else if(lastHeard>0&&now-lastHeard>350)needle.style.opacity=.6;
+    }
   }
   async function start(){
     if(typeof bp!=='undefined'&&bp.on)bstop();      // the backing track would drown out the guitar
@@ -938,12 +974,21 @@ function Tuner(){
     if(!c||!navigator.mediaDevices?.getUserMedia){say("This browser can't use the microphone. Try Safari or Chrome.");return;}
     try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});}
     catch(e){say('The tuner needs the microphone. Allow microphone access for this site in your browser settings, then tap Start again.');return;}
-    srcNode=c.createMediaStreamSource(stream);an=c.createAnalyser();an.fftSize=4096;srcNode.connect(an);buf=new Float32Array(an.fftSize);
-    running=true;go.textContent='Stop tuner';lastHeard=0;say('Listening… pluck one string and let it ring.');loop();
+    if(c.state!=='running')try{await c.resume();}catch(e){}
+    // Keep only the guitar's range: cut rumble and hum below the low E and the bright overtones above the high e.
+    srcNode=c.createMediaStreamSource(stream);
+    const hp=c.createBiquadFilter();hp.type='highpass';hp.frequency.value=60;hp.Q.value=.7;
+    const hp2=c.createBiquadFilter();hp2.type='highpass';hp2.frequency.value=60;hp2.Q.value=.7;
+    const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1100;lp.Q.value=.7;
+    an=c.createAnalyser();an.fftSize=4096;buf=new Float32Array(an.fftSize);
+    srcNode.connect(hp);hp.connect(hp2);hp2.connect(lp);lp.connect(an);chain=[hp,hp2,lp];
+    running=true;go.textContent='Stop tuner';lastHeard=-1;hist=[];shownStr=0;floor=.001;lastMsg='';
+    say('Listening… pluck one string and let it ring.');
+    timer=setInterval(tick,45);                      // ~22 readings a second
   }
   function stop(){
-    cancelAnimationFrame(raf);if(srcNode)srcNode.disconnect();if(stream)stream.getTracks().forEach(t=>t.stop());
-    stream=srcNode=an=null;running=false;go.textContent='Start tuner';
+    clearInterval(timer);if(srcNode)srcNode.disconnect();chain.forEach(n=>n.disconnect());if(stream)stream.getTracks().forEach(t=>t.stop());
+    stream=srcNode=an=null;chain=[];running=false;go.textContent='Start tuner';hist=[];shownStr=0;
     setNeedle(0,true);gauge.classList.remove('intune');picks.forEach(b=>b.classList.remove('heard'));
   }
   go.onclick=()=>running?(stop(),say('Tuner stopped.')):start();
@@ -1046,7 +1091,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v83';
+window.APP_VERSION = 'v84';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
