@@ -52,6 +52,9 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
 - **Test locally:** `python3 -m http.server 8769` in this folder, then open http://localhost:8769/. The service
   worker caches aggressively: unregister it and clear caches before re-checking a change.
 - `index.html` holds the Read section (generator, VexFlow drawing, tab, playback, Customize, Settings).
+- Tuner: tuning-fork button beside the gear opens a pop-up (index.html, `Tuner()`), ported from First Frets: same YIN
+  detector, needle and messages; Auto or a picked string; standard tuning. Starting it stops the Improv backing; closing
+  the pop-up or leaving the app turns the mic off.
   `improv.js` holds the Improv section and shares globals from index.html (`store`, `h`, `audio`, `OUT`, `pluck`,
   `tick`, `hush`, `STRINGS`, `player`, `stop`, `describe`). Notation uses vendored VexFlow 4.2.5; CSS recolors it.
 - localStorage keys start with `sr.` (from the old name, Sight Reading); keep that so settings survive.
