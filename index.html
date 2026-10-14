@@ -892,9 +892,9 @@ function Tuner(){
       <text class="gl" x="40" y="118">♭ flat</text><text class="gl" x="260" y="118">sharp ♯</text>
       <line class="needle" x1="150" y1="150" x2="150" y2="40"/><circle class="hub" cx="150" cy="150" r="7"/>
       <text class="note" x="150" y="210">–</text><text class="cents" x="150" y="238"></text></svg>
-    <div class="tl-msg" aria-live="polite">Tap Start, then pluck one string at a time.</div>
-    <div class="row"><button type="button" class="btn primary tl-go">Start tuner</button><button type="button" class="btn tl-play" aria-pressed="false" title="Pick a string, then play its pitch">Play pitch</button><span class="cap">Uses your microphone. Nothing is recorded or sent anywhere.</span></div></div>`);
-  const needle=el.querySelector('.needle'),gauge=el.querySelector('.gauge'),msg=el.querySelector('.tl-msg'),go=el.querySelector('.tl-go'),
+    <div class="tl-msg" aria-live="polite">Listening… pluck one string and let it ring.</div>
+    <div class="row"><button type="button" class="btn tl-play" aria-pressed="false" title="Pick a string, then play its pitch">Play pitch</button><span class="cap">Uses your microphone. Nothing is recorded or sent anywhere.</span></div></div>`);
+  const needle=el.querySelector('.needle'),gauge=el.querySelector('.gauge'),msg=el.querySelector('.tl-msg'),
         noteT=el.querySelector('.note'),centsT=el.querySelector('.cents'),picks=el.querySelectorAll('.strpick .btn');
   needle.style.transformOrigin='150px 150px';
   const play=el.querySelector('.tl-play');
@@ -971,12 +971,16 @@ function Tuner(){
       }else if(lastHeard>0&&now-lastHeard>350)needle.style.opacity=.6;
     }
   }
+  let starting=false;
   async function start(){
+    if(running||starting)return;starting=true;try{await begin();}finally{starting=false;}
+  }
+  async function begin(){
     if(typeof bp!=='undefined'&&bp.on)bstop();      // the backing track would drown out the guitar
     const c=audio();
     if(!c||!navigator.mediaDevices?.getUserMedia){say("This browser can't use the microphone. Try Safari or Chrome.");return;}
     try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:true}});}
-    catch(e){say('The tuner needs the microphone. Allow microphone access for this site in your browser settings, then tap Start again.');return;}
+    catch(e){say('The tuner needs the microphone. Allow microphone access for this site in your browser settings, then close the tuner and open it again.');return;}
     if(c.state!=='running')try{await c.resume();}catch(e){}
     // Keep only the guitar's range: cut rumble and hum below the low E and the bright overtones above the high e.
     srcNode=c.createMediaStreamSource(stream);
@@ -985,16 +989,15 @@ function Tuner(){
     const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1100;lp.Q.value=.7;
     an=c.createAnalyser();an.fftSize=4096;buf=new Float32Array(an.fftSize);
     srcNode.connect(hp);hp.connect(hp2);hp2.connect(lp);lp.connect(an);chain=[hp,hp2,lp];
-    running=true;go.textContent='Stop tuner';lastHeard=-1;hist=[];shownStr=0;floor=.001;lastMsg='';
+    running=true;lastHeard=-1;hist=[];shownStr=0;floor=.001;lastMsg='';
     say('Listening… pluck one string and let it ring.');
     timer=setInterval(tick,45);                      // ~22 readings a second
   }
   function stop(){
     clearInterval(timer);if(srcNode)srcNode.disconnect();chain.forEach(n=>n.disconnect());if(stream)stream.getTracks().forEach(t=>t.stop());
-    stream=srcNode=an=null;chain=[];running=false;go.textContent='Start tuner';hist=[];shownStr=0;
+    stream=srcNode=an=null;chain=[];running=false;hist=[];shownStr=0;
     setNeedle(0,true);gauge.classList.remove('intune');picks.forEach(b=>b.classList.remove('heard'));
   }
-  go.onclick=()=>running?(stop(),say('Tuner stopped.')):start();
   // Play pitch: a steady drone on the picked string's note until turned off (a bright-ish sawtooth, softened, so
   // even the low E is clear on phone speakers and beats are easy to hear). Needs a string: greyed out on Auto.
   let pt=null;
@@ -1010,12 +1013,16 @@ function Tuner(){
   el.querySelector('.strpick').addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(!b)return;target=+b.dataset.s;hist=[];
     picks.forEach(x=>x.setAttribute('aria-pressed',x===b));playable();if(pt)ring();});
   setNeedle(0,true);playable();
-  return {el,stop:()=>{quiet();if(running){stop();say('Tap Start, then pluck one string at a time.');}}};
+  // The tuner listens as soon as it opens, on Auto; closing it (or leaving the app) turns the mic off.
+  const auto=()=>{target=0;hist=[];picks.forEach(x=>x.setAttribute('aria-pressed',x.dataset.s==='0'));playable();};
+  return {el,open:()=>{auto();lastMsg='';say('Listening… pluck one string and let it ring.');start();},
+    stop:()=>{quiet();if(running)stop();},resume:()=>start()};
 }
 let theTuner=null;
-const tunerPop=Popup('Tuner',()=>(theTuner=Tuner()).el,()=>theTuner&&theTuner.stop());
-document.getElementById('tuner-open').onclick=()=>tunerPop.open();
-document.addEventListener('visibilitychange',()=>{if(document.hidden&&theTuner)theTuner.stop();});
+let tunerOpen=false;
+const tunerPop=Popup('Tuner',()=>(theTuner=Tuner()).el,()=>{tunerOpen=false;if(theTuner)theTuner.stop();});
+document.getElementById('tuner-open').onclick=()=>{tunerPop.open();tunerOpen=true;theTuner.open();};
+document.addEventListener('visibilitychange',()=>{if(!theTuner)return;if(document.hidden)theTuner.stop();else if(tunerOpen)theTuner.resume();});
 
 /* ---------- customize (what the exercises contain) ---------- */
 const ORD=n=>n===1?'1st':n+'th';
@@ -1094,7 +1101,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v85';
+window.APP_VERSION = 'v86';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');

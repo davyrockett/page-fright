@@ -61,8 +61,9 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
   phone mics work); clarity >= .84 for a new note, >= .7 while it agrees with the note ringing (David: needed to pluck
   too hard, so made more sensitive + mic autoGainControl on), median of 7 readings + eased needle, reading held ~2 s as the string fades, Auto switches
   string only after 3 agreeing readings, one-octave jumps folded back. Tested with synthetic plucks (weak low-E
-  fundamental, quiet mic, noise): ~90% of the ring shown, within 3 cents. Same needle and messages; Auto or a picked string; standard tuning. Starting it stops the Improv backing; closing
-  the pop-up or leaving the app turns the mic off.
+  fundamental, quiet mic, noise): ~90% of the ring shown, within 3 cents. Same needle and messages; Auto or a picked string; standard tuning. No Start button (David): opening the pop-up starts
+  listening on Auto (a string picked last time is forgotten); it stops the Improv backing; closing the pop-up or
+  leaving the app turns the mic off, coming back with it open turns it on again.
   Play pitch: a steady drone (softened sawtooth, David: not guitar-like, easy to tune to) on the picked string until
   turned off; switching strings glides to the new note; greyed out on Auto. Pop-ups close with an × icon.
 - Section switch (Drill | Improv | Read) has depth: a recessed track with the chosen section raised (David asked when
