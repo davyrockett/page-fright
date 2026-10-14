@@ -908,7 +908,7 @@ function Tuner(){
      filtered to the guitar's range first (see start). Returns [Hz, clarity, level] or null. */
   function detect(x,sr){
     const N=x.length;let ss=0;for(let i=0;i<N;i++)ss+=x[i]*x[i];const rms=Math.sqrt(ss/N);
-    if(rms<Math.max(.0004,floor*2))return [0,0,rms];
+    if(rms<Math.max(.00012,floor*1.4))return [0,0,rms];
     const minT=Math.floor(sr/1050),maxT=Math.min(Math.ceil(sr/62),N>>1),nsdf=new Float32Array(maxT+2);
     let m=2*ss;
     for(let t=0;t<=maxT+1;t++){
@@ -946,7 +946,10 @@ function Tuner(){
     // The room's background level: follows the quietest moments, creeping up slowly if the room gets louder.
     floor=rms<floor?rms:Math.min(floor*1.0015,.02);
     let f=f0;
-    if(f&&clar>=.86&&f>62&&f<1050){
+    // While a string is ringing, a slightly less clear reading still counts if it agrees with the last one (so a
+    // quiet or fading string keeps reading); a new note needs a clear reading.
+    const agrees=f&&lastF&&now-lastHeard<600&&Math.abs(1200*Math.log2(f/lastF))<40;
+    if(f&&clar>=(agrees?.7:.84)&&f>62&&f<1050){
       // Octave mistakes: with a string picked, fold the reading into that string's octave. On Auto, a jump of
       // exactly one octave from the note just heard is a mistake (no two strings are an octave apart).
       if(target){const r=TSTR[target].freq;while(f/r>1.5)f/=2;while(r/f>1.5)f*=2;}
@@ -972,7 +975,7 @@ function Tuner(){
     if(typeof bp!=='undefined'&&bp.on)bstop();      // the backing track would drown out the guitar
     const c=audio();
     if(!c||!navigator.mediaDevices?.getUserMedia){say("This browser can't use the microphone. Try Safari or Chrome.");return;}
-    try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});}
+    try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:true}});}
     catch(e){say('The tuner needs the microphone. Allow microphone access for this site in your browser settings, then tap Start again.');return;}
     if(c.state!=='running')try{await c.resume();}catch(e){}
     // Keep only the guitar's range: cut rumble and hum below the low E and the bright overtones above the high e.
@@ -1091,7 +1094,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v84';
+window.APP_VERSION = 'v85';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');

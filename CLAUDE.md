@@ -57,8 +57,9 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
 - `index.html` holds the Read section (generator, VexFlow drawing, tab, playback, Customize, Settings).
 - Tuner: tuning-fork button beside the gear opens a pop-up (index.html, `Tuner()`). Rebuilt Oct 2026 after David found
   the First Frets (YIN) version unreliable: McLeod Pitch Method (normalized square difference, first key maximum within
-  7% of the top, clarity >= .86), mic filtered to 60–1100 Hz, gate = 2x the quietest recent level (not a fixed level,
-  so quiet phone mics work), median of 7 readings + eased needle, reading held ~2 s as the string fades, Auto switches
+  7% of the top), mic filtered to 60–1100 Hz, gate = 1.4x the quietest recent level (not a fixed level, so quiet
+  phone mics work); clarity >= .84 for a new note, >= .7 while it agrees with the note ringing (David: needed to pluck
+  too hard, so made more sensitive + mic autoGainControl on), median of 7 readings + eased needle, reading held ~2 s as the string fades, Auto switches
   string only after 3 agreeing readings, one-octave jumps folded back. Tested with synthetic plucks (weak low-E
   fundamental, quiet mic, noise): ~90% of the ring shown, within 3 cents. Same needle and messages; Auto or a picked string; standard tuning. Starting it stops the Improv backing; closing
   the pop-up or leaving the app turns the mic off.
