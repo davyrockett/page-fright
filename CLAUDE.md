@@ -55,6 +55,7 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
 - Tuner: tuning-fork button beside the gear opens a pop-up (index.html, `Tuner()`), ported from First Frets: same YIN
   detector, needle and messages; Auto or a picked string; standard tuning. Starting it stops the Improv backing; closing
   the pop-up or leaving the app turns the mic off.
+  Play pitch: plucks the picked string's note every ~2.4 s until turned off; greyed out on Auto. Pop-ups close with an × icon.
   `improv.js` holds the Improv section and shares globals from index.html (`store`, `h`, `audio`, `OUT`, `pluck`,
   `tick`, `hush`, `STRINGS`, `player`, `stop`, `describe`). Notation uses vendored VexFlow 4.2.5; CSS recolors it.
 - localStorage keys start with `sr.` (from the old name, Sight Reading); keep that so settings survive.

@@ -833,7 +833,7 @@ document.addEventListener('keydown',e=>{
 
 /* ---------- settings ---------- */
 function Popup(title,build,onClose=()=>{}){
-  const m=h(`<div class="tmodal" role="dialog" aria-modal="true" aria-label="${title}" hidden><div class="tmodal-card"><div class="row" style="justify-content:space-between"><h2>${title}</h2><button type="button" class="btn tmodal-x">Close</button></div><div class="tmodal-slot"></div></div></div>`);
+  const m=h(`<div class="tmodal" role="dialog" aria-modal="true" aria-label="${title}" hidden><div class="tmodal-card"><div class="row" style="justify-content:space-between"><h2>${title}</h2><button type="button" class="btn icon tmodal-x" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg></button></div><div class="tmodal-slot"></div></div></div>`);
   document.body.append(m);let built=false;
   const close=()=>{m.hidden=true;onClose();};
   m.querySelector('.tmodal-x').onclick=close;
@@ -884,10 +884,11 @@ function Tuner(){
       <line class="needle" x1="150" y1="150" x2="150" y2="40"/><circle class="hub" cx="150" cy="150" r="7"/>
       <text class="note" x="150" y="210">–</text><text class="cents" x="150" y="238"></text></svg>
     <div class="tl-msg" aria-live="polite">Tap Start, then pluck one string at a time.</div>
-    <div class="row"><button type="button" class="btn primary tl-go">Start tuner</button><span class="cap">Uses your microphone. Nothing is recorded or sent anywhere.</span></div></div>`);
+    <div class="row"><button type="button" class="btn primary tl-go">Start tuner</button><button type="button" class="btn tl-play" aria-pressed="false" title="Pick a string, then play its pitch">Play pitch</button><span class="cap">Uses your microphone. Nothing is recorded or sent anywhere.</span></div></div>`);
   const needle=el.querySelector('.needle'),gauge=el.querySelector('.gauge'),msg=el.querySelector('.tl-msg'),go=el.querySelector('.tl-go'),
         noteT=el.querySelector('.note'),centsT=el.querySelector('.cents'),picks=el.querySelectorAll('.strsel .btn');
   needle.style.transformOrigin='150px 150px';
+  const play=el.querySelector('.tl-play');
   let target=0,stream=null,srcNode=null,an=null,buf=null,raf=0,hist=[],lastHeard=0,running=false;
   const say=(t,cls='')=>{msg.className='tl-msg '+cls;msg.textContent=t;};
   const setNeedle=(c,dim)=>{needle.style.transform=`rotate(${Math.max(-62,Math.min(62,c/50*60))}deg)`;needle.style.opacity=dim?.35:1;};
@@ -923,7 +924,7 @@ function Tuner(){
       picks.forEach(b=>b.classList.remove('heard'));say('Listening… pluck one string and let it ring.');}
   }
   async function start(){
-    if(typeof bp!=='undefined'&&bp.on)bstop();   // the backing track would drown out the guitar
+    if(typeof bp!=='undefined'&&bp.on)bstop();      // the backing track would drown out the guitar
     const c=audio();
     if(!c||!navigator.mediaDevices?.getUserMedia){say("This browser can't use the microphone. Try Safari or Chrome.");return;}
     try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});}
@@ -937,10 +938,17 @@ function Tuner(){
     setNeedle(0,true);gauge.classList.remove('intune');picks.forEach(b=>b.classList.remove('heard'));
   }
   go.onclick=()=>running?(stop(),say('Tuner stopped.')):start();
+  // Play pitch: plucks the picked string's note every couple of seconds until turned off. Needs a string, so it's
+  // greyed out on Auto.
+  let pt=0;
+  const ring=()=>{pluck(TSTR[target].freq,{dur:2.6,vol:.6});pt=setTimeout(ring,2400);};
+  const quiet=()=>{clearTimeout(pt);pt=0;play.setAttribute('aria-pressed',false);};
+  const playable=()=>{greyOut(play,!target);if(!target)quiet();};
+  play.onclick=()=>{if(pt)quiet();else{play.setAttribute('aria-pressed',true);ring();}};
   el.querySelector('.strsel').addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(!b)return;target=+b.dataset.s;hist=[];
-    picks.forEach(x=>x.setAttribute('aria-pressed',x===b));});
-  setNeedle(0,true);
-  return {el,stop:()=>{if(running){stop();say('Tap Start, then pluck one string at a time.');}}};
+    picks.forEach(x=>x.setAttribute('aria-pressed',x===b));playable();if(pt){clearTimeout(pt);ring();}});
+  setNeedle(0,true);playable();
+  return {el,stop:()=>{quiet();if(running){stop();say('Tap Start, then pluck one string at a time.');}}};
 }
 let theTuner=null;
 const tunerPop=Popup('Tuner',()=>(theTuner=Tuner()).el,()=>theTuner&&theTuner.stop());
@@ -1024,7 +1032,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v79';
+window.APP_VERSION = 'v80';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
