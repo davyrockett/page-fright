@@ -113,6 +113,7 @@ p{margin:0}
 .seg{display:flex;gap:6px;flex-wrap:wrap}
 /* Tuner (same detector and needle as First Frets) */
 .tuner-live{display:flex;flex-direction:column;gap:14px}
+.strpick{display:flex;flex-direction:column;gap:8px}
 .strsel{flex-wrap:nowrap;gap:6px}.strsel .btn{flex:1;padding:9px 0}
 .tuner-live .btn.heard{box-shadow:0 0 0 3px var(--hl)}
 .gauge{width:100%;max-width:340px;display:block;margin:0 auto}
@@ -125,7 +126,7 @@ p{margin:0}
 .gauge .note{font-family:var(--f-display);font-weight:800;font-size:46px;text-anchor:middle;fill:var(--ink)}
 .gauge .cents{font-size:14px;text-anchor:middle;fill:var(--muted)}
 .gauge.intune .needle,.gauge.intune .note{stroke:var(--good);fill:var(--good)}
-.tl-msg{min-height:2.6em;font-weight:600}.tl-msg.ok{color:var(--good)}
+.tl-msg{min-height:3.9em;line-height:1.3;font-weight:600}.tl-msg.ok{color:var(--good)}
 .sub-opts{display:grid;gap:6px;padding-left:12px;border-left:2px solid var(--line)}
 @media (max-width:560px){.status{margin-left:0;flex-basis:100%}.tempo input{width:120px}}
 /* Read | Improv switch */
@@ -876,7 +877,7 @@ document.getElementById('settings-open').onclick=()=>settingsPop.open();
 const TSTR={1:{name:'e',freq:329.63},2:{name:'B',freq:246.94},3:{name:'G',freq:196.00},4:{name:'D',freq:146.83},5:{name:'A',freq:110.00},6:{name:'E',freq:82.41}};
 function Tuner(){
   const el=h(`<div class="tuner-live">
-    <div class="row strsel" role="group" aria-label="String to tune"><button type="button" class="btn" data-s="0" aria-pressed="true">Auto</button>${[6,5,4,3,2,1].map(s=>`<button type="button" class="btn" data-s="${s}" aria-pressed="false">${TSTR[s].name}</button>`).join('')}</div>
+    <div class="strpick" role="group" aria-label="String to tune"><div class="row"><button type="button" class="btn" data-s="0" aria-pressed="true">Auto</button></div><div class="row strsel">${[6,5,4,3,2,1].map(s=>`<button type="button" class="btn" data-s="${s}" aria-pressed="false">${TSTR[s].name}</button>`).join('')}</div></div>
     <svg class="gauge" viewBox="0 0 300 244" role="img" aria-label="Tuner needle">
       <path class="arc" d="M46.1 90 A120 120 0 0 1 253.9 90"/><path class="zone" d="M137.5 30.7 A120 120 0 0 1 162.5 30.7"/>
       ${[-50,-25,0,25,50].map(c=>{const a=c/50*60*Math.PI/180;return `<line class="tick" x1="${150+100*Math.sin(a)}" y1="${150-100*Math.cos(a)}" x2="${150+88*Math.sin(a)}" y2="${150-88*Math.cos(a)}"/>`;}).join('')}
@@ -886,7 +887,7 @@ function Tuner(){
     <div class="tl-msg" aria-live="polite">Tap Start, then pluck one string at a time.</div>
     <div class="row"><button type="button" class="btn primary tl-go">Start tuner</button><button type="button" class="btn tl-play" aria-pressed="false" title="Pick a string, then play its pitch">Play pitch</button><span class="cap">Uses your microphone. Nothing is recorded or sent anywhere.</span></div></div>`);
   const needle=el.querySelector('.needle'),gauge=el.querySelector('.gauge'),msg=el.querySelector('.tl-msg'),go=el.querySelector('.tl-go'),
-        noteT=el.querySelector('.note'),centsT=el.querySelector('.cents'),picks=el.querySelectorAll('.strsel .btn');
+        noteT=el.querySelector('.note'),centsT=el.querySelector('.cents'),picks=el.querySelectorAll('.strpick .btn');
   needle.style.transformOrigin='150px 150px';
   const play=el.querySelector('.tl-play');
   let target=0,stream=null,srcNode=null,an=null,buf=null,raf=0,hist=[],lastHeard=0,running=false;
@@ -950,7 +951,7 @@ function Tuner(){
     pt=null;play.setAttribute('aria-pressed',false);};
   const playable=()=>{greyOut(play,!target);if(!target)quiet();};
   play.onclick=()=>{if(pt)quiet();else{play.setAttribute('aria-pressed',true);ring();}};
-  el.querySelector('.strsel').addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(!b)return;target=+b.dataset.s;hist=[];
+  el.querySelector('.strpick').addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(!b)return;target=+b.dataset.s;hist=[];
     picks.forEach(x=>x.setAttribute('aria-pressed',x===b));playable();if(pt)ring();});
   setNeedle(0,true);playable();
   return {el,stop:()=>{quiet();if(running){stop();say('Tap Start, then pluck one string at a time.');}}};
@@ -1037,7 +1038,7 @@ document.getElementById('custom-open').onclick=()=>customPop.open();
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v81';
+window.APP_VERSION = 'v82';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
