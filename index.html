@@ -98,6 +98,9 @@ p{margin:0}
 .fabs{position:fixed;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:15;display:flex;gap:10px}
 .fab{display:inline-flex;align-items:center;gap:8px;padding:12px 18px;border-radius:999px;font-size:16px;box-shadow:0 6px 18px rgba(0,0,0,.25)}
 #read-view[hidden] .fabs{display:none}
+/* Hidden at the top of the page (the main buttons are right there); they slide in once you scroll down. */
+.fabs{transition:opacity .2s,transform .2s}
+.fabs:not(.shown){opacity:0;transform:translateY(12px);pointer-events:none;visibility:hidden}
 .fab:not(.primary){background:var(--surface);min-width:96px;justify-content:center}
 #read-view{padding-bottom:64px}   /* room so the floating button never covers the last line */
 .read-tempo .tstep{width:36px;height:36px;justify-content:center;padding:0;border-radius:50%}
@@ -917,6 +920,8 @@ document.getElementById('new').onclick=()=>newExercise();
 // The floating button (bottom right): a new exercise with the same settings that starts playing right away, and the
 // page stays where it is, so you can keep reading without scrolling up and back down (David).
 document.getElementById('new-play').onclick=()=>newExercise({stay:true,go:true});
+{const fabs=document.querySelector('.fabs'),upd=()=>fabs.classList.toggle('shown',window.scrollY>40);
+  addEventListener('scroll',upd,{passive:true});upd();}
 const tabBtn=document.getElementById('tab-toggle');tabBtn.setAttribute('aria-pressed',tabOn);
 function toggleTab(){tabOn=!tabOn;store.set('tab',tabOn);tabBtn.setAttribute('aria-pressed',tabOn);render();if(player.on&&player.cur>=0)mark(player.cur,false);}
 tabBtn.onclick=toggleTab;
@@ -1207,7 +1212,7 @@ document.getElementById('custom-open').onclick=()=>{customPop.open();document.qu
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v98';
+window.APP_VERSION = 'v99';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
