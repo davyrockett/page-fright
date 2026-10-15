@@ -836,9 +836,13 @@ function mark(i,scroll=true){
   scoreEl.querySelectorAll('.on').forEach(el=>el.classList.remove('on'));
   const el=noteEls[i];if(!el)return;
   el.classList.add('on');tabEls[i]?.classList.add('on');
+  // Look ahead: when playback reaches a new line, bring that line up near the top of the screen, so the lines after it
+  // are in view below (David). Lines already near the top are left alone, so nothing jumps needlessly.
   if(scroll&&(i===0||lineOf[i]!==lineOf[i-1])){
-    const r=el.getBoundingClientRect();
-    if(r.top<8||r.bottom>innerHeight-8)el.scrollIntoView({block:'center',behavior:'smooth'});   // only when it's off screen
+    let top=Infinity;noteEls.forEach((n,k)=>{if(lineOf[k]===lineOf[i])top=Math.min(top,n.getBoundingClientRect().top);});
+    top-=24;                                    // a little room for ledger lines and the measure number
+    const want=innerHeight*.12;
+    if(top>innerHeight*.3||top<0)window.scrollBy({top:top-want,behavior:'smooth'});
   }
 }
 // Everything to play, in beats from the start of the count-in: metronome clicks and notes.
@@ -1212,7 +1216,7 @@ document.getElementById('custom-open').onclick=()=>{customPop.open();document.qu
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v99';
+window.APP_VERSION = 'v100';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');

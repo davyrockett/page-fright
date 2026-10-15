@@ -56,8 +56,8 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
   worker caches aggressively: unregister it and clear caches before re-checking a change.
 - `index.html` holds the Read section (generator, VexFlow drawing, tab, playback, Customize, Settings).
 - Read: floating buttons (bottom right, Read only; they fade in once you scroll down past 40px, hidden at the top): Play/Stop (same as the top Play button, kept in step) and "New + Play": new exercise with the same settings, starts playing,
-  and the page does NOT scroll (David: scrolling up and back down broke his flow). Auto-scroll while playing only
-  happens when the current note is actually off screen.
+  and the page does NOT scroll (David: scrolling up and back down broke his flow). While playing, each new line is
+  scrolled up to ~12% from the top (if it's below 30% or off screen) so the lines after it show (David: look ahead).
 - Read controls: Play · Metronome · Subdivide (quieter 8th clicks, greyed out with the metronome off), then the tempo
   on its own full-width line: − / long slider (1 bpm steps) / + / bpm. Tempo, Metronome and Subdivide all change
   during playback (David). Below it, Metronome level and Notes level sliders (0–150%, 100 = normal; own gain
