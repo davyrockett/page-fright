@@ -58,7 +58,8 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
 - Read controls: Play · Metronome · Subdivide (quieter 8th clicks, greyed out with the metronome off), then the tempo
   on its own full-width line: − / long slider (1 bpm steps) / + / bpm. Tempo, Metronome and Subdivide all change
   during playback (David). Below it, Metronome level and Notes level sliders (0–150%, 100 = normal; own gain
-  buses, so they act instantly and only affect Read playback).
+  buses, so they act instantly and only affect Read playback). Metronome: max 200%, a woodblock-style click (`rclick`)
+  that skips the main compressor for its own limiter. David found the old beep too quiet on his iPad even maxed out.
 - Customize (Read): Key / Rhythm / Notes / Positions are collapsible cards (`.csec` details): icon tile, title, a live
   summary of what's chosen, round chevron that turns orange when open. Every section starts closed each time
   (Notes: the Intervals buttons are HIDDEN with Single notes only. David chose hiding over greying here; leave it.)

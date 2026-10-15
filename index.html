@@ -295,7 +295,7 @@ p{margin:0}
       <button type="button" class="btn icon tstep" data-step="1" aria-label="Faster by 1 bpm" title="Faster (1 bpm)"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" d="M3 8h10M8 3v10"/></svg></button>
       <output id="tempo-val"></output></div>
     <div class="read-levels" role="group" aria-label="Levels">
-      <label><span class="cap">Metronome level</span><input type="range" id="lvl-click" min="0" max="150" step="5"></label>
+      <label><span class="cap">Metronome level</span><input type="range" id="lvl-click" min="0" max="200" step="5"></label>
       <label><span class="cap">Notes level</span><input type="range" id="lvl-notes" min="0" max="150" step="5"></label></div>
   </div>
   <div class="row">
@@ -781,7 +781,31 @@ function tick(at,strong,sub=false,out=null){   // sub: the quieter 8th-note clic
 // Read's own level controls: the metronome and the notes each go through their own volume, so the Levels sliders
 // change them instantly, even mid-playback, without touching sounds elsewhere in the app.
 const LEVEL={click:store.get('lvlClick',100),notes:store.get('lvlNotes',100)},BUS={};
-function bus(k){const c=audio();if(!c)return null;if(!BUS[k]){BUS[k]=c.createGain();BUS[k].gain.value=LEVEL[k]/100;BUS[k].connect(OUT);}return BUS[k];}
+function bus(k){const c=audio();if(!c)return null;
+  if(!BUS[k]){BUS[k]=c.createGain();BUS[k].gain.value=LEVEL[k]/100;
+    if(k==='click'){
+      // The metronome skips the app's main compressor (which squashed its short clicks, so even 150% stayed quiet on
+      // an iPad) and goes through its own limiter instead: loud, but it can't distort.
+      const lim=c.createDynamicsCompressor();lim.threshold.value=-3;lim.knee.value=0;lim.ratio.value=20;lim.attack.value=.001;lim.release.value=.05;
+      BUS[k].connect(lim);lim.connect(c.destination);
+    }else BUS[k].connect(OUT);}
+  return BUS[k];}
+// Read's metronome click: a woodblock-style "tock" (a pitched knock plus a short burst of noise for the attack), which
+// carries much better on tablet and phone speakers than a pure beep. Downbeats are higher and louder; the 8th-note
+// subdivisions are lower and softer.
+let CLICKNOISE=null;
+function rclick(at,strong,sub){
+  const c=audio();if(!c)return;const out=bus('click');
+  if(!CLICKNOISE){CLICKNOISE=c.createBuffer(1,Math.floor(c.sampleRate*.03),c.sampleRate);const d=CLICKNOISE.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.exp(-i/(d.length*.18));}
+  const peak=strong?.95:sub?.32:.75,f=strong?1650:sub?1000:1250;
+  const o=c.createOscillator(),o2=c.createOscillator(),g=c.createGain();
+  o.type='triangle';o.frequency.setValueAtTime(f*1.25,at);o.frequency.exponentialRampToValueAtTime(f,at+.012);
+  o2.type='sine';o2.frequency.value=f*2.7;const g2=c.createGain();g2.gain.value=.25;o2.connect(g2);g2.connect(g);
+  g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(peak,at+.0015);g.gain.exponentialRampToValueAtTime(peak*.3,at+.03);g.gain.exponentialRampToValueAtTime(.0001,at+.11);
+  o.connect(g);g.connect(out);o.start(at);o2.start(at);o.stop(at+.12);o2.stop(at+.12);
+  const n=c.createBufferSource(),bp=c.createBiquadFilter(),ng=c.createGain();n.buffer=CLICKNOISE;bp.type='bandpass';bp.frequency.value=3200;bp.Q.value=.9;
+  ng.gain.value=peak*.9;n.connect(bp);bp.connect(ng);ng.connect(out);n.start(at);
+}
 // Play a note or chord: chords are a quick low-to-high strum, a little softer per string.
 function strike(keys,at,dur){const c=audio();if(!c)return;const t=Math.max(at,c.currentTime);
   keys.forEach((k,j)=>pluck(freqOf(midiOf(k)),{at:t+j*.018,dur,vol:keys.length>1?.42:.6,out:bus('notes')}));}
@@ -818,7 +842,7 @@ function schedule(){
     const it=q[player.next],at=player.start+it.beat*player.spb;
     // Clicks follow the Metronome and Subdivide buttons as they are when each click comes up, so both can change
     // during playback. The count-in always clicks on the beat.
-    if(it.click){if(it.sub){if(subdiv&&(it.count||metro))tick(at,false,true,bus('click'));}else if(it.count||metro)tick(at,it.strong,false,bus('click'));}
+    if(it.click){if(it.sub){if(subdiv&&(it.count||metro))rclick(at,false,true);}else if(it.count||metro)rclick(at,it.strong,false);}
     else{const e=exercise.events[it.i];strike(e.keys,at,Math.min(2.4,Math.max(.35,e.d/4*player.spb*1.1+.15)));}
     player.next++;
   }
@@ -1170,7 +1194,7 @@ document.getElementById('custom-open').onclick=()=>{customPop.open();document.qu
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v94';
+window.APP_VERSION = 'v95';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
