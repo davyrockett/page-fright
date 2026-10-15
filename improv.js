@@ -49,18 +49,21 @@ const ivName=(root,iv)=>iv===6&&sharp4()?nameFrom(root,6,3):nameFrom(root,iv);
 /* ---------- the form ----------
    Chords as steps above the key: 0 = I, 5 = IV, 7 = V. Bar 12 is the turnaround (V). */
 const FORM=[0,0,0,0,5,5,0,0,7,5,0,7], QUICK=[0,5,0,0,5,5,0,0,7,5,0,7];
+// Major: a two-bar loop, one bar on the I chord and one on the IV (David), same drums, bass and organ.
+const MAJOR=[0,5];
+const isMajor=()=>B.track==='major';
 const B={key:store.get('bkey',9),bpm:store.get('btempo',92),feel:store.get('bfeel','shuffle'),quick:store.get('bquick',false),
   scale:store.get('bscale','minor'),shapes:store.get('bshapes',[]),lab:store.get('blab','int'),tones:store.get('btones',true),
   mode:store.get('bmode','dorian'),track:store.get('btrack','blues')};
 if(!MODES[B.mode])B.mode='dorian';
 B.shapesOn=store.get('bshapesOn',B.shapes.length>0); // the Shapes button only shows or hides the shape buttons
 const activeShapes=()=>B.shapes;                      // picks stay highlighted either way
-const form=()=>B.quick?QUICK:FORM;
+const form=()=>isMajor()?MAJOR:B.quick?QUICK:FORM;
 // Which chord's tones to show (steps above the key): a tapped chord, else the one playing, else none.
 B.preview=null;
 const tonesOn=()=>B.tones&&B.scale!=='modes';  // Chord tones is greyed out for Modes (for now)
 const toneStep=()=>!tonesOn()?null:B.preview!==null?B.preview:bp.on&&bp.bar>=0?form()[bp.bar]:null;
-const chordName=bar=>pcName(B.key+form()[bar],B.key)+'7';
+const chordName=bar=>pcName(B.key+form()[bar],B.key)+(isMajor()?'':'7');
 
 /* ---------- sounds ---------- */
 let NOISE=null;
@@ -80,14 +83,14 @@ function bass(midi,at,dur){const c=AC,o=c.createOscillator(),f=c.createBiquadFil
 // Organ: a soft drawbar-style tone (fundamental + octave, a touch of the 3rd harmonic) with a slight wobble.
 // Voicing: the chord's 3rd, 5th and ♭7, built on a root between C3 and B3. (A 9th and stronger upper
 // partials sounded out of tune to David, as did a deeper wobble.)
-function organ(pc,at,dur){
+function organ(pc,at,dur,ivs=[4,7,10]){
   const c=AC,root=48+((pc%12)+12)%12,end=at+dur;
   const g=c.createGain(),trem=c.createGain(),f=c.createBiquadFilter(),lfo=c.createOscillator(),depth=c.createGain();
   f.type='lowpass';f.frequency.value=2600;
   g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(.03,at+.02);g.gain.setValueAtTime(.03,end-.06);g.gain.linearRampToValueAtTime(0,end);
   lfo.frequency.value=4.5;depth.gain.value=.06;trem.gain.value=1;lfo.connect(depth);depth.connect(trem.gain); // the wobble
   trem.connect(g);g.connect(f);f.connect(OUT);lfo.start(at);lfo.stop(end+.05);
-  [4,7,10].forEach(iv=>{const fr=440*Math.pow(2,(root+iv-69)/12);
+  ivs.forEach(iv=>{const fr=440*Math.pow(2,(root+iv-69)/12);
     [[1,1],[2,.4],[3,.08]].forEach(([h,a])=>{const o=c.createOscillator(),og=c.createGain();
       o.frequency.value=fr*h;og.gain.value=a;o.connect(og);og.connect(trem);o.start(at);o.stop(end+.05);});});
   live.add(g);setTimeout(()=>live.delete(g),(end-c.currentTime+.5)*1000); // so Stop fades it out
@@ -131,20 +134,23 @@ const bplay=document.getElementById('bplay'),bstatus=document.getElementById('bs
 const off8=()=>B.feel==='shuffle'?2/3:1/2;
 // Boogie bass: root, 3, 5, 6, ♭7, 6, 5, 3 in 8th notes.
 const BOOGIE=[0,4,7,9,10,9,7,4];
+// Over the major track the line goes up to the octave instead of the ♭7: root, 3, 5, 6, 8, 6, 5, 3.
+const BOOGIE_MAJ=[0,4,7,9,12,9,7,4];
 function bschedule(){
   const c=AC;
   while(bp.start+bp.next*bp.spb<c.currentTime+.25){
     const b=bp.next,at=bp.start+b*bp.spb,at2=at+off8()*bp.spb;
     if(b<BCOUNT){tick(at,b===0);}
     else{
-      const k=b-BCOUNT,bar=Math.floor(k/4)%12,beat=k%4,step=form()[bar],pc=(B.key+step)%12;
+      const k=b-BCOUNT,bar=Math.floor(k/4)%form().length,beat=k%4,step=form()[bar],pc=(B.key+step)%12;
       const root=28+((pc-4)%12+12)%12;                 // bass root between low E and D♯
       if(beat===0||beat===2)kick(at); else snare(at);
       hat(at,.16);hat(at2,.1);
-      bass(root+BOOGIE[beat*2],at,off8()*bp.spb*.95);bass(root+BOOGIE[beat*2+1],at2,(1-off8())*bp.spb*.95);
+      const line=isMajor()?BOOGIE_MAJ:BOOGIE,voice=isMajor()?[4,7,12]:[4,7,10];   // major: 3, 5 and octave on the organ
+      bass(root+line[beat*2],at,off8()*bp.spb*.95);bass(root+line[beat*2+1],at2,(1-off8())*bp.spb*.95);
       // Organ: a short chord on 1, then a push on the "and" of 2.
-      if(beat===0)organ(pc,at,bp.spb*.8);
-      if(beat===1)organ(pc,at2,bp.spb*1.25);
+      if(beat===0)organ(pc,at,bp.spb*.8,voice);
+      if(beat===1)organ(pc,at2,bp.spb*1.25,voice);
     }
     bp.next++;
   }
@@ -153,12 +159,12 @@ function bframe(){
   if(!bp.on)return;
   const beat=Math.floor((AC.currentTime-bp.start)/bp.spb);
   if(beat<BCOUNT){bstatus.textContent=beat>=0?`Count-in: ${beat+1}`:'';}
-  else{const bar=Math.floor((beat-BCOUNT)/4)%12;if(bar!==bp.bar){bp.bar=bar;showBar();}}
+  else{const bar=Math.floor((beat-BCOUNT)/4)%form().length;if(bar!==bp.bar){bp.bar=bar;showBar();}}
   bp.raf=requestAnimationFrame(bframe);
 }
 function showBar(){
   if(B.track==='drone'){bstatus.textContent=bp.on?`Drone on ${scaleRoot()}`:'';drawChips();drawBoard();return;}
-  bstatus.textContent=bp.bar>=0?`Bar ${bp.bar+1} of 12 · ${chordName(bp.bar)}`:'';
+  bstatus.textContent=bp.bar>=0?`Bar ${bp.bar+1} of ${form().length} · ${chordName(bp.bar)}`:'';
   drawChips();drawBoard();
 }
 function bstart(){
@@ -251,7 +257,7 @@ function drawBoard(){
   const sel=placed.filter(x=>activeShapes().includes(x.name)), any=sel.length>0; // chosen shapes (none = all)
   // Chord tones: over the blues, the I/IV/V chord (tapped or playing); over the drone, the mode's home chord.
   const drone=B.track==='drone', step=drone?(tonesOn()&&bp.on?0:null):toneStep();  // like the blues: only while it plays
-  const chordIv=drone?droneTriad():[0,4,7,10], tones=step===null?null:chordIv.map(i=>(key+step+i)%12);
+  const chordIv=drone?droneTriad():isMajor()?[0,4,7]:[0,4,7,10], tones=step===null?null:chordIv.map(i=>(key+step+i)%12);
   let svg=`<rect class="wood" x="${NUT}" y="${TOP-10}" width="${LAST*FW}" height="${5*GAP+20}" rx="3"/>`;
   // The chosen shapes' areas, under the fret lines so those still show
   sel.forEach(x=>x.places.forEach(pl=>{const fr=pl.map(p=>p.f),lo=Math.min(...fr),hi=Math.max(...fr);
@@ -314,8 +320,9 @@ function pressAll(){
   // greyed out (not hidden) and nothing else moves.
   const md=document.getElementById('bmodes');md.hidden=B.scale!=='modes';
   md.querySelectorAll('[data-md]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.md===B.mode));
-  const blues=B.track==='blues';
-  [document.getElementById('bquick'),document.getElementById('btempo').closest('label'),document.getElementById('bfeel').closest('label')].forEach(el=>greyOut(el,!blues));
+  // Quick change is only for the 12-bar; Tempo and Feel for anything with drums.
+  greyOut(document.getElementById('bquick'),B.track!=='blues');
+  [document.getElementById('btempo').closest('label'),document.getElementById('bfeel').closest('label')].forEach(el=>greyOut(el,B.track==='drone'));
   document.getElementById('blab').setAttribute('aria-pressed',B.lab==='note');
   document.getElementById('bshapes').setAttribute('aria-pressed',B.shapesOn);const sh=document.getElementById('bshape');sh.classList.toggle('off',!B.shapesOn);sh.setAttribute('aria-hidden',!B.shapesOn); // invisible but still takes its space, so nothing jumps
   document.querySelectorAll('#bshape [data-sh]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.sh==='all'?!B.shapes.length:B.shapes.includes(b.dataset.sh)));
@@ -332,7 +339,7 @@ document.getElementById('bmodes').innerHTML=Object.entries(MODES).map(([k,m])=>`
 function greyOut(el,off){el.classList.toggle('greyed',off);el.setAttribute('aria-disabled',off);el.querySelectorAll('input,select').forEach(i=>i.disabled=off);if(el.matches('button'))el.disabled=off;}
 function setTrack(t){
   if(t===B.track)return;const playing=bp.on;if(playing)bstop();
-  B.track=t;store.set('btrack',t);pressAll();if(playing)bstart();
+  B.track=t;store.set('btrack',t);if(t==='major'&&B.preview===7)B.preview=null;pressAll();if(playing)bstart();
 }
 document.getElementById('btrack').onchange=e=>{setTrack(e.target.value);drawChips();drawBoard();describeImprov();};
 document.getElementById('bfeel').onchange=e=>{B.feel=e.target.value;store.set('bfeel',B.feel);describeImprov();};
@@ -360,7 +367,10 @@ function drawChips(){
   const el=document.getElementById('bchips'),hide=!tonesOn()||B.track==='drone';
   el.classList.toggle('off',hide);el.setAttribute('aria-hidden',hide);
   const now=bp.on&&bp.bar>=0?form()[bp.bar]:null;
-  el.innerHTML=[0,5,7].map(st=>`<button type="button" class="btn chip${st===now?' now':''}" data-chip="${st}" aria-pressed="${B.preview===st}" title="Show the tones of ${pcName(B.key+st,B.key)}7">${pcName(B.key+st,B.key)}7</button>`).join('');
+  // Major: the I and IV triads (no 7ths); the V isn't in the loop, so it's greyed out, keeping its place.
+  const sfx=isMajor()?'':'7';
+  el.innerHTML=[0,5,7].map(st=>{const nm=pcName(B.key+st,B.key)+sfx,off=isMajor()&&st===7;
+    return `<button type="button" class="btn chip${st===now?' now':''}${off?' greyed':''}" data-chip="${st}" aria-pressed="${B.preview===st}"${off?' disabled aria-disabled="true"':''} title="Show the tones of ${nm}">${nm}</button>`;}).join('');
   keepLines();
 }
 // Whenever the chord buttons are hidden (Chord tones off, or the drone), the row keeps the line breaks it has with
@@ -382,7 +392,7 @@ function describeImprov(){
   if(document.getElementById('improv-view').hidden)return;
   const sc=B.scale==='modes'?`${scaleRoot()} ${MODES[B.mode].name}`:`${scaleRoot()} ${SCALES[B.scale].name.toLowerCase()}`;
   document.getElementById('subtitle').textContent=B.track==='drone'?`Drone on ${scaleRoot()} · ${sc}`
-    :`12-bar blues in ${pcName(B.key,B.key)} · ${B.bpm} bpm · ${B.feel==='shuffle'?'Shuffle':'Straight'}${B.quick?' · Quick change':''}`;
+      :`${isMajor()?'Major I–IV':'12-bar blues'} in ${pcName(B.key,B.key)} · ${B.bpm} bpm · ${B.feel==='shuffle'?'Shuffle':'Straight'}${B.quick&&!isMajor()?' · Quick change':''}`;
 }
 
 /* ---------- Read | Improv | Drill ---------- */

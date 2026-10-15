@@ -109,7 +109,10 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
 - Improv modes (v70, David picked layout "C"): "Modes" in the scale list shows a row of mode buttons
   (Ion…Loc, `MODES`, own row so nothing jumps); shapes = 5-note box + 2 notes; colour note (Dorian ♮6, Lydian ♯4,
   Mixolydian ♭7, Phrygian ♭2, Aeolian ♭6, Locrian ♭5, Ionian 7) ringed purple; Lydian labels/spells ♯4. Track
-  select: 12-bar blues | Drone (root+5th pad; root+octave for Locrian). Picking Modes switches to Drone, leaving
+- Major I–IV track (David): same drums/bass/organ, two-bar loop of I then IV. Organ plays 3-5-octave (no ♭7), bass
+  boogie goes to the octave instead of the ♭7, chord tones are the triads, chips read A · D (no 7) with the V chip
+  greyed out. Quick change is greyed out on it; Tempo and Feel work.
+  select: 12-bar blues | Major I–IV | Drone (root+5th pad; root+octave for Locrian). Picking Modes switches to Drone, leaving
   switches back. Tempo/Feel/Quick change are GREYED OUT on Drone (David: hiding them made things jump); the I/IV/V chips are HIDDEN on Drone (his later call), but whenever the chips are hidden
   (drone, or Chord tones off) the row keeps the lines it has with them showing (`keepLines()`): if Chord tones + chips
   needs a new line, Chord tones sits on it even when off. RULE (David): clicking Chord tones must never make it jump
