@@ -312,7 +312,7 @@ p{margin:0}
   <div class="score card" id="score" aria-label="Sight-reading exercise, 16 measures"></div>
   <div class="fabs">
   <button type="button" class="btn fab" id="fab-play" title="Play / stop (space)"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M3 1.5v13l11-6.5z"/></svg><span>Play</span></button>
-  <button type="button" class="btn primary fab" id="new-play" title="New exercise and play (same settings)"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M3 1.5v13l11-6.5z"/></svg><span>New + play</span></button>
+  <button type="button" class="btn primary fab" id="new-play" title="New exercise and play (same settings)"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M3 1.5v13l11-6.5z"/></svg><span>New + Play</span></button>
   </div>
 
   <details class="notes cap help">
@@ -1207,7 +1207,7 @@ document.getElementById('custom-open').onclick=()=>{customPop.open();document.qu
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v97';
+window.APP_VERSION = 'v98';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
