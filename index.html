@@ -95,9 +95,10 @@ p{margin:0}
 .read-levels label{flex:1 1 220px;display:flex;align-items:center;gap:10px;min-width:0}
 .read-levels .cap{white-space:nowrap;min-width:7.5em}
 .read-levels input{flex:1 1 0;width:0;min-width:0;accent-color:var(--accent);height:24px}
-.fab{position:fixed;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:15;
-  display:inline-flex;align-items:center;gap:8px;padding:12px 18px;border-radius:999px;font-size:16px;box-shadow:0 6px 18px rgba(0,0,0,.25)}
-#read-view[hidden] .fab{display:none}
+.fabs{position:fixed;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:15;display:flex;gap:10px}
+.fab{display:inline-flex;align-items:center;gap:8px;padding:12px 18px;border-radius:999px;font-size:16px;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+#read-view[hidden] .fabs{display:none}
+.fab:not(.primary){background:var(--surface);min-width:96px;justify-content:center}
 #read-view{padding-bottom:64px}   /* room so the floating button never covers the last line */
 .read-tempo .tstep{width:36px;height:36px;justify-content:center;padding:0;border-radius:50%}
 .cap{font-size:13px;color:var(--muted)}
@@ -309,7 +310,10 @@ p{margin:0}
   </div>
 
   <div class="score card" id="score" aria-label="Sight-reading exercise, 16 measures"></div>
+  <div class="fabs">
+  <button type="button" class="btn fab" id="fab-play" title="Play / stop (space)"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M3 1.5v13l11-6.5z"/></svg><span>Play</span></button>
   <button type="button" class="btn primary fab" id="new-play" title="New exercise and play (same settings)"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M3 1.5v13l11-6.5z"/></svg><span>New + play</span></button>
+  </div>
 
   <details class="notes cap help">
     <summary>How it works</summary>
@@ -817,7 +821,7 @@ function strike(keys,at,dur){const c=audio();if(!c)return;const t=Math.max(at,c.
 function hush(){const c=AC;if(!c)return;live.forEach(g=>{g.gain.cancelScheduledValues(c.currentTime);g.gain.setTargetAtTime(0,c.currentTime,.03);});}
 
 /* ---------- playback ---------- */
-const playBtn=document.getElementById('play'),statusEl=document.getElementById('status');
+const playBtn=document.getElementById('play'),fabPlay=document.getElementById('fab-play'),statusEl=document.getElementById('status');
 const tempoEl=document.getElementById('tempo'),tempoVal=document.getElementById('tempo-val'),clickBtn=document.getElementById('click');
 let bpm=store.get('tempo',72),metro=store.get('metronome',true),subdiv=store.get('subdivide',false);
 tempoEl.value=bpm;tempoVal.textContent=bpm+' bpm';clickBtn.setAttribute('aria-pressed',metro);
@@ -868,17 +872,15 @@ function play(){
   const c=audio();if(!c)return;
   player.on=true;player.spb=60/bpm;player.start=c.currentTime+.15;player.next=0;player.cur=-1;player.queue=buildQueue();
   schedule();player.timer=setInterval(schedule,40);player.raf=requestAnimationFrame(frame);
-  playBtn.querySelector('span').textContent='Stop';
-  playBtn.querySelector('path').setAttribute('d','M3 3h10v10H3z');
+  [playBtn,fabPlay].forEach(b=>{b.querySelector('span').textContent='Stop';b.querySelector('path').setAttribute('d','M3 3h10v10H3z');});
 }
 function stop(cut=true){
   player.on=false;clearInterval(player.timer);cancelAnimationFrame(player.raf);
   if(cut)hush();
   scoreEl.querySelectorAll('.on').forEach(el=>el.classList.remove('on'));statusEl.textContent='';
-  playBtn.querySelector('span').textContent='Play';
-  playBtn.querySelector('path').setAttribute('d','M3 1.5v13l11-6.5z');
+  [playBtn,fabPlay].forEach(b=>{b.querySelector('span').textContent='Play';b.querySelector('path').setAttribute('d','M3 1.5v13l11-6.5z');});
 }
-playBtn.onclick=()=>player.on?stop():play();
+playBtn.onclick=fabPlay.onclick=()=>player.on?stop():play();   // the floating one (bottom right) does the same, without scrolling
 function setTempo(nb){
   nb=Math.max(40,Math.min(200,Math.round(nb)));tempoEl.value=nb;tempoVal.textContent=nb+' bpm';
   if(player.on){ // keep going from the same spot at the new speed
@@ -1205,7 +1207,7 @@ document.getElementById('custom-open').onclick=()=>{customPop.open();document.qu
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v96';
+window.APP_VERSION = 'v97';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
