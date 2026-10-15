@@ -64,7 +64,9 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
   7% of the top), mic filtered to 60–1100 Hz, gate = 1.4x the quietest recent level (not a fixed level, so quiet
   phone mics work); clarity >= .84 for a new note, >= .7 while it agrees with the note ringing (David: needed to pluck
   too hard, so made more sensitive + mic autoGainControl on), median of 7 readings + eased needle, reading held ~2 s as the string fades, Auto switches
-  string only after 3 agreeing readings, one-octave jumps folded back. Tested with synthetic plucks (weak low-E
+  string only after 3 agreeing readings, one-octave jumps folded back.
+  Fading notes: only readings nearly as clear as the pluck's best (within .035) move the needle; weaker ones within
+  15 cents keep it alive; a jump in level (new pluck) resets that. First Frets has the same tuner: keep them in step. Tested with synthetic plucks (weak low-E
   fundamental, quiet mic, noise): ~90% of the ring shown, within 3 cents. Same needle and messages; Auto or a picked string; standard tuning. No Start button (David): opening the pop-up starts
   listening on Auto (a string picked last time is forgotten); it stops the Improv backing; closing the pop-up or
   leaving the app turns the mic off, coming back with it open turns it on again.

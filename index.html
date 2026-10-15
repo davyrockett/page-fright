@@ -918,7 +918,7 @@ function Tuner(){
   needle.style.transformOrigin='150px 150px';
   const play=el.querySelector('.tl-play');
   let target=0,stream=null,srcNode=null,chain=[],an=null,buf=null,timer=0,running=false;
-  let hist=[],shownStr=0,pendStr=0,pendN=0,needleC=0,lastHeard=0,lastF=0,floor=.002,lastMsg='';
+  let hist=[],shownStr=0,pendStr=0,pendN=0,needleC=0,lastHeard=0,lastF=0,medF=0,noteClar=0,rmsAvg=0,floor=.002,lastMsg='';
   const say=(t,cls='')=>{if(t+cls===lastMsg)return;lastMsg=t+cls;msg.className='tl-msg '+cls;msg.textContent=t;};
   const setNeedle=(c,dim)=>{needle.style.transform=`rotate(${Math.max(-62,Math.min(62,c/50*60))}deg)`;needle.style.opacity=dim?.35:1;};
   /* Pitch: the McLeod Pitch Method (what the better web tuners use). The normalized square-difference function
@@ -965,9 +965,13 @@ function Tuner(){
     // The room's background level: follows the quietest moments, creeping up slowly if the room gets louder.
     floor=rms<floor?rms:Math.min(floor*1.0015,.02);
     let f=f0;
-    // While a string is ringing, a slightly less clear reading still counts if it agrees with the last one (so a
-    // quiet or fading string keeps reading); a new note needs a clear reading.
-    const agrees=f&&lastF&&now-lastHeard<600&&Math.abs(1200*Math.log2(f/lastF))<40;
+    // While a string is ringing, a slightly less clear reading still counts if it's within 15 cents of the steady
+    // reading (so a quiet or fading string keeps reading, but the shaky tail of a fading note can't drag it off);
+    // a new note needs a clear reading.
+    const agrees=f&&medF&&now-lastHeard<600&&Math.abs(1200*Math.log2(f/medF))<15;
+    // A new pluck (a jump in level) starts a fresh note.
+    if(rms>rmsAvg*1.8+.0002)noteClar=0;
+    rmsAvg=rmsAvg*.8+rms*.2;
     if(f&&clar>=(agrees?.7:.84)&&f>62&&f<1050){
       // Octave mistakes: with a string picked, fold the reading into that string's octave. On Auto, a jump of
       // exactly one octave from the note just heard is a mistake (no two strings are an octave apart).
@@ -977,15 +981,18 @@ function Tuner(){
       // Auto: switch strings only after the new string is heard a few times in a row.
       let s=target;
       if(!s){const n=nearest(f);if(!shownStr||n===shownStr){s=n;pendN=0;}else if(n===pendStr&&++pendN>=3){s=n;pendN=0;hist=[];}else{if(n!==pendStr){pendStr=n;pendN=1;}s=shownStr;}}
-      if(s!==shownStr){hist=[];needleC=1200*Math.log2(f/TSTR[s].freq);}
+      if(s!==shownStr){hist=[];medF=0;noteClar=0;needleC=1200*Math.log2(f/TSTR[s].freq);}
       shownStr=s;
       const c=1200*Math.log2(f/TSTR[s].freq);
-      if(Math.abs(c)<600||target){hist.push(c);if(hist.length>7)hist.shift();}
+      // Only readings nearly as clear as this pluck's best move the needle: as a note fades into the room's noise its
+      // readings drift, so those just keep the display alive. (The best clarity eases down slowly over time.)
+      noteClar=Math.max(clar,noteClar-.002);
+      if((Math.abs(c)<600||target)&&(clar>=Math.max(.84,noteClar-.035)||!hist.length)){hist.push(c);if(hist.length>7)hist.shift();}
       const med=[...hist].sort((x,y)=>x-y)[hist.length>>1];
-      if(hist.length){lastHeard=now;show(s,med);}
+      if(hist.length){lastHeard=now;medF=TSTR[s].freq*Math.pow(2,med/1200);show(s,med);}
     }else{
       if(now-lastHeard>2200&&lastHeard!==-1){         // hold the last reading a while as the string fades
-        lastHeard=-1;hist=[];shownStr=0;pendN=0;lastF=0;setNeedle(0,true);gauge.classList.remove('intune');centsT.textContent='';noteT.textContent='–';
+        lastHeard=-1;hist=[];shownStr=0;pendN=0;lastF=0;medF=0;setNeedle(0,true);gauge.classList.remove('intune');centsT.textContent='';noteT.textContent='–';
         picks.forEach(b=>b.classList.remove('heard'));say('Listening… pluck one string and let it ring.');
       }else if(lastHeard>0&&now-lastHeard>350)needle.style.opacity=.6;
     }
@@ -1008,7 +1015,7 @@ function Tuner(){
     const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1100;lp.Q.value=.7;
     an=c.createAnalyser();an.fftSize=4096;buf=new Float32Array(an.fftSize);
     srcNode.connect(hp);hp.connect(hp2);hp2.connect(lp);lp.connect(an);chain=[hp,hp2,lp];
-    running=true;lastHeard=-1;hist=[];shownStr=0;floor=.001;lastMsg='';
+    running=true;lastHeard=-1;hist=[];shownStr=0;lastF=0;medF=0;floor=.001;lastMsg='';
     say('Listening… pluck one string and let it ring.');
     timer=setInterval(tick,45);                      // ~22 readings a second
   }
@@ -1130,7 +1137,7 @@ document.getElementById('custom-open').onclick=()=>{customPop.open();document.qu
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v90';
+window.APP_VERSION = 'v91';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
