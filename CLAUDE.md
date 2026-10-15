@@ -57,7 +57,8 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
 - `index.html` holds the Read section (generator, VexFlow drawing, tab, playback, Customize, Settings).
 - Read controls: Play · Metronome · Subdivide (quieter 8th clicks, greyed out with the metronome off), then the tempo
   on its own full-width line: − / long slider (1 bpm steps) / + / bpm. Tempo, Metronome and Subdivide all change
-  during playback (David).
+  during playback (David). Below it, Metronome level and Notes level sliders (0–150%, 100 = normal; own gain
+  buses, so they act instantly and only affect Read playback).
 - Customize (Read): Key / Rhythm / Notes / Positions are collapsible cards (`.csec` details): icon tile, title, a live
   summary of what's chosen, round chevron that turns orange when open. Every section starts closed each time
   (Notes: the Intervals buttons are HIDDEN with Single notes only. David chose hiding over greying here; leave it.)
