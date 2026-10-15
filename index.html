@@ -86,6 +86,12 @@ p{margin:0}
 .tempo{display:flex;align-items:center;gap:10px}
 .tempo input{width:160px;accent-color:var(--accent)}
 .tempo output{font-variant-numeric:tabular-nums;min-width:4.5em;font-weight:700}
+/* Read: the tempo gets its own full-width line with a long slider (finer control) and −/+ for single steps. */
+.read-tempo{flex-basis:100%;display:flex;align-items:center;gap:10px}
+.read-tempo input{flex:1 1 0;width:0;min-width:0;accent-color:var(--accent);height:28px}
+@media (max-width:560px){.read-tempo{gap:8px}.read-tempo>.cap{display:none}.read-tempo output{min-width:4em}}  /* phones: the slider gets the room */
+.read-tempo output{font-variant-numeric:tabular-nums;min-width:4.5em;font-weight:700;text-align:right}
+.read-tempo .tstep{width:36px;height:36px;justify-content:center;padding:0;border-radius:50%}
 .cap{font-size:13px;color:var(--muted)}
 .status{margin-left:auto}
 /* The score. VexFlow draws in black; these rules recolor it to the theme. */
@@ -277,8 +283,13 @@ p{margin:0}
   <div class="controls card">
     <button type="button" class="btn primary play" id="play" title="Play / stop (space)"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M3 1.5v13l11-6.5z"/></svg><span>Play</span></button>
     <button type="button" class="btn" id="click" aria-pressed="true">Metronome</button>
-    <label class="tempo"><span class="cap">Tempo</span><input type="range" id="tempo" min="40" max="200" step="2"><output id="tempo-val"></output></label>
+    <button type="button" class="btn" id="subdiv" aria-pressed="false" title="Add quieter 8th-note clicks">Subdivide</button>
     <span class="cap status" id="status" aria-live="polite"></span>
+    <div class="read-tempo"><span class="cap">Tempo</span>
+      <button type="button" class="btn icon tstep" data-step="-1" aria-label="Slower by 1 bpm" title="Slower (1 bpm)"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" d="M3 8h10"/></svg></button>
+      <input type="range" id="tempo" min="40" max="200" step="1" aria-label="Tempo">
+      <button type="button" class="btn icon tstep" data-step="1" aria-label="Faster by 1 bpm" title="Faster (1 bpm)"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" d="M3 8h10M8 3v10"/></svg></button>
+      <output id="tempo-val"></output></div>
   </div>
   <div class="row">
     <button type="button" class="btn" id="new" title="New exercise (N)">New exercise</button>
@@ -753,11 +764,11 @@ function pluck(freq,{at=0,dur=2.6,vol=.55}={}){
   src.connect(g);g.connect(OUT);src.start(t);src.stop(t+len/sr+.6);
   live.add(g);src.onended=()=>live.delete(g);
 }
-function tick(at,strong){
+function tick(at,strong,sub=false){   // sub: the quieter 8th-note click between beats
   const c=audio();if(!c)return;
   const o=c.createOscillator(),g=c.createGain();
-  o.frequency.value=strong?1760:1175;o.type='sine';
-  g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(strong?.35:.22,at+.002);g.gain.exponentialRampToValueAtTime(.0001,at+.06);
+  o.frequency.value=strong?1760:sub?980:1175;o.type='sine';
+  g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(strong?.35:sub?.09:.22,at+.002);g.gain.exponentialRampToValueAtTime(.0001,at+.06);
   o.connect(g);g.connect(OUT);o.start(at);o.stop(at+.08);
 }
 // Play a note or chord: chords are a quick low-to-high strum, a little softer per string.
@@ -768,8 +779,9 @@ function hush(){const c=AC;if(!c)return;live.forEach(g=>{g.gain.cancelScheduledV
 /* ---------- playback ---------- */
 const playBtn=document.getElementById('play'),statusEl=document.getElementById('status');
 const tempoEl=document.getElementById('tempo'),tempoVal=document.getElementById('tempo-val'),clickBtn=document.getElementById('click');
-let bpm=store.get('tempo',72),metro=store.get('metronome',true);
+let bpm=store.get('tempo',72),metro=store.get('metronome',true),subdiv=store.get('subdivide',false);
 tempoEl.value=bpm;tempoVal.textContent=bpm+' bpm';clickBtn.setAttribute('aria-pressed',metro);
+const subBtn=document.getElementById('subdiv');subBtn.setAttribute('aria-pressed',subdiv);
 const player={on:false,start:0,spb:1,next:0,cur:-1,timer:0,raf:0,queue:[]};
 const COUNT=BEATS, TOTAL=COUNT+MEASURES*BEATS;
 
@@ -785,7 +797,7 @@ function mark(i,scroll=true){
 // Everything to play, in beats from the start of the count-in: metronome clicks and notes.
 function buildQueue(){
   const q=[];
-  for(let b=0;b<TOTAL;b++)q.push({beat:b,click:true,strong:b%BEATS===0,count:b<COUNT});
+  for(let b=0;b<TOTAL;b++){q.push({beat:b,click:true,strong:b%BEATS===0,count:b<COUNT});q.push({beat:b+.5,click:true,sub:true,count:b<COUNT});}
   exercise.events.forEach((e,i)=>{if(!e.rest)q.push({beat:COUNT+onsets[i]/4,i});});
   return q.sort((a,b)=>a.beat-b.beat);
 }
@@ -793,7 +805,9 @@ function schedule(){
   const c=AC,q=player.queue;
   while(player.next<q.length&&player.start+q[player.next].beat*player.spb<c.currentTime+.2){
     const it=q[player.next],at=player.start+it.beat*player.spb;
-    if(it.click){if(it.count||metro)tick(at,it.strong);}
+    // Clicks follow the Metronome and Subdivide buttons as they are when each click comes up, so both can change
+    // during playback. The count-in always clicks on the beat.
+    if(it.click){if(it.sub){if(subdiv&&(it.count||metro))tick(at,false,true);}else if(it.count||metro)tick(at,it.strong);}
     else{const e=exercise.events[it.i];strike(e.keys,at,Math.min(2.4,Math.max(.35,e.d/4*player.spb*1.1+.15)));}
     player.next++;
   }
@@ -825,15 +839,20 @@ function stop(cut=true){
   playBtn.querySelector('path').setAttribute('d','M3 1.5v13l11-6.5z');
 }
 playBtn.onclick=()=>player.on?stop():play();
-tempoEl.oninput=()=>{
-  const nb=+tempoEl.value;tempoVal.textContent=nb+' bpm';
+function setTempo(nb){
+  nb=Math.max(40,Math.min(200,Math.round(nb)));tempoEl.value=nb;tempoVal.textContent=nb+' bpm';
   if(player.on){ // keep going from the same spot at the new speed
     const now=AC.currentTime,pos=(now-player.start)/player.spb,spb=60/nb;
     player.start=now-pos*spb;player.spb=spb; // beats already queued keep their old timing
   }
   bpm=nb;store.set('tempo',bpm);
-};
-clickBtn.onclick=()=>{metro=!metro;store.set('metronome',metro);clickBtn.setAttribute('aria-pressed',metro);};
+}
+tempoEl.oninput=()=>setTempo(+tempoEl.value);
+document.querySelectorAll('.read-tempo .tstep').forEach(b=>b.onclick=()=>setTempo(bpm+ +b.dataset.step));
+subBtn.onclick=()=>{subdiv=!subdiv;store.set('subdivide',subdiv);subBtn.setAttribute('aria-pressed',subdiv);};
+// Subdivide only matters with the metronome on: greyed out (not hidden) when it's off.
+const subAvail=()=>{subBtn.disabled=!metro;};subAvail();
+clickBtn.onclick=()=>{metro=!metro;store.set('metronome',metro);clickBtn.setAttribute('aria-pressed',metro);subAvail();};
 
 // Tap a note to hear it.
 scoreEl.addEventListener('click',e=>{
@@ -1137,7 +1156,7 @@ document.getElementById('custom-open').onclick=()=>{customPop.open();document.qu
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v92';
+window.APP_VERSION = 'v93';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
