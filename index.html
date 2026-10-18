@@ -14,6 +14,7 @@
 <meta name="theme-color" content="#F1F0EC" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#151310" media="(prefers-color-scheme: dark)">
 <script src="move.js" data-keep="sr."></script>
+<script src="suite.js" defer></script>
 <script>
 // Light unless changed in Settings. Set before the page draws so it never flashes dark first.
 (()=>{let t='light';try{const v=localStorage.getItem('sr.theme');if(v)t=JSON.parse(v);}catch(e){}if(t!=='auto')document.documentElement.setAttribute('data-theme',t);})();
@@ -1217,7 +1218,7 @@ document.getElementById('custom-open').onclick=()=>{customPop.open();document.qu
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v101';
+window.APP_VERSION = 'v102';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
