@@ -51,7 +51,7 @@ with this section (copy it from any other app) plus an "## This app" section.
 
 ## This app
 
-Guitar sight-reading generator plus an improv practice section. Live: https://davyrockett.github.io/page-fright/
+Guitar sight-reading generator plus an improv practice section. Live: https://www.davyrockett.com/page-fright/
 (`#improv` opens the Improv section). See README.md for files and features.
 
 - **Publish:** run `tools/bump.sh` (bumps `sw.js` VERSION and `window.APP_VERSION` in index.html), commit, push,
@@ -89,7 +89,7 @@ Guitar sight-reading generator plus an improv practice section. Live: https://da
   `improv.js` holds the Improv section and shares globals from index.html (`store`, `h`, `audio`, `OUT`, `pluck`,
   `tick`, `hush`, `STRINGS`, `player`, `stop`, `describe`). Notation uses vendored VexFlow 4.2.5; CSS recolors it.
 - localStorage keys start with `sr.` (from the old name, Sight Reading); keep that so settings survive.
-- Old address davyrockett.github.io/sight-reading/ forwards here (repo davyrockett/sight-reading).
+- Old address www.davyrockett.com/sight-reading/ forwards here (repo davyrockett/sight-reading).
 - Icon links carry `?v=N` (index.html and manifest). After redrawing the icons, bump N so Safari fetches the new
   files; installed Home Screen / Dock copies still keep their old icon until removed and re-added.
 

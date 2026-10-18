@@ -7,7 +7,7 @@ covering the whole guitar range: low E (open 6th string) up to C on the 1st stri
 (written C7, above the 5th ledger line).
 Written in treble clef, which sounds an octave lower on guitar.
 
-**Live app:** https://davyrockett.github.io/page-fright/ It runs as an app on
+**Live app:** https://www.davyrockett.com/page-fright/ It runs as an app on
 iPhone and iPad Home Screens and the Mac's Dock, and works with no signal once installed.
 
 ## What's in here
@@ -95,7 +95,7 @@ Same screen as Chords.
 
 ## Old address
 
-The app used to be called Sight Reading, at https://davyrockett.github.io/sight-reading/. That address now
+The app used to be called Sight Reading, at https://www.davyrockett.com/sight-reading/. That address now
 forwards here (repo `davyrockett/sight-reading`, local folder `../sight-reading-redirect`). Settings carry over
 because both addresses are on the same site (localStorage keys start with `sr.`).
 
