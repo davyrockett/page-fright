@@ -318,6 +318,7 @@ p{margin:0}
   <div class="score card" id="score" aria-label="Sight-reading exercise, 16 measures"></div>
   <div class="fabs">
   <button type="button" class="btn fab" id="fab-play" title="Play / stop (space)"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M3 1.5v13l11-6.5z"/></svg><span>Play</span></button>
+  <button type="button" class="btn fab" id="fab-new" title="New exercise (same settings), no playback"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9"/><path fill="currentColor" d="M14.5 1.5v4.5H10z"/></svg><span>New</span></button>
   <button type="button" class="btn primary fab" id="new-play" title="New exercise and play (same settings)"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M3 1.5v13l11-6.5z"/></svg><span>New + Play</span></button>
   </div>
 
@@ -927,6 +928,8 @@ document.getElementById('new').onclick=()=>newExercise();
 // The floating button (bottom right): a new exercise with the same settings that starts playing right away, and the
 // page stays where it is, so you can keep reading without scrolling up and back down (David).
 document.getElementById('new-play').onclick=()=>newExercise({stay:true,go:true});
+// "New" beside it: the same, but without playing (David).
+document.getElementById('fab-new').onclick=()=>newExercise({stay:true});
 {const fabs=document.querySelector('.fabs'),upd=()=>fabs.classList.toggle('shown',window.scrollY>40);
   addEventListener('scroll',upd,{passive:true});upd();}
 const tabBtn=document.getElementById('tab-toggle');tabBtn.setAttribute('aria-pressed',tabOn);
@@ -1220,7 +1223,7 @@ document.getElementById('custom-open').onclick=()=>{customPop.open();document.qu
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v104';
+window.APP_VERSION = 'v105';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
