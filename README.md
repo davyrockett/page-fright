@@ -45,6 +45,7 @@ iPhone and iPad Home Screens and the Mac's Dock, and works with no signal once i
   eighths/sixteenths are beamed by the beat.
 - **Notes** (in Customize): single notes, double stops and/or triple stops. **Intervals** (2nds to octaves,
   default 3rds and 5ths) sets the double stops; triple stops stack two of them (3rds + 3rds make a triad).
+  With double or triple stops on, each exercise ends on the key's I chord.
   Chords are on neighboring strings (double stops may skip one) and are checked to be playable in the chosen
   positions (or within a 5-fret stretch on the whole neck). The diminished 5th is left out.
 - **Accidentals** (in Customize, under Key): some notes become sharps, flats or naturals outside the key, each
