@@ -573,15 +573,16 @@ function generate(sel=store.get('positions',[]),tex=store.get('textures',['singl
   const nearest=(list,pos)=>list.reduce((b,c)=>Math.abs(c.at(-1)-pos)<Math.abs(b.at(-1)-pos)?c:b);
   // Start and end with the home note at the bottom. If no such chord fits, any chord with the home note in it.
   const homeChords=list=>{const b=list.filter(c=>isHome(c[0]));if(b.length)return b;const a=list.filter(c=>c.some(isHome));return a.length?a:list;};
-  // With double or triple stops on, the last chord is the key's I chord, a three-note triad on neighboring strings
-  // (David), whatever intervals are chosen: the voicing nearest the last note, root position unless an inversion is
-  // much closer.
+  // The ending is built from the key's I chord, as many notes as the texture (David; one of the chosen textures):
+  // single = the home note, double = two notes of the triad (C–E, E–G, G–C… in C), triple = the triad in any order.
+  // Whatever intervals are chosen; the one nearest the last note.
+  const endType=anyType();
   const iChord=()=>{const h=LETTERS.indexOf(home),tri=new Set([0,2,4].map(d=>LETTERS[(h+d)%7])),b=[];
-    for(const sh of [[0,2,4],[0,2,5],[0,3,5]])for(let i=lo;i+sh[2]<=hi;i++){   // root position, 1st and 2nd inversion
+    const shapes=endType==='single'?[[0]]:endType==='double'?[[0,2],[0,3],[0,4],[0,5]]:[[0,2,4],[0,2,5],[0,3,5]];
+    for(const sh of shapes)for(let i=lo;i+sh.at(-1)<=hi;i++){
       const c=sh.map(d=>i+d);
-      if(c.every(j=>tri.has(SC[j].letter))&&playable(c.map(j=>SC[j].midi),sel))b.push(c);}
-    const cost=c=>Math.abs(c.at(-1)-pos)+(isHome(c[0])?0:5);
-    return b.length?b.reduce((x,c)=>cost(c)<cost(x)?c:x):null;};
+      if((endType==='single'?isHome(i):c.every(j=>tri.has(SC[j].letter)))&&playable(c.map(j=>SC[j].midi),sel))b.push(c);}
+    return b.length?nearest(b,pos):null;};
   const events=rhythmFor(), sounding=events.filter(e=>!e.rest), N=sounding.length;
   const pool=options(anyType()), first=homeChords(pool.some(c=>c.some(isHome))?pool:tex.flatMap(options));
   let cur=first[Math.floor(Math.random()*first.length)];
@@ -590,12 +591,11 @@ function generate(sel=store.get('positions',[]),tex=store.get('textures',['singl
   let target=newTarget();
   const out=[cur];
   for(let n=1;n<N;n++){
-    const toI=tex.some(t=>t!=='single');
-    if(n===N-1){out.push((toI&&iChord())||nearest(homeChords(tex.flatMap(options)),pos));break;}
+    if(n===N-1){out.push(iChord()||nearest(homeChords(tex.flatMap(options)),pos));break;}
     const type=anyType();
     if(pos===target)target=newTarget();
-    // The last few notes head for a step above the I chord's top note, so it ends with a step down, not a big leap.
-    if(toI&&n>=N-5){const c=iChord();if(c)target=c.at(-1)<hi?c.at(-1)+1:c.at(-1)-1;}
+    // The last few notes head for a step above the ending's top note, so it ends with a step down, not a big leap.
+    if(n>=N-5){const c=iChord();if(c)target=c.at(-1)<hi?c.at(-1)+1:c.at(-1)-1;}
     const dir=Math.sign(target-pos);
     let move;
     if(Math.random()<.05&&last!==0)move=0;                       // an occasional repeat
@@ -1184,7 +1184,7 @@ const customPop=Popup('Customize',()=>{
     <div class="seg" role="group" aria-label="Rhythm extras">${btns('flag',[['dotted','Dotted'],['rests','Rests']])}</div>`)}
     ${sec('tex','♫','Notes',`<p class="cap">Choose more than one to mix them. Every chord fits your positions.</p>
     <div class="seg" role="group" aria-label="Notes">${btns('tex',Object.entries(TEXTURES))}</div>
-    <div class="sub-opts"><p class="cap"><b>Intervals</b>: double stops use these. Triple stops stack two of them on neighboring strings (3rds + 3rds make a triad, 3rds + 4ths an inversion). Double stop 6ths, 7ths and octaves may skip a string. With double or triple stops on, the exercise ends on the key's I chord.</p>
+    <div class="sub-opts"><p class="cap"><b>Intervals</b>: double stops use these. Triple stops stack two of them on neighboring strings (3rds + 3rds make a triad, 3rds + 4ths an inversion). Double stop 6ths, 7ths and octaves may skip a string. Exercises end on the key's I chord: the home note, two notes of the chord, or all three, to match the notes chosen.</p>
       <div class="seg" role="group" aria-label="Intervals">${btns('dint',Object.entries(INTERVALS))}</div></div>`)}
     ${sec('pos',FRETS,'Positions',`<p class="cap">Only use notes you can play without leaving the positions you choose. A position is named for its lowest fret and covers four frets, plus the index finger's reach back one fret; 1st position uses the open strings. Choose several to combine them, or Whole neck for everything.</p>
     <div class="seg" role="group" aria-label="Positions">
@@ -1235,7 +1235,7 @@ document.getElementById('custom-open').onclick=()=>{customPop.open();document.qu
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v106';
+window.APP_VERSION = 'v107';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');

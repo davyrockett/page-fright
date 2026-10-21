@@ -119,10 +119,10 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
   call): no separate options; two of the chosen intervals stacked (3rds+3rds = triad, 3rds+4ths = inversion), on
   neighboring strings; a texture that can't be built (e.g. octaves only) is dropped. Checked by `playable()`; no
   tritone anywhere. The Intervals row shows only when double or triple stops are on.
-- Ending (2026-10-21, David): with double or triple stops on, the exercise ends on the key's I chord, a 3-note triad on
-  neighboring strings whatever intervals are chosen (`iChord()` in `generate()`). Root position unless an inversion is
-  much closer; the last few notes head for a step above its top note so it ends with a step down, not a leap.
-  Single notes only: still ends on the home note.
+- Ending (2026-10-21, David): the last note/chord comes from the key's I chord, sized to the texture (`iChord()` in
+  `generate()`; with several textures chosen, one of them at random): single = the home note; double = the nearest two
+  notes of the triad (in C: C–E, E–G, G–C, also C–G, E–C); triple = the nearest triad in any order (any inversion).
+  Ignores the chosen intervals. The last few notes head for a step above its top note, so it ends with a step down.
 - Accidentals (v71; v72 moved to Customize > Key, off by default): some single notes become chromatic approach notes a
   half step below or above the next note (`approach()`), spelled from the neighbouring letter; drawn with
   `VF.Accidental.applyAccidentals` per measure (adds naturals too).
