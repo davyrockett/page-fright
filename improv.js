@@ -54,7 +54,8 @@ const MAJOR=[0,5];
 const isMajor=()=>B.track==='major';
 const B={key:store.get('bkey',9),bpm:store.get('btempo',92),feel:store.get('bfeel','shuffle'),quick:store.get('bquick',false),
   scale:store.get('bscale','minor'),shapes:store.get('bshapes',[]),lab:store.get('blab','int'),tones:store.get('btones',true),
-  mode:store.get('bmode','dorian'),track:store.get('btrack','blues')};
+  mode:store.get('bmode','dorian'),track:store.get('btrack','blues'),
+  licksOn:store.get('blicksOn',false),lick:store.get('blick',null),slow:store.get('blslow',false)};
 if(!MODES[B.mode])B.mode='dorian';
 B.shapesOn=store.get('bshapesOn',B.shapes.length>0); // the Shapes button only shows or hides the shape buttons
 const activeShapes=()=>B.shapes;                      // picks stay highlighted either way
@@ -128,6 +129,7 @@ function droneStop(){
 
 /* ---------- playback ---------- */
 const bp={on:false,start:0,spb:.6,next:0,timer:0,raf:0,bar:-1};
+const lp={on:false,start:0,beat:.6,times:[],raf:0,bus:null,cur:-1}; // a lick playing (see licks below)
 const BCOUNT=4; // count-in beats
 const bplay=document.getElementById('bplay'),bstatus=document.getElementById('bstatus');
 // When in the beat each 8th note lands: swung (2/3 of the way) or straight (halfway).
@@ -177,7 +179,7 @@ function bstart(){
   bplay.querySelector('span').textContent='Stop';bplay.querySelector('path').setAttribute('d','M3 3h10v10H3z');
 }
 function bstop(){
-  bp.on=false;clearInterval(bp.timer);cancelAnimationFrame(bp.raf);droneStop();hush();bp.bar=-1;showBar();
+  lstop();bp.on=false;clearInterval(bp.timer);cancelAnimationFrame(bp.raf);droneStop();hush();bp.bar=-1;showBar();
   bplay.querySelector('span').textContent='Play';bplay.querySelector('path').setAttribute('d','M3 1.5v13l11-6.5z');
 }
 bplay.onclick=()=>bp.on?bstop():bstart();
@@ -247,6 +249,88 @@ function placedShapes(){
     .sort((a,b)=>Math.min(...a.places[0].map(p=>p.f))-Math.min(...b.places[0].map(p=>p.f)));
 }
 
+/* ---------- licks ----------
+   Standard blues licks (licks.js), written in A and moved to the key picked. With Licks on, the picked lick's notes
+   are numbered on the fretboard in playing order, joined by a line, and the rest of the scale fades; the lick's tab
+   goes under the board. Minor licks show with the minor scales, major licks with the major ones (none for Modes
+   or CAGED, so Licks is greyed out there). */
+const LICK_FAMILY={minor:'minor',blues:'minor',minorScale:'minor',major:'major',majorScale:'major'};
+const STR_OF={E:0,A:1,D:2,G:3,B:4,e:5};
+function parseLick(text){
+  return text.trim().split(/\s+/).map(tok=>{
+    let [ns,d]=tok.split('*'),tech=null,bend=0;
+    if(ns[0]==='/'){tech='slide';ns=ns.slice(1);}else if(ns[0]==='h'){tech='hammer';ns=ns.slice(1);}
+    const notes=ns.split('+').map(n=>{const m=n.match(/^([EADGBe])(\d+)(b(\d)?)?$/);if(m[3])bend=m[4]?+m[4]:2;return {s:STR_OF[m[1]],f:+m[2]};});
+    return {notes,d:+d||1,tech,bend};
+  });
+}
+const lickList=()=>LICKS.filter(l=>l.scales.includes(LICK_FAMILY[B.scale]));
+const licksOn=()=>B.licksOn&&lickList().length>0;
+const curLick=()=>{const ls=lickList();return ls.find(l=>l.id===B.lick)||ls[0]||null;};
+// The lick in the key picked: moved as few frets as it can be and still fit on frets 0–17 (a bend, slide or
+// hammer-on can't be on an open string), so E and F get the open-position versions.
+function lickSteps(){
+  if(!licksOn())return null;
+  const steps=parseLick(curLick().notes),k=((B.key-9)%12+12)%12;
+  for(const sh of [k,k-12].sort((a,b)=>Math.abs(a)-Math.abs(b))){
+    const ok=steps.every(st=>st.notes.every(n=>{const f=n.f+sh;return f>=(st.tech==='slide'?3:st.bend||st.tech?1:0)&&f<=LAST;}));
+    if(ok)return steps.map(st=>({...st,notes:st.notes.map(n=>({s:n.s,f:n.f+sh}))}));
+  }
+  return null;
+}
+// When each step starts, in beats (swung 8ths on Shuffle), plus where the lick ends.
+function lickTimes(steps){let t=0;const at=()=>Math.floor(t/2)+(t%2?off8():0);return steps.map(st=>{const a=at();t+=st.d;return a;}).concat([at()]);}
+// The order numbers on a dot played more than once: 1·3, or 1–4 for a held top note.
+function orderLabel(o){if(o.length>2&&o[o.length-1]-o[0]===o.length-1)return o[0]+'–'+o[o.length-1];return o.join('·');}
+// Hear it: the lick alone at the tempo picked, or, when the band is playing, from the next bar line in time with it.
+// Half speed doubles every note's length (still in time with the band).
+function lplay(){
+  const c=audio();if(!c)return;lstop();
+  const steps=lickSteps();if(!steps)return;
+  let beat=60/B.bpm*(B.slow?2:1),start=c.currentTime+.08;
+  if(bp.on&&B.track!=='drone'){
+    beat=bp.spb*(B.slow?2:1);const first=bp.start+BCOUNT*bp.spb,bar=4*bp.spb;
+    start=first+Math.max(0,Math.ceil((c.currentTime+.05-first)/bar))*bar;
+  }
+  const bus=c.createGain(),times=lickTimes(steps);bus.connect(OUT);
+  steps.forEach((st,i)=>{const at=start+times[i]*beat,len=(times[i+1]-times[i])*beat;
+    st.notes.forEach(n=>pluck(440*Math.pow(2,(STRINGS[n.s]+n.f-12-69)/12),
+      {at,dur:Math.max(.7,len+.5),vol:st.tech==='hammer'?.35:.5,out:bus,bend:st.bend,slide:st.tech==='slide'?2:0}));});
+  Object.assign(lp,{on:true,start,beat,times,bus,cur:-1});setLickBtn(true);lp.raf=requestAnimationFrame(lframe);
+}
+function lframe(){
+  if(!lp.on)return;const t=(AC.currentTime-lp.start)/lp.beat;
+  if(t>lp.times[lp.times.length-1]+1){lstop(false);return;}
+  let cur=-1;for(let i=0;i<lp.times.length-1;i++)if(t>=lp.times[i])cur=i;
+  if(cur!==lp.cur){lp.cur=cur;drawBoard();}
+  lp.raf=requestAnimationFrame(lframe);
+}
+function lstop(fade=true){
+  if(!lp.on)return;lp.on=false;cancelAnimationFrame(lp.raf);
+  if(fade&&lp.bus){const b=lp.bus;b.gain.setTargetAtTime(0,AC.currentTime,.03);setTimeout(()=>b.disconnect(),800);}
+  lp.cur=-1;setLickBtn(false);drawBoard();
+}
+function setLickBtn(on){const b=document.getElementById('blplay');b.querySelector('span').textContent=on?'Stop':'Hear it';
+  b.querySelector('path').setAttribute('d',on?'M3 3h10v10H3z':'M3 1.5v13l11-6.5z');}
+// The lick in tab under the fretboard: spaced by how long each note lasts, bar lines every 8 eighths, and each
+// note's interval (or name, with Note names on) underneath.
+function drawTab(){
+  const box=document.getElementById('blicktab'),lk=lickSteps();box.hidden=!lk;if(!lk)return;
+  const U=24,X0=34,total=lk.reduce((a,st)=>a+st.d,0),Wt=X0+total*U+14,y=s=>14+(5-s)*16,root=scaleRoot();
+  let svg='';
+  for(let s=0;s<6;s++)svg+=`<line class="tline" x1="22" x2="${Wt-6}" y1="${y(s)}" y2="${y(s)}"/><text class="snm" x="8" y="${y(s)}" dominant-baseline="central">${'EADGBe'[s]}</text>`;
+  for(let m=8;m<total;m+=8)svg+=`<line class="bar" x1="${X0+m*U-U/2+4}" x2="${X0+m*U-U/2+4}" y1="${y(5)}" y2="${y(0)}"/>`;
+  let t=0;
+  lk.forEach((st,i)=>{const x=X0+t*U;
+    st.notes.forEach(n=>{const lab=(st.tech==='slide'?'/':st.tech==='hammer'?'h':'')+n.f+(st.bend?'b'+(n.f+st.bend):'');
+      svg+=`<g class="num${lp.on&&lp.cur===i?' now':''}"><rect x="${x-3}" y="${y(n.s)-8}" width="${lab.length*8+5}" height="16"/><text x="${x}" y="${y(n.s)}" dominant-baseline="central">${lab}</text></g>`;});
+    const top=st.notes.reduce((a,n)=>n.s>a.s?n:a),iv=((pcAt(top.s,top.f)-B.key)%12+12)%12;
+    svg+=`<text class="iv" x="${x}" y="${y(0)+24}">${B.lab==='int'?ivLabel(iv):ivName(root,iv)}</text>`;
+    t+=st.d;});
+  const el=document.getElementById('ltab');el.setAttribute('viewBox',`0 0 ${Wt} ${y(0)+32}`);el.style.width=Math.round(Wt*1.1)+'px';el.innerHTML=svg;
+  document.getElementById('ltip').textContent=curLick().tip;
+}
+
 /* ---------- fretboard drawing ---------- */
 const fb=document.getElementById('fb');
 // Shared with drill.js. DOT is the dot radius; strings are GAP apart.
@@ -258,6 +342,10 @@ function drawBoard(){
   // Chord tones: over the blues, the I/IV/V chord (tapped or playing); over the drone, the mode's home chord.
   const drone=B.track==='drone', step=drone?(tonesOn()&&bp.on?0:null):toneStep();  // like the blues: only while it plays
   const chordIv=drone?droneTriad():isMajor()?[0,4,7]:[0,4,7,10], tones=step===null?null:chordIv.map(i=>(key+step+i)%12);
+  // The lick showing (Licks on): where each of its notes is, with the steps that play it.
+  const lk=lickSteps(),lpos=new Map();
+  if(lk)lk.forEach((st,i)=>st.notes.forEach(n=>{const k=n.s+','+n.f;if(!lpos.has(k))lpos.set(k,{s:n.s,f:n.f,order:[],bend:0});
+    const p=lpos.get(k);if(!p.order.includes(i+1))p.order.push(i+1);if(st.bend)p.bend=st.bend;}));
   let svg=`<rect class="wood" x="${NUT}" y="${TOP-10}" width="${LAST*FW}" height="${5*GAP+20}" rx="3"/>`;
   // The chosen shapes' areas, under the fret lines so those still show
   sel.forEach(x=>x.places.forEach(pl=>{const fr=pl.map(p=>p.f),lo=Math.min(...fr),hi=Math.max(...fr);
@@ -273,17 +361,27 @@ function drawBoard(){
   const on=new Set(), all=new Map();
   placed.forEach(x=>x.places.forEach(pl=>pl.forEach(p=>{all.set(p.s+','+p.f,p);if(sel.includes(x))on.add(p.s+','+p.f);})));
   if(B.scale!=='caged'){const iv=sc.iv.map(i=>(key+i)%12);for(let s=0;s<6;s++)for(let f=0;f<=LAST;f++)if(iv.includes(pcAt(s,f)))all.set(s+','+f,{s,f});}
+  // The lick's line, under its dots: through the top note of each step.
+  if(lk)svg+=`<polyline class="lick-path" points="${lk.map(st=>{const n=st.notes.reduce((a,n)=>n.s>a.s?n:a);return fx(n.f)+','+sy(n.s);}).join(' ')}"/>`;
   all.forEach(p=>{
-    const pc=pcAt(p.s,p.f),iv=((pc-key)%12+12)%12;
-    const cls=['dot',iv===0?'root':'',sc.extra!==undefined&&iv===sc.extra?'blue':'',sc.color!==undefined&&iv===sc.color?'color':'',any&&!on.has(p.s+','+p.f)?'dim':''].join(' ');
-    const label=B.lab==='int'?ivLabel(iv):ivName(root,iv);
+    const pc=pcAt(p.s,p.f),iv=((pc-key)%12+12)%12,L=lpos.get(p.s+','+p.f),shown=lk?!!L:!(any&&!on.has(p.s+','+p.f));
+    const label=L?orderLabel(L.order):B.lab==='int'?ivLabel(iv):ivName(root,iv);
+    const cls=['dot',iv===0?'root':'',sc.extra!==undefined&&iv===sc.extra?'blue':'',sc.color!==undefined&&iv===sc.color?'color':'',shown?'':'dim',L?'lick':'',L&&label.length>2?'long':''].join(' ');
     svg+=`<g class="${cls}" data-s="${p.s}" data-f="${p.f}"><circle cx="${fx(p.f)}" cy="${sy(p.s)}" r="${DOT}"/><text x="${fx(p.f)}" y="${sy(p.s)+.5}">${label}</text></g>`;
-    if(tones&&tones.includes(pc)&&!(any&&!on.has(p.s+','+p.f)))svg+=`<circle class="ring" cx="${fx(p.f)}" cy="${sy(p.s)}" r="${DOT+3.5}"/>`;
+    if(tones&&tones.includes(pc)&&shown)svg+=`<circle class="ring" cx="${fx(p.f)}" cy="${sy(p.s)}" r="${DOT+3.5}"/>`;
   });
+  // Lick notes outside the scale (like the IV chord's 3rd over minor pentatonic): hollow blue dots, numbered too.
+  lpos.forEach((L,k)=>{if(all.has(k))return;const label=orderLabel(L.order);
+    svg+=`<g class="dot extra lick${label.length>2?' long':''}" data-s="${L.s}" data-f="${L.f}"><circle cx="${fx(L.f)}" cy="${sy(L.s)}" r="${DOT}"/><text x="${fx(L.f)}" y="${sy(L.s)+.5}">${label}</text></g>`;
+    if(tones&&tones.includes(pcAt(L.s,L.f)))svg+=`<circle class="ring" cx="${fx(L.f)}" cy="${sy(L.s)}" r="${DOT+3.5}"/>`;});
+  // Bends: a small arrow up beside the note; and while the lick plays, a ring on the note(s) sounding.
+  lpos.forEach(L=>{if(!L.bend)return;const x=fx(L.f)+DOT+2,y=sy(L.s);
+    svg+=`<path class="bend" d="M${x} ${y} q8 0 8 -12 M${x+4} ${y-8} l4 -4 l4 4"/>`;});
+  if(lk&&lp.on&&lp.cur>=0)lk[lp.cur].notes.forEach(n=>{svg+=`<circle class="lick-now" cx="${fx(n.f)}" cy="${sy(n.s)}" r="${DOT+4.5}"/>`;});
   // Chord tones the scale doesn't have (like the IV chord's major 3rd over minor pentatonic): hollow blue dots,
   // labeled by their job in the chord. Only with Chord tones on, for a tapped chord or the one playing,
   // and only inside the chosen shapes (or anywhere with All shapes).
-  if(tones){
+  if(tones&&!lk){
     const cr=(key+step)%12, inScale=sc.iv.map(i=>(key+i)%12), JOB={0:'R',3:'♭3',4:'3',6:'♭5',7:'5',10:'♭7'};
     const areas=any?sel.flatMap(x=>x.places.map(pl=>[Math.min(...pl.map(p=>p.f)),Math.max(...pl.map(p=>p.f))])):[[0,LAST]];
     for(let s=0;s<6;s++)for(let f=0;f<=LAST;f++){
@@ -293,11 +391,13 @@ function drawBoard(){
     }
   }
   fb.setAttribute('viewBox',`0 0 ${W} ${H}`);fb.innerHTML=svg;
+  drawTab();
 }
 // On a narrow screen the fretboard scrolls sideways: bring the chosen shape into view.
 function scrollToShape(){
-  const r=fb.querySelector('.region'),wrap=fb.parentElement;if(!r||wrap.scrollWidth<=wrap.clientWidth)return;
-  const k=fb.clientWidth/W;wrap.scrollLeft=Math.max(0,+r.getAttribute('x')*k-16);
+  const r=fb.querySelector('.region'),wrap=fb.parentElement,lick=[...fb.querySelectorAll('.dot.lick circle')].map(c=>+c.getAttribute('cx'));
+  if((!r&&!lick.length)||wrap.scrollWidth<=wrap.clientWidth)return;
+  const k=fb.clientWidth/W,x=lick.length?Math.min(...lick)-DOT-20:+r.getAttribute('x');wrap.scrollLeft=Math.max(0,x*k-16);
 }
 fb.addEventListener('click',e=>{const g=e.target.closest('.dot');if(!g)return;
   pluck(440*Math.pow(2,(STRINGS[+g.dataset.s]+ +g.dataset.f-12-69)/12),{dur:1.6});});
@@ -306,7 +406,7 @@ fb.addEventListener('click',e=>{const g=e.target.closest('.dot');if(!g)return;
 const keySelect=document.getElementById('bkey');
 keySelect.innerHTML=BKEYS.map(k=>`<option value="${k}">${pcName(k,k)}</option>`).join('');
 keySelect.value=B.key;
-keySelect.onchange=()=>{B.key=+keySelect.value;store.set('bkey',B.key);droneTune();if(DRONE)bstatus.textContent=`Drone on ${scaleRoot()}`;drawShapes();drawChips();drawBoard();scrollToShape();describeImprov();};
+keySelect.onchange=()=>{lstop();B.key=+keySelect.value;store.set('bkey',B.key);droneTune();if(DRONE)bstatus.textContent=`Drone on ${scaleRoot()}`;drawShapes();drawChips();drawBoard();scrollToShape();describeImprov();};
 const bt=document.getElementById('btempo'),btv=document.getElementById('btempo-val');
 bt.value=B.bpm;btv.textContent=B.bpm+' bpm';
 bt.oninput=()=>{const nb=+bt.value;btv.textContent=nb+' bpm';
@@ -328,10 +428,18 @@ function pressAll(){
   document.querySelectorAll('#bshape [data-sh]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.sh==='all'?!B.shapes.length:B.shapes.includes(b.dataset.sh)));
   document.getElementById('bquick').setAttribute('aria-pressed',B.quick);
   const bt=document.getElementById('btones');bt.setAttribute('aria-pressed',tonesOn());greyOut(bt,B.scale==='modes');
+  // Licks: greyed out for scales with no licks (Modes, CAGED); the lick list and its row only with Licks on.
+  const lb=document.getElementById('blicks');lb.setAttribute('aria-pressed',licksOn());greyOut(lb,!lickList().length);
+  document.getElementById('blickrow').hidden=!licksOn();document.getElementById('blslow').setAttribute('aria-pressed',B.slow);
+  const ls=lickList(),sel=document.getElementById('blick');
+  sel.innerHTML=Object.entries(LICK_JOBS).map(([j,t])=>{const g=ls.filter(l=>l.job===j);
+    return g.length?`<optgroup label="${t}">${g.map(l=>`<option value="${l.id}">${l.name}</option>`).join('')}</optgroup>`:'';}).join('');
+  if(ls.length)sel.value=curLick().id;
 }
+document.getElementById('blick').onchange=e=>{lstop();B.lick=e.target.value;store.set('blick',B.lick);drawBoard();scrollToShape();};
 document.getElementById('bscale').innerHTML=Object.entries(SCALES).map(([k,v])=>`<option value="${k}">${v.name}</option>`).join('');
 document.getElementById('bscale').onchange=e=>{
-  const was=B.scale;B.scale=e.target.value;store.set('bscale',B.scale);
+  lstop();const was=B.scale;B.scale=e.target.value;store.set('bscale',B.scale);
   // Modes come with the drone (the blues only suits a couple of them); leaving Modes brings the blues back.
   if(B.scale==='modes'&&was!=='modes')setTrack('drone');else if(was==='modes'&&B.scale!=='modes')setTrack('blues');
   pressAll();drawShapes();drawChips();drawBoard();scrollToShape();describeImprov();};
@@ -356,10 +464,13 @@ document.getElementById('improv-view').addEventListener('click',e=>{
   else if(d.sh){B.shapes=d.sh==='all'?[]:B.shapes.includes(d.sh)?B.shapes.filter(n=>n!==d.sh):[...B.shapes,d.sh];store.set('bshapes',B.shapes);}
   else if(b.id==='bquick'){B.quick=!B.quick;store.set('bquick',B.quick);}
   else if(d.md){B.mode=d.md;store.set('bmode',B.mode);droneTune();if(DRONE)droneRevoice();drawShapes();}
+  else if(b.id==='blicks'){lstop();B.licksOn=!B.licksOn;store.set('blicksOn',B.licksOn);}
+  else if(b.id==='blslow'){B.slow=!B.slow;store.set('blslow',B.slow);}
+  else if(b.id==='blplay'){lp.on?lstop():lplay();return;}
   else if(b.id==='btones'){B.tones=!B.tones;store.set('btones',B.tones);if(!B.tones)B.preview=null;drawChips();}
   else if(d.chip!==undefined){const st=+d.chip;B.preview=B.preview===st?null:st;drawChips();}
   else return;
-  pressAll();drawBoard();if(d.sh||b.id==='bshapes')scrollToShape();describeImprov();
+  pressAll();drawBoard();if(d.sh||b.id==='bshapes'||b.id==='blicks')scrollToShape();describeImprov();
 });
 // The I, IV and V chords beside Chord tones: tap one to see its tones; the one playing is outlined.
 function drawChips(){
@@ -405,7 +516,7 @@ function showView(v){
   store.set('view',v);
   // Only one thing plays at a time.
   if(v!=='read'&&player.on)stop();
-  if(v!=='improv'&&bp.on)bstop();
+  if(v!=='improv'){lstop();if(bp.on)bstop();}
   if(v!=='drill'&&typeof dstop==='function'){dstop();if(typeof cstop==='function')cstop();}
   if(v==='read')describe();else if(v==='improv')describeImprov();else if(typeof describeDrill==='function')describeDrill();
   history.replaceState(null,'',v==='read'?location.pathname+location.search:'#'+v); // #improv / #drill link straight there

@@ -146,6 +146,15 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
   needs a new line, Chord tones sits on it even when off. RULE (David): clicking Chord tones must never make it jump
   down a line. Chord-tone rings = home chord.
   Chord tones is GREYED OUT while Modes is selected (David, for now); its on/off setting is kept for other scales.
+- Improv licks (2026-10-22, David picked mockup "A" of three; B call-and-response and C same-lick-every-position were
+  not chosen yet): **Licks** toggle in the pick row (before Shapes) shows a lick row (dropdown grouped by job: I chord,
+  IV chord, Turnarounds, Endings · Hear it · Half speed) and a tab strip + tip under the fretboard. Standard blues licks
+  Claude chose (David said "standard blues licks"), in `licks.js`, written in A in a text format (`B8b*2`, `/G6`,
+  `hG6`, `e5+B8`); `scales` minor/major picks which scale lists show them; Licks is greyed out for Modes and CAGED.
+  Moved to the key by the smallest fret shift that fits 0–17 (E and F get open position). Lick dots show their order
+  numbers (1·3, 1–4) instead of intervals; the tab row shows intervals/names. Other scale notes fade; Chord tones rings
+  only lick notes; out-of-scale lick notes are hollow blue. Hear it with the band playing starts on the next bar line.
+  `pluck()` takes `bend` and `slide` (semitones, via playbackRate) for this.
 - Improv note names are spelled from the scale (C minor: B♭ and E♭, never A♯/D♯): `nameFrom()` / `scaleRoot()`.
   Minor scales in A♭ are spelled from G♯; the blues ♭5 becomes ♯4 where ♭5 would be C♭/F♭ (F blues: B).
   Chord tones are spelled from the chord's root (F7 = F A C E♭).
