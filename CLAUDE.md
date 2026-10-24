@@ -150,7 +150,7 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
   chosen yet). 2026-10-23 (David): added his A blues lick sheet as licks **1–50** (numbered as on the sheet, transcribed
   exactly from his photos: rhythms, H/P, bends, HB/RB, SB, slides, rakes, vibrato); Claude's 13 standard licks are 51–63
   (with name + tip, swung 8ths on Shuffle). His rules: the list is labelled "Lick N" (names got too long), grouped by shape
-  (was by fret area until 2026-10-24, see below), with ‹ › stepping in number order; the fretboard shows the lick's notes with
+  (was by fret area until 2026-10-24, see below), with ‹ › stepping in the list's order (through a group, then on to the next; David 2026-10-24); the fretboard shows the lick's notes with
   the SAME labels as the scale (intervals or names) — NOT numbered in playing order, no connecting line; the order is
   shown by notation + tab under the fretboard (he asked for notation+tab or rhythmic tab; Claude chose notation+tab, like
   his sheet). Format in `licks.js`: 24 ticks a beat, `|` between 4/4 bars (all checked to add up), `:8t`/`:16t`/`:qt`

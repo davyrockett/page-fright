@@ -279,7 +279,7 @@ function parseLick(text){
 }
 const familyLicks=()=>LICKS.filter(l=>l.scales.includes(LICK_FAMILY[B.scale])).sort((a,b)=>a.n-b.n);
 const licksOn=()=>B.licksOn&&familyLicks().length>0;
-// The licks in the shapes shown (see lickGroups), in number order.
+// The licks in the shapes shown (see lickGroups), in the list's order: by group, then by number.
 const lickList=()=>lickGroups().map(x=>x.L);
 const curLick=()=>{const ls=lickList();return ls.find(l=>l.n===B.lick)||ls[0]||null;};
 // A lick in the key picked: moved as few frets as it can be and still fit on frets 0–17 (bends, slides and held
@@ -320,7 +320,7 @@ function lickGroups(){
   const act=activeShapes(),sig=[B.scale,B.key,act.join()].join('|');
   if(groupMemo.sig!==sig){
     const ps=placedShapes(),shown=ps.map((x,i)=>i).filter(i=>!act.length||act.includes(ps[i].name));
-    groupMemo={sig,list:familyLicks().map(L=>{const st=placeLick(L);return {L,g:st&&lickGroup(st,ps,shown)};}).filter(x=>x.g)};
+    groupMemo={sig,list:familyLicks().map(L=>{const st=placeLick(L);return {L,g:st&&lickGroup(st,ps,shown)};}).filter(x=>x.g).sort((a,b)=>a.g.at-b.g.at)};
   }
   return groupMemo.list;
 }
@@ -330,12 +330,12 @@ function fillLicks(){
   // None in the shapes shown: say so, and grey out the list, ‹ › and Hear it.
   [sel.closest('label'),...['blprev','blnext','blplay'].map(id=>document.getElementById(id))].forEach(el=>greyOut(el,!gs.length));
   if(!gs.length){sel.innerHTML='<option>No licks in these shapes</option>';return;}
-  const groups=new Map();[...gs].sort((a,b)=>a.g.at-b.g.at).forEach(({L,g})=>{if(!groups.has(g.label))groups.set(g.label,[]);groups.get(g.label).push(L);});
+  const groups=new Map();gs.forEach(({L,g})=>{if(!groups.has(g.label))groups.set(g.label,[]);groups.get(g.label).push(L);});
   sel.innerHTML=[...groups].map(([t,g])=>`<optgroup label="${t}">${g.map(L=>`<option value="${L.n}">${lickName(L)}</option>`).join('')}</optgroup>`).join('');
   sel.value=curLick().n;
 }
 function pickLick(n){lstop();B.lick=n;store.set('blick',n);document.getElementById('blick').value=n;drawBoard();scrollToShape();}
-// ‹ and ›: the lick before or after, in number order, round and round.
+// ‹ and ›: the lick before or after in the list, so through a group before the next one, round and round.
 function stepLick(d){const ls=lickList();if(!ls.length)return;const i=ls.indexOf(curLick());pickLick(ls[(i+d+ls.length)%ls.length].n);}
 
 /* The lick written out: notation over tab, like a lick book. Bends are a grace note in the notation and an arrow in
