@@ -149,8 +149,8 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
 - Improv licks (2026-10-22, David picked mockup "A" of three; B call-and-response and C same-lick-every-position not
   chosen yet). 2026-10-23 (David): added his A blues lick sheet as licks **1–50** (numbered as on the sheet, transcribed
   exactly from his photos: rhythms, H/P, bends, HB/RB, SB, slides, rakes, vibrato); Claude's 13 standard licks are 51–63
-  (with name + tip, swung 8ths on Shuffle). His rules: the list is labelled "Lick N" (names got too long), grouped by fret
-  area in the current key (`LICK_AREAS`), with ‹ › stepping in number order; the fretboard shows the lick's notes with
+  (with name + tip, swung 8ths on Shuffle). His rules: the list is labelled "Lick N" (names got too long), grouped by shape
+  (was by fret area until 2026-10-24, see below), with ‹ › stepping in number order; the fretboard shows the lick's notes with
   the SAME labels as the scale (intervals or names) — NOT numbered in playing order, no connecting line; the order is
   shown by notation + tab under the fretboard (he asked for notation+tab or rhythmic tab; Claude chose notation+tab, like
   his sheet). Format in `licks.js`: 24 ticks a beat, `|` between 4/4 bars (all checked to add up), `:8t`/`:16t`/`:qt`
@@ -161,10 +161,13 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
   source; legato notes change that source's playbackRate (one pick per string chain), vibrato is an LFO on it.
   Licks is greyed out for Modes and CAGED; Chord tones rings only lick notes; out-of-scale lick notes are hollow blue.
   Rake (muted) notes show on the fretboard too (David, 2026-10-23), like the lick's other notes.
-  2026-10-24 (David: wants licks bridging the E shape to the D shape, "extension boxes of the E shape"): only his
-  lick 10 did, so Claude added standard bridge licks 64–73 (name + tip, swung). The list now starts with an "E ↔ D
-  shapes" group (`bridgesED()`: a minor lick with a note only the E shape has and one only the D shape has, as written
-  in A); those licks also stay in their fret-area group.
+  2026-10-24 (David): Claude added standard licks 64–73 bridging the E and D shapes, and 74–83 stretching the A shape
+  (74–79 up into the G shape, 80–83 down into the C shape). Then David's RULE: the lick list shows ONLY the licks that
+  fit in the shapes shown (All = every lick); this replaced the fret-area groups. Groups are by shape in neck order:
+  "E shape", "E + D shapes" (crossing into the next shape up), …, "Across shapes" (`lickGroups()`/`lickGroup()`). A
+  note fits a shape if its pressed fret is within the shape's frets in any octave (passing notes outside the scale may
+  be 1 fret outside). No licks for the shapes picked: the list says so and ‹ › Hear it grey out. Every lick lands in
+  the same group in all 12 keys (checked); lick 80 has no room on the neck in C, so it isn't listed there.
 - Improv note names are spelled from the scale (C minor: B♭ and E♭, never A♯/D♯): `nameFrom()` / `scaleRoot()`.
   Minor scales in A♭ are spelled from G♯; the blues ♭5 becomes ♯4 where ♭5 would be C♭/F♭ (F blues: B).
   Chord tones are spelled from the chord's root (F7 = F A C E♭).
