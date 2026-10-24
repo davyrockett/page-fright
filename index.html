@@ -276,6 +276,7 @@ p{margin:0}
    Note names says Names, so Key, the scale and it share the first line. */
 #blab .short{display:none}
 @media (max-width:560px){.track-row .track-tempo{flex-basis:150px}.key-pick .cap{display:none}#blab .long{display:none}#blab .short{display:inline}}
+@media (max-width:400px){.track-row{gap:8px}.track-row .tempo select{padding:6px 4px;font-size:13px}.track-row .btn.play{min-width:0}}  /* Play, Track, Feel: one line down to 360px */
 /* Chord tones follows the other buttons, left-aligned; if it doesn't fit it wraps to its own row. */
 .pick-row .tones{flex-wrap:nowrap}
 #bchips{flex-wrap:nowrap}
@@ -1278,7 +1279,7 @@ document.getElementById('custom-open').onclick=()=>{customPop.open();document.qu
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v116';
+window.APP_VERSION = 'v117';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
