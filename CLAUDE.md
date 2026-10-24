@@ -146,15 +146,20 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
   needs a new line, Chord tones sits on it even when off. RULE (David): clicking Chord tones must never make it jump
   down a line. Chord-tone rings = home chord.
   Chord tones is GREYED OUT while Modes is selected (David, for now); its on/off setting is kept for other scales.
-- Improv licks (2026-10-22, David picked mockup "A" of three; B call-and-response and C same-lick-every-position were
-  not chosen yet): **Licks** toggle in the pick row (before Shapes) shows a lick row (dropdown grouped by job: I chord,
-  IV chord, Turnarounds, Endings · Hear it · Half speed) and a tab strip + tip under the fretboard. Standard blues licks
-  Claude chose (David said "standard blues licks"), in `licks.js`, written in A in a text format (`B8b*2`, `/G6`,
-  `hG6`, `e5+B8`); `scales` minor/major picks which scale lists show them; Licks is greyed out for Modes and CAGED.
-  Moved to the key by the smallest fret shift that fits 0–17 (E and F get open position). Lick dots show their order
-  numbers (1·3, 1–4) instead of intervals; the tab row shows intervals/names. Other scale notes fade; Chord tones rings
-  only lick notes; out-of-scale lick notes are hollow blue. Hear it with the band playing starts on the next bar line.
-  `pluck()` takes `bend` and `slide` (semitones, via playbackRate) for this.
+- Improv licks (2026-10-22, David picked mockup "A" of three; B call-and-response and C same-lick-every-position not
+  chosen yet). 2026-10-23 (David): added his A blues lick sheet as licks **1–50** (numbered as on the sheet, transcribed
+  exactly from his photos: rhythms, H/P, bends, HB/RB, SB, slides, rakes, vibrato); Claude's 13 standard licks are 51–63
+  (with name + tip, swung 8ths on Shuffle). His rules: the list is labelled "Lick N" (names got too long), grouped by fret
+  area in the current key (`LICK_AREAS`), with ‹ › stepping in number order; the fretboard shows the lick's notes with
+  the SAME labels as the scale (intervals or names) — NOT numbered in playing order, no connecting line; the order is
+  shown by notation + tab under the fretboard (he asked for notation+tab or rhythmic tab; Claude chose notation+tab, like
+  his sheet). Format in `licks.js`: 24 ticks a beat, `|` between 4/4 bars (all checked to add up), `:8t`/`:16t`/`:qt`
+  triplets, `B8^10` quick bend, `B8(10)` held bend, link prefixes h p s / b r x _. Score: `drawLickScore()` (VexFlow
+  notation over tab, grace notes for quick bends, StaveTie/TabTie arcs labelled H P B RB SB SL); bend arrows, vibrato and
+  "rake"/"SL" labels are drawn by hand because VexFlow's Bend/Vibrato/Annotation on tab notes push the grace notes out
+  of place. Blues note spelled ♯4 when bent/hammered up to or leading up, else ♭5. Playback: `pluck()` returns its
+  source; legato notes change that source's playbackRate (one pick per string chain), vibrato is an LFO on it.
+  Licks is greyed out for Modes and CAGED; Chord tones rings only lick notes; out-of-scale lick notes are hollow blue.
 - Improv note names are spelled from the scale (C minor: B♭ and E♭, never A♯/D♯): `nameFrom()` / `scaleRoot()`.
   Minor scales in A♭ are spelled from G♯; the blues ♭5 becomes ♯4 where ♭5 would be C♭/F♭ (F blues: B).
   Chord tones are spelled from the chord's root (F7 = F A C E♭).

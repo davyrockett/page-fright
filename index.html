@@ -233,24 +233,22 @@ p{margin:0}
 .mode-row{flex-wrap:nowrap}
 @media (max-width:560px){.mode-row{gap:4px}.mode-row .btn{padding:6px 5px;font-size:13px;min-width:0;flex:1 1 0}}
 .fretboard .dot.color circle{stroke:var(--inv2);stroke-width:3.5}
-/* Improv licks: the lick's notes numbered in playing order, joined by a line; bends get an arrow. */
-.fretboard .lick-path{fill:none;stroke:var(--accent);stroke-width:4;stroke-opacity:.45;stroke-linejoin:round;stroke-linecap:round}
-.fretboard .dot.lick text{font-size:12px}
-.fretboard .dot.lick.long text{font-size:10px}
+/* Improv licks: the lick's notes on the fretboard (bends get an arrow), and the lick in notation and tab below. */
 .fretboard .bend{fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .fretboard .lick-now{fill:none;stroke:var(--hl);stroke-width:3.5}
 .lick-row .btn{padding:7px 13px;font-size:14px}
 .lick-row .btn svg{margin-right:6px;vertical-align:-1px}
-.lick-tab .tab-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
-#ltab{display:block;height:auto;max-width:100%;min-width:300px}
-#blslow .short{display:none}
-#ltab .tline{stroke:var(--muted);stroke-opacity:.5}
-#ltab .bar{stroke:var(--muted)}
-#ltab text{font-family:var(--f-body);fill:var(--ink);font-size:13px;font-weight:700}
-#ltab .snm,#ltab .iv{fill:var(--muted);font-weight:400;font-size:11px}
-#ltab .num rect{fill:var(--surface)}
-#ltab .num.now text{fill:var(--hl)}
+.lick-row .btn.step{padding:5px 11px;font-size:20px;line-height:1}
+.lick-score{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.lick-score svg{display:block;height:auto;max-width:none}
+.lick-score svg,.lick-score svg [fill]:not([fill="none"]){fill:var(--ink)}
+.lick-score svg,.lick-score svg [stroke]:not([stroke="none"]){stroke:var(--ink)}
+.lick-score svg .vf-tabnote rect[fill]{fill:var(--surface)}
+.lick-score .vf-tabnote text{font-family:var(--f-body);font-weight:700}
+.lick-score .on,.lick-score .on [fill]:not([fill="none"]){fill:var(--hl)}
+.lick-score .on,.lick-score .on [stroke]:not([stroke="none"]){stroke:var(--hl)}
 #ltip{margin:6px 0 0}
+#blslow .short{display:none}
 /* Controls that don't apply right now (e.g. Tempo on the drone): greyed out in place, so nothing moves. */
 .greyed{opacity:.35;pointer-events:none}
 /* Drill notation strip: same width as the fretboard, so each chord sits under its shape. */
@@ -292,7 +290,8 @@ p{margin:0}
   .tempo{gap:6px}
   /* The lick row stays on one line: the lick list gives up room first. */
   .lick-row{flex-wrap:nowrap;gap:6px}.lick-row .tempo{flex:1 1 auto;min-width:0}.lick-row select{width:100%;min-width:0}
-  .lick-row .btn{padding:6px 9px;font-size:13px;flex:none}.lick-row .btn svg{margin-right:4px}
+  .lick-row .btn{padding:6px 7px;font-size:13px;flex:none}.lick-row .btn svg{margin-right:4px}
+  .lick-row .btn.step{padding:4px 8px;font-size:18px}.lick-row .tempo{min-width:88px}
   #blslow .long{display:none}#blslow .short{display:inline}
 }
 @media (max-width:360px){.shapes-group #bshape .btn,.pick-row .chip{padding:6px 4px;min-width:26px}.pick-row #bshapes{padding:6px 7px}}
@@ -373,19 +372,19 @@ p{margin:0}
       </div>
       <div class="seg mode-row" role="group" aria-label="Mode" id="bmodes" hidden></div>
       <div class="row lick-row" id="blickrow" hidden>
-        <label class="tempo"><select id="blick" aria-label="Lick"></select></label>
+        <button type="button" class="btn step" id="blprev" aria-label="Previous lick">‹</button><label class="tempo"><select id="blick" aria-label="Lick"></select></label><button type="button" class="btn step" id="blnext" aria-label="Next lick">›</button>
         <button type="button" class="btn" id="blplay" title="Play the lick (in time with the band if it's playing)"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path fill="currentColor" d="M3 1.5v13l11-6.5z"/></svg><span>Hear it</span></button>
         <button type="button" class="btn" id="blslow" aria-pressed="false"><span class="long">Half speed</span><span class="short">½ speed</span></button>
       </div>
       <div class="fb-wrap"><svg id="fb" class="fretboard" role="img" aria-label="Fretboard"></svg></div>
-      <div class="lick-tab" id="blicktab" hidden><div class="tab-wrap"><svg id="ltab" role="img" aria-label="The lick in tab"></svg></div><p class="cap" id="ltip"></p></div>
+      <div class="lick-tab" id="blicktab" hidden><div class="lick-score" id="lscore" aria-label="The lick in notation and tab"></div><p class="cap" id="ltip"></p></div>
     </div>
 
     <details class="notes cap help">
       <summary>How it works</summary>
       <p>The backing track is 12-bar blues: drums, a boogie bass line, and organ. Quick change moves to the IV chord in bar 2. Major I–IV uses the same band on a two-bar loop: one bar of the I chord, one of the IV. Play counts you in for one measure, then loops until you stop it.</p>
       <p>Orange dots are the root. With <b>Chord tones</b> on, notes of the chord being played get a blue ring while the track runs, so you can aim for them as the chords change. Chord tones that aren't in the scale (like the IV chord's major 3rd over minor pentatonic) show as hollow blue dots, labeled by their part in the chord: R, 3, 5 or ♭7. Pick <b>Modes</b> to play the seven modes: tap Ion, Dor, Phr, Lyd, Mix, Aeo or Loc. Each mode's color note (the one that gives it its sound, like Dorian's 6 or Lydian's ♯4) has a purple ring, and the backing switches to a <b>Drone</b> on the root (you can pick the blues under Track instead). Over the drone, Chord tones rings the mode's home chord while it plays. Tap a chord beside Chord tones to see its tones any time (tap it again to go back to following the track); the chord being played is outlined in blue. Tap a dot to hear it. <b>Space</b> plays or stops.</p>
-      <p><b>Licks</b> shows a standard blues lick on the fretboard, moved to your key: its notes are numbered in the order you play them, with an arrow on bends, and the tab is underneath with each note's interval. Pick one from the list (grouped by where it fits in the 12-bar: over the I chord, over the IV, turnarounds and endings). <b>Hear it</b> plays it; while the band is playing it comes in on the next bar, in time. <b>Half speed</b> slows it down. Minor licks show with the minor scales and major licks with the major ones.</p>
+      <p><b>Licks</b> shows a blues lick, moved to your key: its notes are marked on the fretboard (with intervals or note names, like the scale, and an arrow on notes that get bent), and it's written out underneath in notation and tab, with bends, hammer-ons (H), pull-offs (P), releases (RB), slides and vibrato. Licks 1–50 are from David's lick sheet; 51–63 are standard licks with a tip each. Pick one from the list (grouped by where it sits on the neck) or step through them with ‹ and ›. <b>Hear it</b> plays it, lighting up each note as it goes; while the band is playing it comes in on the next bar, in time. <b>Half speed</b> slows it down. Minor licks show with the minor scales and major licks with the major ones.</p>
     </details>
   </div>
 
@@ -813,8 +812,8 @@ function audio(){
   return AC;
 }
 const live=new Set();
-// bend: semitones to bend up just after the pick; slide: semitones below to slide up from (Improv licks).
-function pluck(freq,{at=0,dur=2.6,vol=.55,out=null,bend=0,slide=0}={}){
+// Returns the sound source, so Improv licks can bend its pitch (playbackRate) for hammer-ons, slides and bends.
+function pluck(freq,{at=0,dur=2.6,vol=.55,out=null}={}){
   const c=audio();if(!c)return;
   const sr=c.sampleRate,len=Math.floor(sr*dur);
   const buf=c.createBuffer(1,len,sr),d=buf.getChannelData(0);
@@ -827,11 +826,10 @@ function pluck(freq,{at=0,dur=2.6,vol=.55,out=null,bend=0,slide=0}={}){
   let pk=0;for(let i=0;i<len;i++)pk=Math.max(pk,Math.abs(d[i]));if(pk)for(let i=0;i<len;i++)d[i]/=pk;
   const src=c.createBufferSource(),g=c.createGain(),t=Math.max(at,c.currentTime)+.01;
   src.buffer=buf;g.gain.setValueAtTime(vol,t);
-  if(slide){src.playbackRate.setValueAtTime(Math.pow(2,-slide/12),t);src.playbackRate.exponentialRampToValueAtTime(1,t+.09);}
-  if(bend){src.playbackRate.setValueAtTime(1,t+.06);src.playbackRate.exponentialRampToValueAtTime(Math.pow(2,bend/12),t+.22);}
 g.gain.setTargetAtTime(0,t+dur*.75,.12);
   src.connect(g);g.connect(out||OUT);src.start(t);src.stop(t+len/sr+.6);
   live.add(g);src.onended=()=>live.delete(g);
+  return src;
 }
 function tick(at,strong,sub=false,out=null){   // sub: the quieter 8th-note click between beats
   const c=audio();if(!c)return;
@@ -1270,7 +1268,7 @@ document.getElementById('custom-open').onclick=()=>{customPop.open();document.qu
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v108';
+window.APP_VERSION = 'v109';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');

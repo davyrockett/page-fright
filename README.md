@@ -17,7 +17,7 @@ iPhone and iPad Home Screens and the Mac's Dock, and works with no signal once i
 | `index.html` | The whole app: exercise generator, notation, playback, settings |
 | `drill.js` | The Drill section: triad shapes on any three strings |
 | `chords.js` | Drill > Chords: shapes from David's two chord books (plus major and open chords) for 32 chord types, moved to any root |
-| `licks.js` | Improv licks: the standard blues licks, written in A (format explained at the top of the file) |
+| `licks.js` | Improv licks: 1–50 from David's lick sheet plus 13 standard ones, written in A (format explained at the top of the file) |
 | `improv.js` | The Improv section: 12-bar blues backing track and scale shapes on the fretboard |
 | `vendor/vexflow-bravura.js` | [VexFlow](https://www.vexflow.com) 4.2.5, which draws the notation (MIT license, see `vendor/VEXFLOW-LICENSE`) |
 | `sw.js` | The "service worker": saves the app on the device so it works offline |
@@ -65,11 +65,12 @@ The **Read | Improv** switch under the header changes sections (`#improv` links 
   names; roots are orange. **Chord tones** rings the notes of the chord being played while the track runs, and shows
   chord tones the scale lacks (e.g. the IV chord's major 3rd over minor pentatonic) as hollow blue dots labeled R/3/5/♭7.
   Tap I/IV/V beside Chord tones to preview a chord's tones any time; the chord being played is outlined.
-- **Licks:** 13 standard blues licks (`licks.js`, written in A in a simple tab-like text format, moved to any key),
-  picked from a list grouped by where they fit: over the I chord, over the IV, turnarounds, endings. Minor licks show with
-  the minor scales, major licks with the major ones. The lick's notes are numbered on the fretboard in playing order
-  (arrows on bends), with its tab, each note's interval and a one-line tip underneath. **Hear it** plays it (on the next
-  bar, in time, if the band is playing); **Half speed** slows it down.
+- **Licks:** 63 blues licks in `licks.js`, written in A in a tab-like text format (explained at the top of the file) and
+  moved to any key: 1–50 from David's A blues lick sheet (numbered as on the sheet), 51–63 standard licks Claude added.
+  The list groups them by where they sit on the neck; ‹ › step through. The lick's notes are marked on the fretboard with
+  the scale's labels, and it's written out under the fretboard in notation and tab (VexFlow) with bends, H/P/RB arcs,
+  slides, rakes and vibrato. **Hear it** plays it with hammer-ons, slides and bends sounding legato (on the next bar, in
+  time, if the band is playing); **Half speed** slows it down.
 
 ## Drill
 

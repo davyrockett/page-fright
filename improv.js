@@ -250,86 +250,261 @@ function placedShapes(){
 }
 
 /* ---------- licks ----------
-   Standard blues licks (licks.js), written in A and moved to the key picked. With Licks on, the picked lick's notes
-   are numbered on the fretboard in playing order, joined by a line, and the rest of the scale fades; the lick's tab
-   goes under the board. Minor licks show with the minor scales, major licks with the major ones (none for Modes
-   or CAGED, so Licks is greyed out there). */
+   Licks (licks.js) are written in A and moved to the key picked. With Licks on, the picked lick's notes show on the
+   fretboard, labelled like the scale (intervals or note names), and the rest of the scale fades; the lick itself is
+   written out under the fretboard in notation and tab. Minor licks show with the minor scales, major licks with the
+   major ones (none for Modes or CAGED, so Licks is greyed out there). */
 const LICK_FAMILY={minor:'minor',blues:'minor',minorScale:'minor',major:'major',majorScale:'major'};
 const STR_OF={E:0,A:1,D:2,G:3,B:4,e:5};
+const TICKS={w:96,h:48,q:24,'8':12,'16':6,'32':3};   // a beat is 24 ticks, a bar 96
+// A lick's text as steps: each a note, chord or rest with its start and length in ticks. A note has its string,
+// the fret pressed (f), the fret it sounds at (snd: higher when it's held bent), a quick bend's target (bend) and how
+// it's reached from the note before on that string (link: h p s / b r _), or mute for a rake.
 function parseLick(text){
-  return text.trim().split(/\s+/).map(tok=>{
-    let [ns,d]=tok.split('*'),tech=null,bend=0;
-    if(ns[0]==='/'){tech='slide';ns=ns.slice(1);}else if(ns[0]==='h'){tech='hammer';ns=ns.slice(1);}
-    const notes=ns.split('+').map(n=>{const m=n.match(/^([EADGBe])(\d+)(b(\d)?)?$/);if(m[3])bend=m[4]?+m[4]:2;return {s:STR_OF[m[1]],f:+m[2]};});
-    return {notes,d:+d||1,tech,bend};
-  });
+  const steps=[];let dur={base:'8',dots:0,tup:false},t=0;
+  for(let tok of text.trim().split(/\s+/)){
+    if(tok==='|')continue;
+    let vib=false;if(tok.endsWith('~')){vib=true;tok=tok.slice(0,-1);}
+    const [body,d]=tok.split(':'),grace=d==='g';
+    if(d&&!grace){const m=d.match(/^(w|h|q|8|16|32)(\.?)(t?)$/);if(!m)throw new Error('Lick length: '+tok);dur={base:m[1],dots:m[2]?1:0,tup:!!m[3]};}
+    const ticks=grace?0:TICKS[dur.base]*(dur.dots?1.5:1)*(dur.tup?2/3:1);
+    const st={start:t,ticks,dur:{...dur},vib,grace,rest:body==='-',notes:[]};
+    if(body==='_')st.notes=steps[steps.length-1].notes.filter(n=>!n.mute).map(n=>({...n,snd:n.bend??n.snd,bend:null,link:'_'}));
+    else if(!st.rest)st.notes=body.split('+').map(x=>{
+      const m=x.match(/^([hps/brx_]?)([EADGBe])(\d+)(?:\(([\d.]+)\))?(?:\^([\d.]+))?$/);if(!m)throw new Error('Lick note: '+x);
+      return {s:STR_OF[m[2]],f:+m[3],snd:m[4]?+m[4]:+m[3],bend:m[5]?+m[5]:null,link:m[1]&&m[1]!=='x'?m[1]:null,mute:m[1]==='x'};});
+    steps.push(st);t+=ticks;
+  }
+  return steps;
 }
-const lickList=()=>LICKS.filter(l=>l.scales.includes(LICK_FAMILY[B.scale]));
+const lickList=()=>LICKS.filter(l=>l.scales.includes(LICK_FAMILY[B.scale])).sort((a,b)=>a.n-b.n);
 const licksOn=()=>B.licksOn&&lickList().length>0;
-const curLick=()=>{const ls=lickList();return ls.find(l=>l.id===B.lick)||ls[0]||null;};
-// The lick in the key picked: moved as few frets as it can be and still fit on frets 0–17 (a bend, slide or
-// hammer-on can't be on an open string), so E and F get the open-position versions.
-function lickSteps(){
-  if(!licksOn())return null;
-  const steps=parseLick(curLick().notes),k=((B.key-9)%12+12)%12;
+const curLick=()=>{const ls=lickList();return ls.find(l=>l.n===B.lick)||ls[0]||null;};
+// A lick in the key picked: moved as few frets as it can be and still fit on frets 0–17 (bends, slides and held
+// bends need a fretted note), so E and F get open-position versions.
+function placeLick(L){
+  const steps=parseLick(L.notes),k=((B.key-9)%12+12)%12;
   for(const sh of [k,k-12].sort((a,b)=>Math.abs(a)-Math.abs(b))){
-    const ok=steps.every(st=>st.notes.every(n=>{const f=n.f+sh;return f>=(st.tech==='slide'?3:st.bend||st.tech?1:0)&&f<=LAST;}));
-    if(ok)return steps.map(st=>({...st,notes:st.notes.map(n=>({s:n.s,f:n.f+sh}))}));
+    const ok=steps.every(st=>st.notes.every(n=>{const f=n.f+sh,min=n.link==='/'?2:n.bend!==null||n.snd!==n.f||'bsr'.includes(n.link||'-')?1:0;return f>=min&&f<=LAST;}));
+    if(ok)return steps.map(st=>({...st,notes:st.notes.map(n=>({...n,f:n.f+sh,snd:n.snd+sh,bend:n.bend===null?null:n.bend+sh}))}));
   }
   return null;
 }
-// When each step starts, in beats (swung 8ths on Shuffle), plus where the lick ends.
-function lickTimes(steps){let t=0;const at=()=>Math.floor(t/2)+(t%2?off8():0);return steps.map(st=>{const a=at();t+=st.d;return a;}).concat([at()]);}
-// The order numbers on a dot played more than once: 1·3, or 1–4 for a held top note.
-function orderLabel(o){if(o.length>2&&o[o.length-1]-o[0]===o.length-1)return o[0]+'–'+o[o.length-1];return o.join('·');}
-// Hear it: the lick alone at the tempo picked, or, when the band is playing, from the next bar line in time with it.
-// Half speed doubles every note's length (still in time with the band).
+let lickMemo={sig:'',steps:null};
+function lickSteps(){
+  if(!licksOn())return null;const L=curLick(),sig=L.n+'|'+B.key;
+  if(lickMemo.sig!==sig)lickMemo={sig,steps:placeLick(L)};
+  return lickMemo.steps;
+}
+// The list groups licks by where they sit on the neck in the key picked (their lowest fretted note).
+const LICK_AREAS=[[3,'Frets 0–3'],[7,'Frets 4–7'],[11,'Frets 8–11'],[99,'Fret 12 and up']];
+function lickArea(steps){const lo=Math.min(...steps.flatMap(st=>st.notes.filter(n=>!n.mute&&n.f>0).map(n=>n.f)));return LICK_AREAS.findIndex(([hi])=>lo<=hi);}
+const lickName=L=>`Lick ${L.n}`;
+function fillLicks(){
+  const ls=lickList(),sel=document.getElementById('blick');if(!ls.length){sel.innerHTML='';return;}
+  const area=new Map(ls.map(L=>{const st=placeLick(L);return [L.n,st?lickArea(st):3];}));
+  sel.innerHTML=LICK_AREAS.map(([,t],a)=>{const g=ls.filter(L=>area.get(L.n)===a);
+    return g.length?`<optgroup label="${t}">${g.map(L=>`<option value="${L.n}">${lickName(L)}</option>`).join('')}</optgroup>`:'';}).join('');
+  sel.value=curLick().n;
+}
+function pickLick(n){lstop();B.lick=n;store.set('blick',n);document.getElementById('blick').value=n;drawBoard();scrollToShape();}
+// ‹ and ›: the lick before or after, in number order, round and round.
+function stepLick(d){const ls=lickList(),i=ls.indexOf(curLick());pickLick(ls[(i+d+ls.length)%ls.length].n);}
+
+/* The lick written out: notation over tab, like a lick book. Bends are a grace note in the notation and an arrow in
+   the tab; hammer-ons, pull-offs, bends into a note and releases are labelled arcs (H, P, B, RB) as on David's sheet. */
+const lscore=document.getElementById('lscore');
+let lickEls=[], lickScoreSig='';
+const vfDur=d=>d.base+(d.dots?'d':'');
+const BEND_TEXT={0.5:'¼',1:'½',1.5:'¾',2:'Full',3:'1½'};
+// A note's name in the key as a VexFlow key (up: spell the blues note as a ♯4 rather than a ♭5).
+function lickKey(midi,iv,up){
+  const name=iv===6&&up?nameFrom(pcName(B.key,B.key),6,3):nameFrom(pcName(B.key,B.key),iv);
+  const acc=(name.match(/♯/g)||[]).length-(name.match(/♭/g)||[]).length;
+  return name[0].toLowerCase()+(acc>0?'#'.repeat(acc):'b'.repeat(-acc))+'/'+(Math.round((midi-acc-NAT_PC[name[0]])/12)-1);
+}
+function drawLickScore(){
+  const box=document.getElementById('blicktab'),lk=lickSteps();box.hidden=!lk;
+  if(!lk){lickEls=[];lickScoreSig='';return;}
+  const L=curLick();
+  document.getElementById('ltip').textContent=L.name?`${lickName(L)}: ${L.name}. ${L.tip}`:'';
+  document.getElementById('ltip').hidden=!L.name;
+  // Drawn only while it can be seen (VexFlow measures its text), and again only when the lick or key changes.
+  if(!lscore.offsetParent){lickScoreSig='';return;}
+  if(lickMemo.sig===lickScoreSig)return;lickScoreSig=lickMemo.sig;
+  const root=pcName(B.key,B.key),key=root.replace('♭','b').replace('♯','#');
+  const keyAcc={};[0,2,4,5,7,9,11].forEach(iv=>{const nm=nameFrom(root,iv);keyAcc[nm[0].toLowerCase()]=nm.includes('♯')?'#':nm.includes('♭')?'b':'';});
+  const sounding=lk.filter(st=>!st.rest&&!st.grace);
+  const top=n=>Math.floor(n.bend??n.snd);   // the fret it sounds at (a quick bend's target)
+  const mid=n=>STRINGS[n.s]+top(n);   // written pitch (an octave above the sound, as guitar music is)
+  const nextUp=i=>{const a=lk[i],b=lk.slice(i+1).find(st=>!st.rest&&st.notes.length);return b&&Math.max(...b.notes.map(mid))>Math.max(...a.notes.map(mid));};
+  // Headroom for high notes (up to 5 ledger lines) and the bend arrows between the staves.
+  const stepOf=k=>{const [,l,,o]=/^([a-g])(#+|b+)?\/(\d)$/.exec(k);return 7*(+o)+'cdefgab'.indexOf(l);};
+  // The blues note is a ♯4 when it's bent or hammered up to, or leads up; otherwise a ♭5 (as on David's sheet).
+  const keyOf=(n,i)=>lickKey(mid(n),((pcAt(n.s,top(n))-B.key)%12+12)%12,n.bend!==null||n.link==='h'||n.link==='b'||nextUp(i));
+  const topStep=Math.max(...sounding.flatMap(st=>st.notes.map(n=>stepOf(keyOf(n,lk.indexOf(st))))));
+  const above=Math.max(4,(topStep-stepOf('f/5'))/2+2.5),TAB_Y=(above+4)*10+52;
+  const nBars=Math.ceil((lk[lk.length-1].start+lk[lk.length-1].ticks)/96);
+  const barOf=st=>Math.min(nBars-1,Math.floor(st.start/96+1e-9));
+  const startX=s=>s.getNoteStartX()-s.getX();
+  const firstX=startX(new VF.Stave(0,0,200).addClef('treble').addKeySignature(key).addTimeSignature('4/4'))-startX(new VF.Stave(0,0,200));
+  // Room for each note (more for grace notes and dots), then stretched to fill the card when there's space.
+  const need=Array.from({length:nBars},(_,b)=>lk.filter(st=>barOf(st)===b&&!st.grace).reduce((a,st)=>a+34+(st.notes.some(q=>q.bend!==null)?22:0)+(st.dur.dots?8:0),60));
+  const fit=Math.min(1.8,Math.max(1,(lscore.clientWidth-20-firstX)/need.reduce((a,b)=>a+b,0)));
+  const widths=need.map((w,b)=>Math.round(w*fit)+(b===0?firstX:0)),total=widths.reduce((a,b)=>a+b,0)+16;
+  lscore.replaceChildren();
+  const r=new VF.Renderer(lscore,VF.Renderer.Backends.SVG);r.resize(total,TAB_Y+120);
+  const ctx=r.getContext(),N=[],T=[],marks=[],barEnd=[];
+  lickEls=[];let x=8;
+  for(let b=0;b<nBars;b++){
+    const w=widths[b],stave=new VF.Stave(x,0,w,{space_above_staff_ln:above}),ts=new VF.TabStave(x,TAB_Y,w);
+    if(b===0){stave.addClef('treble').addKeySignature(key).addTimeSignature('4/4');ts.addClef('tab');}
+    if(b===nBars-1){stave.setEndBarType(VF.Barline.type.END);ts.setEndBarType(VF.Barline.type.END);}
+    const nx=Math.max(stave.getNoteStartX(),ts.getNoteStartX());stave.setNoteStartX(nx);ts.setNoteStartX(nx);
+    stave.setContext(ctx).draw();ts.setContext(ctx).draw();
+    if(b===0)new VF.StaveConnector(stave,ts).setType(VF.StaveConnector.type.SINGLE_LEFT).setContext(ctx).draw();
+    const notes=[],tabs=[];let rake=false;
+    lk.forEach((st,i)=>{
+      if(barOf(st)!==b)return;
+      if(st.grace){rake=true;return;}   // a rake before the note: written as "rake" over it
+      const dur=vfDur(st.dur);let n,t;
+      if(st.rest){n=new VF.StaveNote({keys:['b/4'],duration:dur+'r'});t=new VF.GhostNote({duration:dur});}
+      else{
+        const ns=[...st.notes].sort((p,q)=>mid(p)-mid(q));st.sorted=ns;
+        n=new VF.StaveNote({keys:ns.map(q=>keyOf(q,i)+(q.mute?'/x2':'')),duration:dur,auto_stem:true});
+        t=new VF.TabNote({positions:ns.map(q=>({str:6-q.s,fret:q.snd===q.f||q.snd%1?String(q.f):`(${q.snd})`})),duration:dur});
+        ns.forEach((q,j)=>{
+          if(q.bend===null)return;
+          // A quick bend: a grace note on the fret pressed (with its own sharp, flat or natural), an arrow in the tab.
+          const gk=lickKey(STRINGS[q.s]+q.f,((pcAt(q.s,q.f)-B.key)%12+12)%12,true),acc=gk.split('/')[0].slice(1),want=keyAcc[gk[0]]||'';
+          const g=new VF.GraceNote({keys:[gk],duration:'8',slash:false});
+          if(acc!==want)g.addModifier(new VF.Accidental(acc||'n'),0);
+          n.addModifier(new VF.GraceNoteGroup([g],true),0);
+          marks.push({kind:'bend',t,ts,s:q.s,text:BEND_TEXT[q.bend-q.f]||String(q.bend-q.f)});
+        });
+        if(st.vib)marks.push({kind:'vib',n,t,stave,ts,i,bend:ns.some(q=>q.bend!==null)});
+        if(st.notes.some(q=>q.mute)||rake)marks.push({kind:'text',t,ts,text:'rake'});
+        if(st.notes.some(q=>q.link==='/'))marks.push({kind:'text',t,ts,text:'SL'});
+      }
+      rake=false;
+      if(st.dur.dots)VF.Dot.buildAndAttach([n],{all:true});
+      notes.push(n);tabs.push(t);N[i]=n;T[i]=st.rest?null:t;
+    });
+    // Triplets: 8th, 16th or quarter-note triplets, grouped until they fill their beat (two beats for quarters).
+    const tuplets=[],bs=lk.filter(s=>barOf(s)===b&&!s.grace);
+    for(let k=0,grp=[],sum=0;k<bs.length;k++){
+      if(!bs[k].dur.tup){grp=[];sum=0;continue;}
+      grp.push(k);sum+=bs[k].ticks;
+      if((sum===12&&grp.every(j=>bs[j].dur.base==='16'))||sum===24||sum===48){
+        const o={num_notes:3,notes_occupied:2};tuplets.push(new VF.Tuplet(grp.map(j=>notes[j]),o));new VF.Tuplet(grp.map(j=>tabs[j]),o);grp=[];sum=0;}
+    }
+    const beams=VF.Beam.generateBeams(notes,{groups:[new VF.Fraction(1,4)]});
+    const nv=new VF.Voice({num_beats:4,beat_value:4}).setMode(VF.Voice.Mode.SOFT).addTickables(notes);
+    const tv=new VF.Voice({num_beats:4,beat_value:4}).setMode(VF.Voice.Mode.SOFT).addTickables(tabs);
+    VF.Accidental.applyAccidentals([nv],key);
+    new VF.Formatter().joinVoices([nv]).joinVoices([tv]).format([nv,tv],stave.getNoteEndX()-stave.getNoteStartX()-12);
+    nv.draw(ctx,stave);beams.forEach(bm=>bm.setContext(ctx).draw());tuplets.forEach(tp=>tp.setContext(ctx).draw());tv.draw(ctx,ts);
+    barEnd[b]=stave.getNoteEndX();x+=w;
+  }
+  // Arcs between notes on the same string: ties, and H / P / B / RB / slides (labelled as on David's sheet).
+  const ARC={h:'H',p:'P',b:'B',r:'RB',s:'SL',_:''};
+  lk.forEach((st,i)=>{
+    if(st.rest||st.grace)return;const links={};
+    st.sorted.forEach((q,j)=>{if(!ARC.hasOwnProperty(q.link||'-'))return;
+      let pi=i-1;while(pi>=0&&!(lk[pi].sorted&&lk[pi].sorted.some(p=>p.s===q.s)))pi--;if(pi<0)return;
+      const k=pi+'|'+q.link;(links[k]=links[k]||{pi,kind:q.link,a:[],z:[]});links[k].a.push(lk[pi].sorted.findIndex(p=>p.s===q.s));links[k].z.push(j);});
+    Object.values(links).forEach(({pi,kind,a,z})=>{
+      const text=kind==='b'&&st.sorted[z[0]].snd%1?'SB':ARC[kind];   // a slight (quarter-tone) bend
+      new VF.StaveTie({first_note:N[pi],last_note:N[i],first_indices:a,last_indices:z},text).setContext(ctx).draw();
+      const tie={first_note:T[pi],last_note:T[i],first_indices:a,last_indices:z};
+      (kind==='s'?new VF.TabSlide(tie):new VF.TabTie(tie,text)).setContext(ctx).draw();
+    });
+  });
+  // Bend arrows, vibrato and "rake"/"SL" labels, drawn by hand: VexFlow's own versions push the grace notes out of place.
+  const wave=(x0,x1,y)=>{ctx.beginPath();ctx.moveTo(x0,y);for(let xx=x0,k=0;xx<x1;xx+=4,k++)ctx.quadraticCurveTo(xx+2,y+(k%2?2.6:-2.6),xx+4,y);ctx.stroke();};
+  ctx.save();ctx.setFont('Atkinson Hyperlegible, sans-serif',10,'bold');
+  marks.forEach(m=>{
+    const top=m.ts.getYForLine(0),tx=m.t.getAbsoluteX();
+    if(m.kind==='bend'){   // up from the fret number, with how far (½, Full, 1½) over the arrow
+      const x0=tx+m.t.getWidth()+1,y0=m.ts.getYForLine(5-m.s)-1,y1=top-14;
+      ctx.beginPath();ctx.moveTo(x0,y0);ctx.quadraticCurveTo(x0+8,y0,x0+8,y1+4);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(x0+4.5,y1+5);ctx.lineTo(x0+8,y1);ctx.lineTo(x0+11.5,y1+5);ctx.closePath();ctx.fill();
+      ctx.fillText(m.text,x0+8-ctx.measureText(m.text).width/2,y1-3);
+    }else if(m.kind==='text')ctx.fillText(m.text,tx,top-6);
+    else{   // vibrato: a wavy line from the note to the next one (or the end of the bar)
+      const nxt=lk.slice(m.i+1).findIndex(st=>!st.grace),ni=nxt<0?-1:m.i+1+nxt,b=barOf(lk[m.i]);
+      const x1=(ni>=0&&barOf(lk[ni])===b&&N[ni]?N[ni].getAbsoluteX():barEnd[b])-6;
+      const nx0=m.n.getAbsoluteX()+16,ny=Math.min(m.stave.getYForLine(0),...m.n.getYs())-14;
+      const tx0=tx+m.t.getWidth()+(m.bend?24:4);wave(nx0,Math.max(nx0+20,x1),ny);wave(tx0,Math.max(tx0+20,x1),top-8);
+    }
+  });
+  ctx.restore();
+  // Each step's drawn notes, to light up the one playing.
+  lickEls=lk.map((st,i)=>[N[i],T[i]].filter(Boolean).map(n=>n.getSVGElement?n.getSVGElement():null).filter(Boolean));
+  const svg=lscore.querySelector('svg');svg.setAttribute('viewBox',`0 0 ${total} ${TAB_Y+120}`);
+  // A little too wide for the card: shrink it to fit (up to about a quarter); much wider: scroll sideways.
+  const cw=lscore.clientWidth;svg.style.width=(total>cw?Math.max(cw,total/1.35):total)+'px';
+}
+function lightLick(i){lscore.querySelectorAll('.on').forEach(e=>e.classList.remove('on'));(lickEls[i]||[]).forEach(e=>e.classList.add('on'));}
+
+/* Hear it: the lick alone at the tempo picked, or, when the band is playing, from the next bar line in time with it.
+   Half speed doubles every note's length (still in time with the band). Each string rings like a real one: a
+   hammer-on, pull-off, slide, bend or release changes the pitch of the note already ringing instead of picking again. */
+// Where a tick falls in beats: as written, or with plain 8ths swung on Shuffle for licks marked swing.
+function lickBeats(t,swing){const b=Math.floor(t/24),r=t-b*24;return b+(swing?(r<12?r*16/12:16+(r-12)*8/12)/24:r/24);}
 function lplay(){
   const c=audio();if(!c)return;lstop();
-  const steps=lickSteps();if(!steps)return;
-  let beat=60/B.bpm*(B.slow?2:1),start=c.currentTime+.08;
+  const lk=lickSteps();if(!lk)return;
+  const swing=!!curLick().swing&&B.feel==='shuffle';
+  let beat=60/B.bpm*(B.slow?2:1),start=c.currentTime+.1;
   if(bp.on&&B.track!=='drone'){
     beat=bp.spb*(B.slow?2:1);const first=bp.start+BCOUNT*bp.spb,bar=4*bp.spb;
     start=first+Math.max(0,Math.ceil((c.currentTime+.05-first)/bar))*bar;
   }
-  const bus=c.createGain(),times=lickTimes(steps);bus.connect(OUT);
-  steps.forEach((st,i)=>{const at=start+times[i]*beat,len=(times[i+1]-times[i])*beat;
-    st.notes.forEach(n=>pluck(440*Math.pow(2,(STRINGS[n.s]+n.f-12-69)/12),
-      {at,dur:Math.max(.7,len+.5),vol:st.tech==='hammer'?.35:.5,out:bus,bend:st.bend,slide:st.tech==='slide'?2:0}));});
+  const at=t=>start+lickBeats(t,swing)*beat,hz=(s,f)=>440*Math.pow(2,(STRINGS[s]+f-12-69)/12);
+  const bus=c.createGain();bus.connect(OUT);
+  const voice={};   // what's ringing on each string: its source, the pitch it was picked at, and its pitch now
+  // How long a picked note rings: through every note joined to it on that string (hammer-ons, ties, bends…).
+  const ringEnd=(i,s)=>{let e=lk[i].start+lk[i].ticks;for(let k=i+1;k<lk.length;k++){const q=lk[k].notes.find(n=>n.s===s);if(!q||!q.link||q.link==='/')break;e=lk[k].start+lk[k].ticks;}return e;};
+  lk.forEach((st,i)=>{
+    if(st.rest)return;const t0=st.grace?at(st.start)-.06:at(st.start);
+    st.notes.forEach((q,j)=>{
+      if(q.mute){pluck(hz(q.s,q.f),{at:t0+j*.012,dur:.09,vol:.25,out:bus});return;}
+      const v=voice[q.s];
+      if(v&&q.link&&q.link!=='/'){   // legato: bend the pitch of the string already ringing
+        const ratio=hz(q.s,q.snd)/v.base,p=v.src.playbackRate;
+        if(q.link==='h'||q.link==='p')p.setValueAtTime(ratio,t0);
+        else if(q.link!=='_'){p.setValueAtTime(v.ratio,t0);p.exponentialRampToValueAtTime(ratio,t0+(q.link==='s'?.07:.14));}
+        v.ratio=ratio;
+      }else{
+        const end=at(ringEnd(i,q.s)),base=hz(q.s,q.snd),src=pluck(base,{at:t0,dur:Math.max(.5,end-t0+.35),vol:.5,out:bus});
+        if(!src)return;voice[q.s]={src,base,ratio:1};
+        if(q.link==='/'){src.playbackRate.setValueAtTime(Math.pow(2,-2/12),t0);src.playbackRate.exponentialRampToValueAtTime(1,t0+.08);}
+        if(q.bend!==null){const ratio=hz(q.s,q.bend)/base;src.playbackRate.setValueAtTime(1,t0+.03);src.playbackRate.exponentialRampToValueAtTime(ratio,t0+.16);voice[q.s].ratio=ratio;}
+      }
+      if(st.vib&&voice[q.s]){   // vibrato: a gentle wobble in pitch while the note holds
+        const lfo=c.createOscillator(),d=c.createGain(),e=at(st.start+st.ticks);lfo.frequency.value=5.5;
+        d.gain.setValueAtTime(0,t0);d.gain.linearRampToValueAtTime(.012,t0+.25);lfo.connect(d);d.connect(voice[q.s].src.playbackRate);lfo.start(t0);lfo.stop(e+.3);
+      }
+    });
+  });
+  const times=lk.map(st=>at(st.start)).concat([at(lk[lk.length-1].start+lk[lk.length-1].ticks)]);
   Object.assign(lp,{on:true,start,beat,times,bus,cur:-1});setLickBtn(true);lp.raf=requestAnimationFrame(lframe);
 }
 function lframe(){
-  if(!lp.on)return;const t=(AC.currentTime-lp.start)/lp.beat;
-  if(t>lp.times[lp.times.length-1]+1){lstop(false);return;}
-  let cur=-1;for(let i=0;i<lp.times.length-1;i++)if(t>=lp.times[i])cur=i;
-  if(cur!==lp.cur){lp.cur=cur;drawBoard();}
+  if(!lp.on)return;const now=AC.currentTime;
+  if(now>lp.times[lp.times.length-1]+.6){lstop(false);return;}
+  let cur=-1;const lk=lickSteps()||[];for(let i=0;i<lp.times.length-1;i++)if(now>=lp.times[i]&&lk[i]&&!lk[i].grace)cur=i;
+  if(cur!==lp.cur){lp.cur=cur;drawBoard();lightLick(cur);}
   lp.raf=requestAnimationFrame(lframe);
 }
 function lstop(fade=true){
   if(!lp.on)return;lp.on=false;cancelAnimationFrame(lp.raf);
   if(fade&&lp.bus){const b=lp.bus;b.gain.setTargetAtTime(0,AC.currentTime,.03);setTimeout(()=>b.disconnect(),800);}
-  lp.cur=-1;setLickBtn(false);drawBoard();
+  lp.cur=-1;setLickBtn(false);drawBoard();lightLick(-1);
 }
 function setLickBtn(on){const b=document.getElementById('blplay');b.querySelector('span').textContent=on?'Stop':'Hear it';
   b.querySelector('path').setAttribute('d',on?'M3 3h10v10H3z':'M3 1.5v13l11-6.5z');}
-// The lick in tab under the fretboard: spaced by how long each note lasts, bar lines every 8 eighths, and each
-// note's interval (or name, with Note names on) underneath.
-function drawTab(){
-  const box=document.getElementById('blicktab'),lk=lickSteps();box.hidden=!lk;if(!lk)return;
-  const U=24,X0=34,total=lk.reduce((a,st)=>a+st.d,0),Wt=X0+total*U+14,y=s=>14+(5-s)*16,root=scaleRoot();
-  let svg='';
-  for(let s=0;s<6;s++)svg+=`<line class="tline" x1="22" x2="${Wt-6}" y1="${y(s)}" y2="${y(s)}"/><text class="snm" x="8" y="${y(s)}" dominant-baseline="central">${'EADGBe'[s]}</text>`;
-  for(let m=8;m<total;m+=8)svg+=`<line class="bar" x1="${X0+m*U-U/2+4}" x2="${X0+m*U-U/2+4}" y1="${y(5)}" y2="${y(0)}"/>`;
-  let t=0;
-  lk.forEach((st,i)=>{const x=X0+t*U;
-    st.notes.forEach(n=>{const lab=(st.tech==='slide'?'/':st.tech==='hammer'?'h':'')+n.f+(st.bend?'b'+(n.f+st.bend):'');
-      svg+=`<g class="num${lp.on&&lp.cur===i?' now':''}"><rect x="${x-3}" y="${y(n.s)-8}" width="${lab.length*8+5}" height="16"/><text x="${x}" y="${y(n.s)}" dominant-baseline="central">${lab}</text></g>`;});
-    const top=st.notes.reduce((a,n)=>n.s>a.s?n:a),iv=((pcAt(top.s,top.f)-B.key)%12+12)%12;
-    svg+=`<text class="iv" x="${x}" y="${y(0)+24}">${B.lab==='int'?ivLabel(iv):ivName(root,iv)}</text>`;
-    t+=st.d;});
-  const el=document.getElementById('ltab');el.setAttribute('viewBox',`0 0 ${Wt} ${y(0)+32}`);el.style.width=Math.round(Wt*1.1)+'px';el.innerHTML=svg;
-  document.getElementById('ltip').textContent=curLick().tip;
-}
 
 /* ---------- fretboard drawing ---------- */
 const fb=document.getElementById('fb');
@@ -342,10 +517,10 @@ function drawBoard(){
   // Chord tones: over the blues, the I/IV/V chord (tapped or playing); over the drone, the mode's home chord.
   const drone=B.track==='drone', step=drone?(tonesOn()&&bp.on?0:null):toneStep();  // like the blues: only while it plays
   const chordIv=drone?droneTriad():isMajor()?[0,4,7]:[0,4,7,10], tones=step===null?null:chordIv.map(i=>(key+step+i)%12);
-  // The lick showing (Licks on): where each of its notes is, with the steps that play it.
+  // The lick showing (Licks on): the frets its notes are played on (rakes aside), and which ones get bent.
   const lk=lickSteps(),lpos=new Map();
-  if(lk)lk.forEach((st,i)=>st.notes.forEach(n=>{const k=n.s+','+n.f;if(!lpos.has(k))lpos.set(k,{s:n.s,f:n.f,order:[],bend:0});
-    const p=lpos.get(k);if(!p.order.includes(i+1))p.order.push(i+1);if(st.bend)p.bend=st.bend;}));
+  if(lk)lk.forEach(st=>st.notes.forEach(n=>{if(n.mute)return;const k=n.s+','+n.f;if(!lpos.has(k))lpos.set(k,{s:n.s,f:n.f,bend:false});
+    if(n.bend!==null||n.link==='b')lpos.get(k).bend=true;}));
   let svg=`<rect class="wood" x="${NUT}" y="${TOP-10}" width="${LAST*FW}" height="${5*GAP+20}" rx="3"/>`;
   // The chosen shapes' areas, under the fret lines so those still show
   sel.forEach(x=>x.places.forEach(pl=>{const fr=pl.map(p=>p.f),lo=Math.min(...fr),hi=Math.max(...fr);
@@ -361,23 +536,21 @@ function drawBoard(){
   const on=new Set(), all=new Map();
   placed.forEach(x=>x.places.forEach(pl=>pl.forEach(p=>{all.set(p.s+','+p.f,p);if(sel.includes(x))on.add(p.s+','+p.f);})));
   if(B.scale!=='caged'){const iv=sc.iv.map(i=>(key+i)%12);for(let s=0;s<6;s++)for(let f=0;f<=LAST;f++)if(iv.includes(pcAt(s,f)))all.set(s+','+f,{s,f});}
-  // The lick's line, under its dots: through the top note of each step.
-  if(lk)svg+=`<polyline class="lick-path" points="${lk.map(st=>{const n=st.notes.reduce((a,n)=>n.s>a.s?n:a);return fx(n.f)+','+sy(n.s);}).join(' ')}"/>`;
   all.forEach(p=>{
     const pc=pcAt(p.s,p.f),iv=((pc-key)%12+12)%12,L=lpos.get(p.s+','+p.f),shown=lk?!!L:!(any&&!on.has(p.s+','+p.f));
-    const label=L?orderLabel(L.order):B.lab==='int'?ivLabel(iv):ivName(root,iv);
-    const cls=['dot',iv===0?'root':'',sc.extra!==undefined&&iv===sc.extra?'blue':'',sc.color!==undefined&&iv===sc.color?'color':'',shown?'':'dim',L?'lick':'',L&&label.length>2?'long':''].join(' ');
+    const label=B.lab==='int'?ivLabel(iv):ivName(root,iv);
+    const cls=['dot',iv===0?'root':'',sc.extra!==undefined&&iv===sc.extra?'blue':'',sc.color!==undefined&&iv===sc.color?'color':'',shown?'':'dim',L?'lick':''].join(' ');
     svg+=`<g class="${cls}" data-s="${p.s}" data-f="${p.f}"><circle cx="${fx(p.f)}" cy="${sy(p.s)}" r="${DOT}"/><text x="${fx(p.f)}" y="${sy(p.s)+.5}">${label}</text></g>`;
     if(tones&&tones.includes(pc)&&shown)svg+=`<circle class="ring" cx="${fx(p.f)}" cy="${sy(p.s)}" r="${DOT+3.5}"/>`;
   });
-  // Lick notes outside the scale (like the IV chord's 3rd over minor pentatonic): hollow blue dots, numbered too.
-  lpos.forEach((L,k)=>{if(all.has(k))return;const label=orderLabel(L.order);
-    svg+=`<g class="dot extra lick${label.length>2?' long':''}" data-s="${L.s}" data-f="${L.f}"><circle cx="${fx(L.f)}" cy="${sy(L.s)}" r="${DOT}"/><text x="${fx(L.f)}" y="${sy(L.s)+.5}">${label}</text></g>`;
+  // Lick notes outside the scale (like the IV chord's 3rd over minor pentatonic): hollow blue dots.
+  lpos.forEach((L,k)=>{if(all.has(k))return;const iv=((pcAt(L.s,L.f)-key)%12+12)%12,label=B.lab==='int'?INT_N[iv]:ivName(root,iv);
+    svg+=`<g class="dot extra lick" data-s="${L.s}" data-f="${L.f}"><circle cx="${fx(L.f)}" cy="${sy(L.s)}" r="${DOT}"/><text x="${fx(L.f)}" y="${sy(L.s)+.5}">${label}</text></g>`;
     if(tones&&tones.includes(pcAt(L.s,L.f)))svg+=`<circle class="ring" cx="${fx(L.f)}" cy="${sy(L.s)}" r="${DOT+3.5}"/>`;});
   // Bends: a small arrow up beside the note; and while the lick plays, a ring on the note(s) sounding.
   lpos.forEach(L=>{if(!L.bend)return;const x=fx(L.f)+DOT+2,y=sy(L.s);
     svg+=`<path class="bend" d="M${x} ${y} q8 0 8 -12 M${x+4} ${y-8} l4 -4 l4 4"/>`;});
-  if(lk&&lp.on&&lp.cur>=0)lk[lp.cur].notes.forEach(n=>{svg+=`<circle class="lick-now" cx="${fx(n.f)}" cy="${sy(n.s)}" r="${DOT+4.5}"/>`;});
+  if(lk&&lp.on&&lp.cur>=0)lk[lp.cur].notes.filter(n=>!n.mute).forEach(n=>{svg+=`<circle class="lick-now" cx="${fx(n.f)}" cy="${sy(n.s)}" r="${DOT+4.5}"/>`;});
   // Chord tones the scale doesn't have (like the IV chord's major 3rd over minor pentatonic): hollow blue dots,
   // labeled by their job in the chord. Only with Chord tones on, for a tapped chord or the one playing,
   // and only inside the chosen shapes (or anywhere with All shapes).
@@ -391,7 +564,7 @@ function drawBoard(){
     }
   }
   fb.setAttribute('viewBox',`0 0 ${W} ${H}`);fb.innerHTML=svg;
-  drawTab();
+  drawLickScore();
 }
 // On a narrow screen the fretboard scrolls sideways: bring the chosen shape into view.
 function scrollToShape(){
@@ -431,12 +604,9 @@ function pressAll(){
   // Licks: greyed out for scales with no licks (Modes, CAGED); the lick list and its row only with Licks on.
   const lb=document.getElementById('blicks');lb.setAttribute('aria-pressed',licksOn());greyOut(lb,!lickList().length);
   document.getElementById('blickrow').hidden=!licksOn();document.getElementById('blslow').setAttribute('aria-pressed',B.slow);
-  const ls=lickList(),sel=document.getElementById('blick');
-  sel.innerHTML=Object.entries(LICK_JOBS).map(([j,t])=>{const g=ls.filter(l=>l.job===j);
-    return g.length?`<optgroup label="${t}">${g.map(l=>`<option value="${l.id}">${l.name}</option>`).join('')}</optgroup>`:'';}).join('');
-  if(ls.length)sel.value=curLick().id;
+  fillLicks();
 }
-document.getElementById('blick').onchange=e=>{lstop();B.lick=e.target.value;store.set('blick',B.lick);drawBoard();scrollToShape();};
+document.getElementById('blick').onchange=e=>pickLick(+e.target.value);
 document.getElementById('bscale').innerHTML=Object.entries(SCALES).map(([k,v])=>`<option value="${k}">${v.name}</option>`).join('');
 document.getElementById('bscale').onchange=e=>{
   lstop();const was=B.scale;B.scale=e.target.value;store.set('bscale',B.scale);
@@ -467,6 +637,7 @@ document.getElementById('improv-view').addEventListener('click',e=>{
   else if(b.id==='blicks'){lstop();B.licksOn=!B.licksOn;store.set('blicksOn',B.licksOn);}
   else if(b.id==='blslow'){B.slow=!B.slow;store.set('blslow',B.slow);}
   else if(b.id==='blplay'){lp.on?lstop():lplay();return;}
+  else if(b.id==='blprev'||b.id==='blnext'){stepLick(b.id==='blnext'?1:-1);return;}
   else if(b.id==='btones'){B.tones=!B.tones;store.set('btones',B.tones);if(!B.tones)B.preview=null;drawChips();}
   else if(d.chip!==undefined){const st=+d.chip;B.preview=B.preview===st?null:st;drawChips();}
   else return;
@@ -518,7 +689,7 @@ function showView(v){
   if(v!=='read'&&player.on)stop();
   if(v!=='improv'){lstop();if(bp.on)bstop();}
   if(v!=='drill'&&typeof dstop==='function'){dstop();if(typeof cstop==='function')cstop();}
-  if(v==='read')describe();else if(v==='improv')describeImprov();else if(typeof describeDrill==='function')describeDrill();
+  if(v==='read')describe();else if(v==='improv'){describeImprov();drawBoard();}else if(typeof describeDrill==='function')describeDrill();
   history.replaceState(null,'',v==='read'?location.pathname+location.search:'#'+v); // #improv / #drill link straight there
 }
 document.querySelector('.views').addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(b)showView(b.dataset.view);});

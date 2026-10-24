@@ -1,41 +1,97 @@
-/* Improv licks: standard blues licks, all written in A (the box at the 5th fret). The app moves each one to the
-   key picked, as close to where it's written as fits on frets 0–17.
+/* Improv licks, all written in A. The app moves each one to the key picked, as close to where it's written as fits
+   on frets 0–17. Licks 1–50 are from David's lick sheet (A blues), numbered as on the sheet; 51–63 are standard
+   blues licks Claude added first.
 
-   How a lick is written: notes in playing order, separated by spaces. Each note is a string and a fret:
-   E A D G B e (low E to high E), e.g. B8 = B string, 8th fret.
-     *2      how long it lasts in 8th notes (no * = one 8th). 8 eighths = one bar. Swung on Shuffle.
-     b       bend up a whole step (b1 = a half step), e.g. B8b*2
-     /G7     slide into it from two frets below
-     hG6     hammer on (not picked)
-     e5+B8   two notes at once (a double stop)
-   job: where it fits in the 12-bar (i, iv, turn, end). scales: which scale lists it shows with
-   (minor = minor pentatonic, blues scale, minor scale; major = major pentatonic, major scale). */
-const LICK_JOBS={i:'Over the I chord',iv:'Over the IV chord',turn:'Turnarounds (bars 11–12)',end:'Endings'};
+   How a lick is written: notes in playing order, separated by spaces, | between bars (each bar is 4/4).
+   A note is a string and a fret: E A D G B e (low E to high E), e.g. B8 = B string, 8th fret.
+     :8      how long it lasts, kept until the next one: w h q 8 16 32, a dot for dotted (q.),
+             t for a triplet (8t, 16t, qt); :g = a grace (no time, only for a rake)
+     -       a rest, e.g. -:q
+     B8^10   pick at 8 and bend up to the pitch of fret 10 (^3.5 = a slight, quarter-tone bend)
+     B8(10)  picked while already bent up to the pitch of fret 10 (pressed at 8)
+     e5+B5   notes played together
+     ~       vibrato (at the end)
+   How a note is reached from the one before it on that string (in front of the string letter):
+     h hammer-on   p pull-off   s slide   / slide in from below   b bend up into it   r release the bend into it
+     x muted (a rake)   _ tied (a _ on its own ties all the notes before it)
+   scales: which scale lists show it (minor = minor pentatonic, blues scale, minor scale; major = major pentatonic,
+   major scale). swing: plain 8ths are swung when Feel is Shuffle (the sheet's licks write their triplets out). */
 const LICKS=[
-  {id:'bend-root',job:'i',scales:['minor'],name:'Bend to the root',notes:'B8b*2 e5 B8 B5 G7 G5 D7*5',
+  {n:1,notes:'G7^9:8t B5 e5 B8^10:h.~'},
+  {n:2,notes:'e5:8t B8 pB5 B8^10:h.~'},
+  {n:3,notes:'e8:8t pe5 B5 B8^10:h.~'},
+  {n:4,notes:'e8:8t pe5 B5 hB8 e5 B5 e8 pe5 B5 hB8 e5 B5'},
+  {n:5,notes:'e8:8t pe5 B5 B8^10 e5 B5 e8 pe5 B5 B8^10 e5 B5'},
+  {n:6,notes:'G7^9:8t B5 B8 G7^9 B5 B8 G7^9 B5 B8 G7 pG5 D7'},
+  {n:7,notes:'G7^9:8t B5 e5 B8 pB5 G7^9 rG7 pG5 D7 G5:q'},
+  {n:8,notes:'B8^10:8 e5:16t B8 pB5 B8^10:8 e5:16t B8 pB5 B8^10:8 e5:16t B8 pB5 B8^10:8 e5:16t B8 pB5'},
+  {n:9,notes:'G7:8 bG7(9) B8 G7(9) rG7 pG5 D7:8t pD5 hD7'},
+  {n:10,notes:'-:h -:8 B5:8 e5:8t B5 e5 | e10^12:8 e8 e5:h.~'},
+  {n:11,notes:'e10^12:q e8:16 B10 G9:8 B10:q B8:8 bB8(10) | B10:w~'},
+  {n:12,notes:'e10^12:8 e8 B10:8. G9:16 B8 B10 D10:8 D7:q'},
+  {n:13,notes:'e8:8t B10 G9 B10:q B8:8t G9 D10 D7:8 B10 | _:h~ -:h'},
+  {n:14,notes:'G8:16 hG9 B8 G8 hG9 B8 G8 hG9 B8 G8 hG9 B8 B10:q'},
+  {n:15,notes:'B10:16 e8 he11 pe8 he10 pe8 B10 e8 he11 pe8 he10 pe8 B10:q'},
+  {n:16,notes:'-:8 D7:8 G9^12:q G9:8t G8 G7 B10:8 D10 | D7:h~ -:h'},
+  {n:17,notes:'-:8 e10^12:8 e10^11:q e10:8t e8 B10 e8:8 e8 | B10:h~ -:h'},
+  {n:18,notes:'-:q -:8 xe8+xB8+xG9:8 e10^12:q~ e10:8 e8 | e10^12:h~ -:h'},
+  {n:19,notes:'-:q xB8+xG9+xD10:8t B10 e8 xB8+xG9+xD10 B10 e8 xB8+xG9+xD10 B10 e8 | D7:h~ -:h'},
+  {n:20,notes:'-:q G8:8 G9 D10 A10 A7 D7 | _:h~ -:h'},
+  {n:21,notes:'-:8 D10:8 A12 B10 _:h~ | -:8 D10:8 A12 A12 _:h~'},
+  {n:22,notes:'-:q /G12:8t B10 B13 B13^16:q rB13(15):8 B13 | B10:8 B13^16 rB13(15) B13 B10:h~'},
+  {n:23,notes:'-:16 E12:16 A10 A12 D10:8 D10 A12:16 G12 B10 B13 e12:8 e12 | B10:h -:h'},
+  {n:24,notes:'/G12:8t B10 B10 /G12 B10 B10 D10:8 A12 _:q | /G12:8t B10 B10 /G12 B10 B10 B13:8 B10 _:q'},
+  {n:25,notes:'G12^14:8t B10 B10 G12^14 B10 B10 G12 pG9 D10 A12:q | G12^14:8t B10 B10 G12^14 B10 B10 G12^14 B10 B13 e10:q'},
+  {n:26,notes:'xG9+xD10+xA12:16 G12 B10 B13 e12 e10 B13 B10 G12^14:q -:q | xG9+xD10+xA12:16 G12 B10 B13 e12 e10 B13 B10 B13^15:q -:q'},
+  {n:27,notes:'B13:16 pB10 G12 B13 pB10 G12 B13 pB10 G12 B13 pB10 G12 D13 D12 D10:8 | A12:w~'},
+  {n:28,notes:'-:8t B10 B13 e12 pe11 pe10 e12 pe11 pe10 e15^17:q | -:8t B10 B13 e12 pe11 pe10 e12 pe11 pe10 B10:q'},
+  {n:29,notes:'e11:16 pe10 B13 pB10 e11 pe10 B13 pB10 e11 pe10 B13 pB10 G12 D13 pD12 pD10 | A12:16 B10 _:8 _:h~ -:q'},
+  {n:30,notes:'e10:16t he11 he12 pe11 pe10 B13 e10 he11 he12 pe11 pe10 B13 e10 he11 he12 pe11 pe10 B13 B10:q'},
+  {n:31,notes:'B15^17:8 e12 e12 B15^17 e12 e12 B15^17 e12 | B15^17:8 e12 B15 B13:16 G12 G14:h~'},
+  {n:32,notes:'-:q D12:8t D14 G12 G14^17:qt G14^17 G14^17 | G14:h~ -:h'},
+  {n:33,notes:'G14^17:q B15:8 G14(17) _:q G14(17):8 rG14:16t G12 D14 | G12:8 G12 _ G14 _:q~ -:q'},
+  {n:34,notes:'e12+B13:8 e12+B13 e12+B13 e12+B13 G14 G12 G14 e12+B13 | _:q e12+B13:8 G14 _:h~'},
+  {n:35,notes:'D12:16 hD13 G12 D12 hD13 G12 D12 hD13 G12 D12 G12 G14 _:q | D12:16 hD13 G12 D12 hD13 G12 D12 hD13 G12 D13 pD12 A12 _:q'},
+  {n:36,notes:'/e12:8 e12 B13:16 G14 G12 e10 se12:8 e12 B13:16 G14 G12 e10 | se12:8 e12 B13:16 G14 G12 G14 _:h~'},
+  {n:37,notes:'-:8 G14:8 B13 B15 bB15(17):q e15:8 B15(17) | _:8 rB15 pB13 e15^17 _:h'},
+  {n:38,notes:'-:q G12:16 G14 B13 B15 bB15(16):q B15(16):8 rB15:16 B13 | e15^17:h~ -:h'},
+  {n:39,notes:'xe12+xB13+xG14:g e15^17:h. e15(17):16 re15 e12 B13 | G14:w~'},
+  {n:40,notes:'A15:16 D14 G12 G14 e12 B13 G14:8 _:q~ G14:16 G12 D14 A12 | _:q -:q -:h'},
+  {n:41,notes:'D5:8 G2 B5:h~ B5:8 B3 | G5^6:q B5:8 G2 _:h~'},
+  {n:42,notes:'G5:8 bG5(6) B5 G5 bG5(6) B5 G5 bG5(6) | B5:8 G5 G2 D5 G2:h~'},
+  {n:43,notes:'B4:8 bB4(5) e5 B4 bB4(5) e5 B4 bB4(5) | e5:8 B4(5) rB4 B3 G5 G2 _:q~'},
+  {n:44,notes:'B4:8 bB4(5) G5 bG5(6) G2:q D5:8 D2 | G2:8 D5 D2 G5 _ bG5(6) -:q'},
+  {n:45,notes:'A3:8 bA3(4) G2+D2 G5+D5 _:q G2+D2:q | A3:8 bA3(4) G2+D2 E5 _:q -:q'},
+  {n:46,notes:'G5^7:8 e5+B5 e5+B5 G5^7 e5+B5 e5+B5 G5^7 e5+B5 | G5^7:8 e5+B5 e5+B5 e3+B3 _ e3+B3 D5:q'},
+  {n:47,notes:'/e5+/B5:8 /e5+/B5 e3+B3 G5+D5 bG5(5.5)+_D5 G5+D5 G2+D2:q | /e5+/B5:8 e3+B3 G5+D5 G2+D2 _:q -:q'},
+  {n:48,notes:'e5+B4:8 e5+B4 e5+B4 e3+B3:16 G5 e3+B3 G5:8 e3+B3:16 _:q | e5+B4:8 e5+B4 e5+B4 e3+B3:16 G5 e3+B3 G5:8 D7:16 _:q~'},
+  {n:49,notes:'e5:8 B5:32 pB4 pB3:16 e3:8 G5 G2:h~ | e5:8 B5:32 pB4 pB3 G5 e3:8 G5 e5:h~'},
+  {n:50,notes:'B4:16 hB5 e3 B4 hB5 e3 B4 hB5 e3 B4 hB5 e3 be3(3.5):q | B4:16 hB5 e3 B4 hB5 e3 B4 hB5 e5 B4 hB5 e3 be3(3.5):q'},
+  {n:51,swing:true,scales:['minor'],name:'Bend to the root',notes:'B8^10:q e5:8 B8 B5 G7 G5 D7 | _:h -:h',
     tip:'Bend the ♭7 up a whole step to the root, then walk down the box.'},
-  {id:'blues-run',job:'i',scales:['minor'],name:'Blues scale run',notes:'e5 B8 B5 G8 G7 G5 D7*4',
+  {n:52,swing:true,scales:['minor'],name:'Blues scale run',notes:'e5:8 B8 B5 G8 G7 G5 D7:q',
     tip:'Down the scale through the blues note (♭5) to the root.'},
-  {id:'bb-box',job:'i',scales:['minor'],name:'B.B. box',notes:'e10b1*2 e8 B10*2 B8 B10*4',
+  {n:53,swing:true,scales:['minor'],name:'B.B. box',notes:'e10^11:q e8:8 B10:q B8:8 B10:q',
     tip:'B.B. King\'s spot above the box: a half-step bend on the 4, then back to the root.'},
-  {id:'iv-third',job:'iv',scales:['minor'],name:'Land on the 3rd',notes:'G5 G7 B7*3 B5 G7*4',
-    tip:'The IV chord\'s 3rd isn\'t in the scale (hollow dot), but it\'s the note that makes the change.'},
-  {id:'iv-flat7',job:'iv',scales:['minor'],name:'Lean on the ♭7',notes:'B5 B8 e5 e8*3 B8 G7*4',
-    tip:'The scale\'s ♭3 is the IV chord\'s ♭7: lean on it, then land on the IV\'s root.'},
-  {id:'chromatic-turn',job:'turn',scales:['minor','major'],name:'Chromatic turnaround',notes:'e5+B8*2 e5+B7*2 e5+B6*2 e5+B5*2 D7*4 A7*4',
-    tip:'Keep the root on top while the B string walks down, then land on the V.'},
-  {id:'walk-up',job:'turn',scales:['minor','major'],name:'Walk up to the V',notes:'E5*2 A4*2 A5*2 A6*2 A7*8',
-    tip:'A bass-string walk from the root up to the V chord\'s root.'},
-  {id:'minor-major',job:'end',scales:['minor'],name:'Minor to major 3rd',notes:'e8 e5 B5 G7 G5 hG6 D7*6',
-    tip:'Hammer from the ♭3 to the major 3rd, then land on the root.'},
-  {id:'run-down',job:'end',scales:['minor'],name:'Run down to the root',notes:'e8 e5 B8 B5 G7 G5 D7 D5 A7 A5 E8 E5*4',
-    tip:'The whole box, top to bottom, ending on the low root.'},
-  {id:'slide-third',job:'i',scales:['major'],name:'Slide to the 3rd',notes:'/G6*2 B5 B7 e5*4',
+  {n:54,swing:true,scales:['minor'],name:'Land on the 3rd',notes:'G5:8 G7 B7:q. B5:8 G7:q',
+    tip:'Over the IV chord: its 3rd isn\'t in the scale (hollow dot), but it\'s the note that makes the change.'},
+  {n:55,swing:true,scales:['minor'],name:'Lean on the ♭7',notes:'B5:8 B8 e5 e8:q B8:8 G7:q',
+    tip:'Over the IV chord: the scale\'s ♭3 is the IV\'s ♭7. Lean on it, then land on the IV\'s root.'},
+  {n:56,swing:true,scales:['minor','major'],name:'Chromatic turnaround',notes:'e5+B8:q e5+B7 e5+B6 e5+B5 | D7:h A7:h',
+    tip:'A turnaround (bars 11–12): keep the root on top while the B string walks down, then land on the V.'},
+  {n:57,swing:true,scales:['minor','major'],name:'Walk up to the V',notes:'E5:q A4 A5 A6 | A7:w',
+    tip:'A turnaround (bars 11–12): a bass-string walk from the root up to the V chord\'s root.'},
+  {n:58,swing:true,scales:['minor'],name:'Minor to major 3rd',notes:'e8:8 e5 B5 G7 G5 hG6 D7:q',
+    tip:'An ending: hammer from the ♭3 to the major 3rd, then land on the root.'},
+  {n:59,swing:true,scales:['minor'],name:'Run down to the root',notes:'e8:8 e5 B8 B5 G7 G5 D7 D5 | A7:8 A5 E8 E5 _:h',
+    tip:'An ending: the whole box, top to bottom, down to the low root.'},
+  {n:60,swing:true,scales:['major'],name:'Slide to the 3rd',notes:'/G6:q B5:8 B7 e5:h',
     tip:'Slide up into the 3rd, then climb to the root.'},
-  {id:'bend-third',job:'i',scales:['major'],name:'Bend to the 3rd',notes:'G4b*2 B5 G6 G4 D7*3',
+  {n:61,swing:true,scales:['major'],name:'Bend to the 3rd',notes:'G4^6:q B5:8 G6 G4 D7:q.',
     tip:'Bend the 2 up to the 3rd: the sweet major sound.'},
-  {id:'iv-third-maj',job:'iv',scales:['major'],name:'Aim for the IV\'s 3rd',notes:'e5 B7 B5 G6 G4*2 D4*3',
-    tip:'The scale\'s 6 is the IV chord\'s 3rd: aim for it as the chord changes.'},
-  {id:'major-run',job:'end',scales:['major'],name:'Major run down',notes:'e5 B7 B5 G6 G4 D7 D4 A7 A4 E5*4',
-    tip:'Down the major pentatonic box to the low root.'},
+  {n:62,swing:true,scales:['major'],name:'Aim for the IV\'s 3rd',notes:'e5:8 B7 B5 G6 G4:q D4',
+    tip:'Over the IV chord: the scale\'s 6 is the IV\'s 3rd. Aim for it as the chord changes.'},
+  {n:63,swing:true,scales:['major'],name:'Major run down',notes:'e5:8 B7 B5 G6 G4 D7 D4 A7 | A4:8 E5 _:q -:h',
+    tip:'An ending: down the major pentatonic box to the low root.'},
 ];
+LICKS.forEach(l=>{if(!l.scales)l.scales=['minor'];});
