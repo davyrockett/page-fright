@@ -29,6 +29,8 @@ iPhone and iPad Home Screens and the Mac's Dock, and works with no signal once i
 
 - **New exercise** (or press N) makes a fresh 16 measures. The current one is remembered on the device.
 - **Play** (or space) counts in one measure, then plays it at guitar pitch and highlights each note.
+- **Non-stop** (beside Subdivide): when an exercise ends, a new one with the same settings takes its place and plays
+  after a 4-beat count-in, in time, until you press Stop.
 - Tap any note to hear it.
 - **Tab** (button by Play, or press T) shows or hides guitar tab under the staff, any time, even while playing.
   Fingerings are worked out for the whole exercise at once (fewest, smallest hand shifts; stays in the chosen

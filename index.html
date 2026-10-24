@@ -335,6 +335,7 @@ p{margin:0}
     <button type="button" class="btn primary play" id="play" title="Play / stop (space)"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M3 1.5v13l11-6.5z"/></svg><span>Play</span></button>
     <button type="button" class="btn" id="click" aria-pressed="true">Metronome</button>
     <button type="button" class="btn" id="subdiv" aria-pressed="false" title="Add quieter 8th-note clicks">Subdivide</button>
+    <button type="button" class="btn" id="nonstop" aria-pressed="false" title="When an exercise ends, a new one appears and plays after a 4-beat count-in">Non-stop</button>
     <span class="cap status" id="status" aria-live="polite"></span>
     <div class="read-tempo"><span class="cap">Tempo</span>
       <button type="button" class="btn icon tstep" data-step="-1" aria-label="Slower by 1 bpm" title="Slower (1 bpm)"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" d="M3 8h10"/></svg></button>
@@ -892,7 +893,8 @@ const tempoEl=document.getElementById('tempo'),tempoVal=document.getElementById(
 let bpm=store.get('tempo',72),metro=store.get('metronome',true),subdiv=store.get('subdivide',false);
 tempoEl.value=bpm;tempoVal.textContent=bpm+' bpm';clickBtn.setAttribute('aria-pressed',metro);
 const subBtn=document.getElementById('subdiv');subBtn.setAttribute('aria-pressed',subdiv);
-const player={on:false,start:0,spb:1,next:0,cur:-1,timer:0,raf:0,queue:[]};
+const player={on:false,start:0,spb:1,next:0,cur:-1,timer:0,raf:0,queue:[],upto:-1};
+let nonstop=store.get('nonstop',false);
 const COUNT=BEATS, TOTAL=COUNT+MEASURES*BEATS;
 
 function mark(i,scroll=true){
@@ -908,10 +910,12 @@ function mark(i,scroll=true){
     if(top>innerHeight*.3||top<0)window.scrollBy({top:top-want,behavior:'smooth'});
   }
 }
-// Everything to play, in beats from the start of the count-in: metronome clicks and notes.
+// Everything to play, in beats from the start of the count-in: metronome clicks and notes. After the last bar comes the
+// next exercise's count-in (`next`), which only plays with Non-stop on.
 function buildQueue(){
   const q=[];
-  for(let b=0;b<TOTAL;b++){q.push({beat:b,click:true,strong:b%BEATS===0,count:b<COUNT});q.push({beat:b+.5,click:true,sub:true,count:b<COUNT});}
+  for(let b=0;b<TOTAL+COUNT;b++){const x={count:b<COUNT||b>=TOTAL,next:b>=TOTAL};
+    q.push({beat:b,click:true,strong:b%BEATS===0,...x});q.push({beat:b+.5,click:true,sub:true,...x});}
   exercise.events.forEach((e,i)=>{if(!e.rest)q.push({beat:COUNT+onsets[i]/4,i});});
   return q.sort((a,b)=>a.beat-b.beat);
 }
@@ -919,11 +923,12 @@ function schedule(){
   const c=AC,q=player.queue;
   while(player.next<q.length&&player.start+q[player.next].beat*player.spb<c.currentTime+.2){
     const it=q[player.next],at=player.start+it.beat*player.spb;
+    player.next++;player.upto=it.beat;
+    if(it.next&&!nonstop)continue;
     // Clicks follow the Metronome and Subdivide buttons as they are when each click comes up, so both can change
     // during playback. The count-in always clicks on the beat.
     if(it.click){if(it.sub){if(subdiv&&(it.count||metro))rclick(at,false,true);}else if(it.count||metro)rclick(at,it.strong,false);}
     else{const e=exercise.events[it.i];strike(e.keys,at,Math.min(2.4,Math.max(.35,e.d/4*player.spb*1.1+.15)));}
-    player.next++;
   }
 }
 function frame(){
@@ -935,12 +940,24 @@ function frame(){
     while(i+1<onsets.length&&onsets[i+1]<=t16)i++;
     if(i!==player.cur){player.cur=i;mark(i);statusEl.textContent=`Measure ${measureOf[i]+1} of ${MEASURES}`;}
   }
+  else if(nonstop)advance();
   else{stop(false);statusEl.textContent='Done. Try it again, or make a new one.';return;}
   player.raf=requestAnimationFrame(frame);
 }
+// Non-stop: at the end of the last bar a new exercise (same settings) takes its place, scrolled into view, and plays
+// after a 4-beat count-in that carries straight on from the old one's beat. Its count-in clicks are already queued.
+function advance(){
+  const done=player.upto-TOTAL;
+  player.start+=TOTAL*player.spb;
+  exercise=generate();store.set('exercise',exercise);index();describe();render();
+  player.queue=buildQueue();player.cur=-1;
+  player.next=player.queue.findIndex(it=>it.beat>done);if(player.next<0)player.next=player.queue.length;
+  const top=scoreEl.getBoundingClientRect().top;
+  if(top<0||top>innerHeight*.3)window.scrollBy({top:top-innerHeight*.12,behavior:'smooth'});
+}
 function play(){
   const c=audio();if(!c)return;
-  player.on=true;player.spb=60/bpm;player.start=c.currentTime+.15;player.next=0;player.cur=-1;player.queue=buildQueue();
+  player.on=true;player.spb=60/bpm;player.start=c.currentTime+.15;player.next=0;player.cur=-1;player.upto=-1;player.queue=buildQueue();
   schedule();player.timer=setInterval(schedule,40);player.raf=requestAnimationFrame(frame);
   [playBtn,fabPlay].forEach(b=>{b.querySelector('span').textContent='Stop';b.querySelector('path').setAttribute('d','M3 3h10v10H3z');});
 }
@@ -967,6 +984,8 @@ document.querySelectorAll('.read-tempo .tstep').forEach(b=>b.onclick=()=>setTemp
 subBtn.onclick=()=>{subdiv=!subdiv;store.set('subdivide',subdiv);subBtn.setAttribute('aria-pressed',subdiv);};
 // Subdivide only matters with the metronome on: greyed out (not hidden) when it's off.
 const subAvail=()=>{subBtn.disabled=!metro;};subAvail();
+const nonstopBtn=document.getElementById('nonstop');nonstopBtn.setAttribute('aria-pressed',nonstop);
+nonstopBtn.onclick=()=>{nonstop=!nonstop;store.set('nonstop',nonstop);nonstopBtn.setAttribute('aria-pressed',nonstop);};
 clickBtn.onclick=()=>{metro=!metro;store.set('metronome',metro);clickBtn.setAttribute('aria-pressed',metro);subAvail();};
 
 // Tap a note to hear it.
@@ -1283,7 +1302,7 @@ document.getElementById('custom-open').onclick=()=>{customPop.open();document.qu
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v119';
+window.APP_VERSION = 'v120';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');

@@ -79,6 +79,10 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
   during playback (David). Below it, Metronome level and Notes level sliders (0–150%, 100 = normal; own gain
   buses, so they act instantly and only affect Read playback). Metronome: max 200%, a woodblock-style click (`rclick`)
   that skips the main compressor for its own limiter. David found the old beep too quiet on his iPad even maxed out.
+- Read Non-stop (2026-10-24, David): a toggle after Subdivide (saved as `nonstop`). When an exercise's last bar ends,
+  `advance()` swaps in a new one (same settings), scrolls its first line to ~12% from the top, and it plays after a
+  4-beat count-in that keeps the old beat (those clicks are queued at the end of every queue as `next`, played only
+  with Non-stop on). Turning it off mid-play just stops at the end as before.
 - Customize (Read): Key / Rhythm / Notes / Positions are collapsible cards (`.csec` details): icon tile, title, a live
   summary of what's chosen, round chevron that turns orange when open. Every section starts closed each time
   (Notes: the Intervals buttons are HIDDEN with Single notes only. David chose hiding over greying here; leave it.)
