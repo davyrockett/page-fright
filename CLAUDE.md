@@ -147,30 +147,28 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
   down a line. Chord-tone rings = home chord.
   Chord tones is GREYED OUT while Modes is selected (David, for now); its on/off setting is kept for other scales.
 - Improv licks (2026-10-22, David picked mockup "A" of three; B call-and-response and C same-lick-every-position not
-  chosen yet). 2026-10-23 (David): added his A blues lick sheet as licks **1–50** (numbered as on the sheet, transcribed
-  exactly from his photos: rhythms, H/P, bends, HB/RB, SB, slides, rakes, vibrato); Claude's 13 standard licks are 51–63
-  (with name + tip, swung 8ths on Shuffle). His rules: the list is labelled "Lick N" (names got too long), grouped by shape
-  (was by fret area until 2026-10-24, see below), with ‹ › stepping in the list's order (through a group, then on to the next; David 2026-10-24); the fretboard shows the lick's notes with
-  the SAME labels as the scale (intervals or names) — NOT numbered in playing order, no connecting line; the order is
-  shown by notation + tab under the fretboard (he asked for notation+tab or rhythmic tab; Claude chose notation+tab, like
-  his sheet). Format in `licks.js`: 24 ticks a beat, `|` between 4/4 bars (all checked to add up), `:8t`/`:16t`/`:qt`
-  triplets, `B8^10` quick bend, `B8(10)` held bend, link prefixes h p s / b r x _. Score: `drawLickScore()` (VexFlow
-  notation over tab, grace notes for quick bends, StaveTie/TabTie arcs labelled H P B RB SB SL); bend arrows, vibrato and
-  "rake"/"SL" labels are drawn by hand because VexFlow's Bend/Vibrato/Annotation on tab notes push the grace notes out
-  of place. Blues note spelled ♯4 when bent/hammered up to or leading up, else ♭5. Playback: `pluck()` returns its
-  source; legato notes change that source's playbackRate (one pick per string chain), vibrato is an LFO on it.
-  Licks is greyed out for Modes and CAGED; Chord tones rings only lick notes; out-of-scale lick notes are hollow blue.
-  Rake (muted) notes show on the fretboard too (David, 2026-10-23), like the lick's other notes.
-  2026-10-24 (David): Claude added standard licks 64–73 bridging the E and D shapes, and 74–83 stretching the A shape
-  (74–79 up into the G shape, 80–83 down into the C shape). Then David's RULE: the lick list shows ONLY the licks that
-  fit in the shapes shown (All = every lick); this replaced the fret-area groups. Groups are by shape in neck order:
-  "E shape", "E + D shapes" (crossing into the next shape up), …, "Across shapes" (`lickGroups()`/`lickGroup()`). A
-  note fits a shape if its pressed fret is within the shape's frets in any octave (passing notes outside the scale may
-  be 1 fret outside). No licks for the shapes picked: the list says so and ‹ › Hear it grey out. Every lick lands in
-  the same group in all 12 keys (checked for the blues scale; minor pentatonic / minor scale shapes differ a little).
-  ‹ › go through a group before the next. 2026-10-24 (David): EVERY bridge must have at least 5 licks (Claude added
-  84–88 D + C and 89–93 G + E), and more double-stop licks in every shape: 94–103, two each for E, D, C, A, G. Licks
-  80, 86 and 89 were reworked so every lick fits the neck in all 12 keys (no bend or slide onto an open string).
+  chosen yet). 2026-10-23 (David): added his A blues lick sheet (50 licks, no name; transcribed exactly from his photos:
+  rhythms, H/P, bends, HB/RB, SB, slides, rakes, vibrato); Claude's standard licks have a name + tip (swung 8ths on
+  Shuffle). The fretboard shows the lick's notes with the SAME labels as the scale (intervals or names) — NOT numbered
+  in playing order, no connecting line; the order is shown by notation + tab under the fretboard (he asked for
+  notation+tab or rhythmic tab; Claude chose notation+tab, like his sheet). Format in `licks.js`: 24 ticks a beat, `|`
+  between 4/4 bars (all checked to add up), `:8t`/`:16t`/`:qt` triplets, `B8^10` quick bend, `B8(10)` held bend, link
+  prefixes h p s / b r x _. Score: `drawLickScore()` (VexFlow notation over tab, grace notes for quick bends,
+  StaveTie/TabTie arcs labelled H P B RB SB SL); bend arrows, vibrato and "rake"/"SL" labels are drawn by hand because
+  VexFlow's Bend/Vibrato/Annotation on tab notes push the grace notes out of place. Blues note spelled ♯4 when
+  bent/hammered up to or leading up, else ♭5. Playback: `pluck()` returns its source; legato notes change that
+  source's playbackRate (one pick per string chain), vibrato is an LFO on it. Licks is greyed out for Modes and CAGED;
+  Chord tones rings only lick notes; out-of-scale lick notes are hollow blue. Rake (muted) notes show on the fretboard
+  too (David, 2026-10-23), like the lick's other notes.
+  SHAPES (David, 2026-10-24): every lick has a fixed `shape` in `licks.js`: one CAGED shape or two neighbours it
+  crosses between ('E-D'). RULES: the list shows ONLY licks whose shapes are all shown (All = every lick); groups in
+  the fixed order E, E+D, D, D+C, C, C+A, A, A+G, G, G+E (`LICK_SHAPES`); labels are shape + place in that shape for
+  its scales, "E 3", "E–D 4" (option 1 of Claude's three; David doesn't care about his sheet's numbers), so new licks go
+  at the END of their shape in licks.js; ‹ › go through a group before the next; EVERY bridge has at least 5 licks;
+  every shape has double-stop licks (at least 2). No licks for the shapes picked: the list says so and ‹ › Hear it grey
+  out. The shapes were first worked out from the notes (frets within the shape's frets, blues scale in A) and then
+  fixed. Every lick fits the neck in all 12 keys (no bend or slide onto an open string). Counts (minor): E 19, E–D 11,
+  D 12, D–C 6, C 11, C–A 6, A 11, A–G 6, G 11, G–E 6; major: E 6 (two are shared with minor).
 - Improv note names are spelled from the scale (C minor: B♭ and E♭, never A♯/D♯): `nameFrom()` / `scaleRoot()`.
   Minor scales in A♭ are spelled from G♯; the blues ♭5 becomes ♯4 where ♭5 would be C♭/F♭ (F blues: B).
   Chord tones are spelled from the chord's root (F7 = F A C E♭).

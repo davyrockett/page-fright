@@ -277,11 +277,24 @@ function parseLick(text){
   }
   return steps;
 }
-const familyLicks=()=>LICKS.filter(l=>l.scales.includes(LICK_FAMILY[B.scale])).sort((a,b)=>a.n-b.n);
+const familyLicks=()=>LICKS.filter(l=>l.scales.includes(LICK_FAMILY[B.scale]));
 const licksOn=()=>B.licksOn&&familyLicks().length>0;
-// The licks in the shapes shown (see lickGroups), in the list's order: by group, then by number.
-const lickList=()=>lickGroups().map(x=>x.L);
-const curLick=()=>{const ls=lickList();return ls.find(l=>l.n===B.lick)||ls[0]||null;};
+/* Each lick has a shape (licks.js): one CAGED shape, or two neighbouring ones it crosses between ('E-D'). The list
+   shows only the licks whose shapes are all shown (every lick with All), grouped by shape in this order. A lick's
+   label is its shape and its place among that shape's licks in licks.js, for its scales: "E 3", "E–D 4". */
+const LICK_SHAPES=['E','E-D','D','D-C','C','C-A','A','A-G','G','G-E'];
+const shapeTitle=sh=>sh.includes('-')?sh.replace('-',' + ')+' shapes':sh+' shape';
+for(const fam of ['minor','major']){const count={};
+  LICKS.filter(L=>L.scales.includes(fam)).forEach(L=>{count[L.shape]=(count[L.shape]||0)+1;(L.labels??={})[fam]=`${L.shape.replace('-','–')} ${count[L.shape]}`;});}
+const lickName=L=>L.labels[LICK_FAMILY[B.scale]];
+let listMemo={sig:'',list:[]};
+function lickList(){
+  const act=activeShapes(),sig=[B.scale,B.key,act.join()].join('|');
+  if(listMemo.sig!==sig)listMemo={sig,list:familyLicks().filter(L=>(!act.length||L.shape.split('-').every(s=>act.includes(s)))&&placeLick(L))
+    .sort((a,b)=>LICK_SHAPES.indexOf(a.shape)-LICK_SHAPES.indexOf(b.shape))};   // keeps licks.js order within a shape
+  return listMemo.list;
+}
+const curLick=()=>{const ls=lickList();return ls.find(L=>lickName(L)===B.lick)||ls[0]||null;};
 // A lick in the key picked: moved as few frets as it can be and still fit on frets 0–17 (bends, slides and held
 // bends need a fretted note), so E and F get open-position versions.
 function placeLick(L){
@@ -292,51 +305,24 @@ function placeLick(L){
   }
   return null;
 }
-let lickMemo={sig:'',steps:null};
+let lickMemo={L:null,key:null,steps:null};
 function lickSteps(){
-  const L=licksOn()&&curLick();if(!L)return null;const sig=L.n+'|'+B.key;
-  if(lickMemo.sig!==sig)lickMemo={sig,steps:placeLick(L)};
+  const L=licksOn()&&curLick();if(!L)return null;
+  if(lickMemo.L!==L||lickMemo.key!==B.key)lickMemo={L,key:B.key,steps:placeLick(L)};
   return lickMemo.steps;
 }
-/* The list shows only the licks that fit in the shapes shown (every lick with All), in the key picked, grouped by
-   shape: licks inside one shape ("E shape"), or crossing into the next shape up the neck ("E + D shapes").
-   A note is inside a shape when its fret is within the shape's frets; a note outside the scale (a passing note) may
-   be one fret outside. Bend targets don't count, only the fret pressed. A shape counts in every octave, even where
-   it doesn't fit whole on the neck (a lick at frets 15–17 can be in a shape that would run to fret 18). */
-const shapeSpans=x=>{const fs=x.places[0].map(q=>q.f),lo=Math.min(...fs),hi=Math.max(...fs);return [-24,-12,0,12,24].map(o=>[lo+o,hi+o]);};
-function covers(spots,spans){
-  const iv=curScale().iv;
-  return spots.every(({s,f})=>{const out=iv.includes(((pcAt(s,f)-B.key)%12+12)%12)?0:1;return spans.some(([lo,hi])=>f>=lo-out&&f<=hi+out);});
-}
-// A lick's group, given the shapes shown (indexes into placedShapes(), which is in order up the neck); null = not in them.
-function lickGroup(steps,ps,shown){
-  const spans=ps.map(shapeSpans),spots=steps.flatMap(st=>st.notes.filter(n=>!n.mute)),n=ps.length;
-  for(const i of shown)if(covers(spots,spans[i]))return {at:2*i,label:`${ps[i].name} shape`};
-  for(const i of shown){const j=(i+1)%n;if(j!==i&&shown.includes(j)&&covers(spots,[...spans[i],...spans[j]]))return {at:2*i+1,label:`${ps[i].name} + ${ps[j].name} shapes`};}
-  return covers(spots,shown.flatMap(i=>spans[i]))?{at:99,label:'Across shapes'}:null;
-}
-let groupMemo={sig:'',list:[]};
-function lickGroups(){
-  const act=activeShapes(),sig=[B.scale,B.key,act.join()].join('|');
-  if(groupMemo.sig!==sig){
-    const ps=placedShapes(),shown=ps.map((x,i)=>i).filter(i=>!act.length||act.includes(ps[i].name));
-    groupMemo={sig,list:familyLicks().map(L=>{const st=placeLick(L);return {L,g:st&&lickGroup(st,ps,shown)};}).filter(x=>x.g).sort((a,b)=>a.g.at-b.g.at)};
-  }
-  return groupMemo.list;
-}
-const lickName=L=>`Lick ${L.n}`;
 function fillLicks(){
-  const gs=lickGroups(),sel=document.getElementById('blick');
+  const ls=lickList(),sel=document.getElementById('blick');
   // None in the shapes shown: say so, and grey out the list, ‹ › and Hear it.
-  [sel.closest('label'),...['blprev','blnext','blplay'].map(id=>document.getElementById(id))].forEach(el=>greyOut(el,!gs.length));
-  if(!gs.length){sel.innerHTML='<option>No licks in these shapes</option>';return;}
-  const groups=new Map();gs.forEach(({L,g})=>{if(!groups.has(g.label))groups.set(g.label,[]);groups.get(g.label).push(L);});
-  sel.innerHTML=[...groups].map(([t,g])=>`<optgroup label="${t}">${g.map(L=>`<option value="${L.n}">${lickName(L)}</option>`).join('')}</optgroup>`).join('');
-  sel.value=curLick().n;
+  [sel.closest('label'),...['blprev','blnext','blplay'].map(id=>document.getElementById(id))].forEach(el=>greyOut(el,!ls.length));
+  if(!ls.length){sel.innerHTML='<option>No licks in these shapes</option>';return;}
+  sel.innerHTML=LICK_SHAPES.map(sh=>{const g=ls.filter(L=>L.shape===sh);
+    return g.length?`<optgroup label="${shapeTitle(sh)}">${g.map(L=>`<option value="${lickName(L)}">${lickName(L)}</option>`).join('')}</optgroup>`:'';}).join('');
+  sel.value=lickName(curLick());
 }
-function pickLick(n){lstop();B.lick=n;store.set('blick',n);document.getElementById('blick').value=n;drawBoard();scrollToShape();}
+function pickLick(id){lstop();B.lick=id;store.set('blick',id);document.getElementById('blick').value=id;drawBoard();scrollToShape();}
 // ‹ and ›: the lick before or after in the list, so through a group before the next one, round and round.
-function stepLick(d){const ls=lickList();if(!ls.length)return;const i=ls.indexOf(curLick());pickLick(ls[(i+d+ls.length)%ls.length].n);}
+function stepLick(d){const ls=lickList();if(!ls.length)return;const i=ls.indexOf(curLick());pickLick(lickName(ls[(i+d+ls.length)%ls.length]));}
 
 /* The lick written out: notation over tab, like a lick book. Bends are a grace note in the notation and an arrow in
    the tab; hammer-ons, pull-offs, bends into a note and releases are labelled arcs (H, P, B, RB) as on David's sheet. */
@@ -358,7 +344,7 @@ function drawLickScore(){
   document.getElementById('ltip').hidden=!L.name;
   // Drawn only while it can be seen (VexFlow measures its text), and again only when the lick or key changes.
   if(!lscore.offsetParent){lickScoreSig='';return;}
-  if(lickMemo.sig===lickScoreSig)return;lickScoreSig=lickMemo.sig;
+  if(lk===lickScoreSig)return;lickScoreSig=lk;   // lickSteps() makes new steps when the lick or key changes
   const root=pcName(B.key,B.key),key=root.replace('♭','b').replace('♯','#');
   const keyAcc={};[0,2,4,5,7,9,11].forEach(iv=>{const nm=nameFrom(root,iv);keyAcc[nm[0].toLowerCase()]=nm.includes('♯')?'#':nm.includes('♭')?'b':'';});
   const sounding=lk.filter(st=>!st.rest&&!st.grace);
@@ -633,7 +619,7 @@ function pressAll(){
   document.getElementById('blickrow').hidden=!licksOn();document.getElementById('blslow').setAttribute('aria-pressed',B.slow);
   fillLicks();
 }
-document.getElementById('blick').onchange=e=>pickLick(+e.target.value);
+document.getElementById('blick').onchange=e=>pickLick(e.target.value);
 document.getElementById('bscale').innerHTML=Object.entries(SCALES).map(([k,v])=>`<option value="${k}">${v.name}</option>`).join('');
 document.getElementById('bscale').onchange=e=>{
   lstop();const was=B.scale;B.scale=e.target.value;store.set('bscale',B.scale);
