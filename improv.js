@@ -366,7 +366,9 @@ function drawLickScore(){
   const fit=Math.min(1.8,Math.max(1,(lscore.clientWidth-20-firstX)/need.reduce((a,b)=>a+b,0)));
   const widths=need.map((w,b)=>Math.round(w*fit)+(b===0?firstX:0)),total=widths.reduce((a,b)=>a+b,0)+16;
   lscore.replaceChildren();
-  const r=new VF.Renderer(lscore,VF.Renderer.Backends.SVG);r.resize(total,TAB_Y+120);
+  // Tall enough for fret numbers on the low E string (the tab's bottom line) to show whole.
+  const H=Math.ceil(new VF.TabStave(0,TAB_Y,100).getYForLine(5)+14);
+  const r=new VF.Renderer(lscore,VF.Renderer.Backends.SVG);r.resize(total,H);
   const ctx=r.getContext(),N=[],T=[],marks=[],barEnd=[];
   lickEls=[];let x=8;
   for(let b=0;b<nBars;b++){
@@ -454,7 +456,7 @@ function drawLickScore(){
   ctx.restore();
   // Each step's drawn notes, to light up the one playing.
   lickEls=lk.map((st,i)=>[N[i],T[i]].filter(Boolean).map(n=>n.getSVGElement?n.getSVGElement():null).filter(Boolean));
-  const svg=lscore.querySelector('svg');svg.setAttribute('viewBox',`0 0 ${total} ${TAB_Y+120}`);
+  const svg=lscore.querySelector('svg');svg.setAttribute('viewBox',`0 0 ${total} ${H}`);
   // A little too wide for the card: shrink it to fit (up to about a quarter); much wider: scroll sideways.
   const cw=lscore.clientWidth;svg.style.width=(total>cw?Math.max(cw,total/1.35):total)+'px';
 }
