@@ -161,6 +161,10 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
   source; legato notes change that source's playbackRate (one pick per string chain), vibrato is an LFO on it.
   Licks is greyed out for Modes and CAGED; Chord tones rings only lick notes; out-of-scale lick notes are hollow blue.
   Rake (muted) notes show on the fretboard too (David, 2026-10-23), like the lick's other notes.
+  2026-10-24 (David: wants licks bridging the E shape to the D shape, "extension boxes of the E shape"): only his
+  lick 10 did, so Claude added standard bridge licks 64–73 (name + tip, swung). The list now starts with an "E ↔ D
+  shapes" group (`bridgesED()`: a minor lick with a note only the E shape has and one only the D shape has, as written
+  in A); those licks also stay in their fret-area group.
 - Improv note names are spelled from the scale (C minor: B♭ and E♭, never A♯/D♯): `nameFrom()` / `scaleRoot()`.
   Minor scales in A♭ are spelled from G♯; the blues ♭5 becomes ♯4 where ♭5 would be C♭/F♭ (F blues: B).
   Chord tones are spelled from the chord's root (F7 = F A C E♭).

@@ -299,12 +299,20 @@ function lickSteps(){
 // The list groups licks by where they sit on the neck in the key picked (their lowest fretted note).
 const LICK_AREAS=[[3,'Frets 0–3'],[7,'Frets 4–7'],[11,'Frets 8–11'],[99,'Fret 12 and up']];
 function lickArea(steps){const lo=Math.min(...steps.flatMap(st=>st.notes.filter(n=>!n.mute&&n.f>0).map(n=>n.f)));return LICK_AREAS.findIndex(([hi])=>lo<=hi);}
+// Minor licks that cross between the E shape and the D shape (frets 5–8 and 7–10 as written, in A) also get a group
+// of their own at the top: they have a note only the E shape has and a note only the D shape has.
+const E_BOX=[[5,8],[5,6,7],[5,7],[5,7,8],[5,8],[5,8]], D_BOX=[[8,10,11],[7,10],[7,10],[7,8,9],[8,10],[8,10,11]];
+function bridgesED(L){
+  if(!L.scales.includes('minor'))return false;
+  const ns=parseLick(L.notes).flatMap(st=>st.notes.filter(n=>!n.mute));
+  return ns.some(n=>E_BOX[n.s].includes(n.f)&&!D_BOX[n.s].includes(n.f))&&ns.some(n=>D_BOX[n.s].includes(n.f)&&!E_BOX[n.s].includes(n.f));
+}
 const lickName=L=>`Lick ${L.n}`;
 function fillLicks(){
   const ls=lickList(),sel=document.getElementById('blick');if(!ls.length){sel.innerHTML='';return;}
   const area=new Map(ls.map(L=>{const st=placeLick(L);return [L.n,st?lickArea(st):3];}));
-  sel.innerHTML=LICK_AREAS.map(([,t],a)=>{const g=ls.filter(L=>area.get(L.n)===a);
-    return g.length?`<optgroup label="${t}">${g.map(L=>`<option value="${L.n}">${lickName(L)}</option>`).join('')}</optgroup>`:'';}).join('');
+  const group=(t,g)=>g.length?`<optgroup label="${t}">${g.map(L=>`<option value="${L.n}">${lickName(L)}</option>`).join('')}</optgroup>`:'';
+  sel.innerHTML=group('E ↔ D shapes',ls.filter(bridgesED))+LICK_AREAS.map(([,t],a)=>group(t,ls.filter(L=>area.get(L.n)===a))).join('');
   sel.value=curLick().n;
 }
 function pickLick(n){lstop();B.lick=n;store.set('blick',n);document.getElementById('blick').value=n;drawBoard();scrollToShape();}
