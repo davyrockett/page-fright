@@ -131,7 +131,7 @@ function droneStop(){
 const bp={on:false,start:0,spb:.6,next:0,timer:0,raf:0,bar:-1};
 const lp={on:false,start:0,beat:.6,times:[],raf:0,bus:null,cur:-1}; // a lick playing (see licks below)
 const BCOUNT=4; // count-in beats
-const bplay=document.getElementById('bplay'),bstatus=document.getElementById('bstatus');
+const bplay=document.getElementById('bplay'),bstatus=Object.assign(document.createElement('span'),{id:'bstatus'}); // count-in / bar / drone, shown in the subtitle (describeImprov)
 // When in the beat each 8th note lands: swung (2/3 of the way) or straight (halfway).
 const off8=()=>B.feel==='shuffle'?2/3:1/2;
 // Boogie bass: root, 3, 5, 6, ♭7, 6, 5, 3 in 8th notes.
@@ -165,14 +165,14 @@ function bframe(){
   bp.raf=requestAnimationFrame(bframe);
 }
 function showBar(){
-  if(B.track==='drone'){bstatus.textContent=bp.on?`Drone on ${scaleRoot()}`:'';drawChips();drawBoard();return;}
+  if(B.track==='drone'){bstatus.textContent='';drawChips();drawBoard();return;}
   bstatus.textContent=bp.bar>=0?`Bar ${bp.bar+1} of ${form().length} · ${chordName(bp.bar)}`:'';
   drawChips();drawBoard();
 }
 function bstart(){
   const c=audio();if(!c)return;
   if(typeof player!=='undefined'&&player.on)stop(); // the reading player
-  if(B.track==='drone'){bp.on=true;droneStart();bstatus.textContent=`Drone on ${scaleRoot()}`;
+  if(B.track==='drone'){bp.on=true;droneStart();bstatus.textContent='';  // the subtitle already says Drone on …
     bplay.querySelector('span').textContent='Stop';bplay.querySelector('path').setAttribute('d','M3 3h10v10H3z');drawBoard();return;}
   bp.on=true;bp.spb=60/B.bpm;bp.start=c.currentTime+.15;bp.next=0;bp.bar=-1;
   bschedule();bp.timer=setInterval(bschedule,40);bp.raf=requestAnimationFrame(bframe);
@@ -592,7 +592,7 @@ fb.addEventListener('click',e=>{const g=e.target.closest('.dot');if(!g)return;
 const keySelect=document.getElementById('bkey');
 keySelect.innerHTML=BKEYS.map(k=>`<option value="${k}">${pcName(k,k)}</option>`).join('');
 keySelect.value=B.key;
-keySelect.onchange=()=>{lstop();B.key=+keySelect.value;store.set('bkey',B.key);droneTune();if(DRONE)bstatus.textContent=`Drone on ${scaleRoot()}`;drawShapes();drawChips();drawBoard();scrollToShape();describeImprov();};
+keySelect.onchange=()=>{lstop();B.key=+keySelect.value;store.set('bkey',B.key);droneTune();drawShapes();drawChips();drawBoard();scrollToShape();describeImprov();};
 const bt=document.getElementById('btempo'),btv=document.getElementById('btempo-val');
 bt.value=B.bpm;btv.textContent=B.bpm+' bpm';
 bt.oninput=()=>{const nb=+bt.value;btv.textContent=nb+' bpm';
@@ -688,6 +688,7 @@ function describeImprov(){
   const sc=B.scale==='modes'?`${scaleRoot()} ${MODES[B.mode].name}`:`${scaleRoot()} ${SCALES[B.scale].name.toLowerCase()}`;
   document.getElementById('subtitle').textContent=B.track==='drone'?`Drone on ${scaleRoot()} · ${sc}`
       :`${isMajor()?'Major I–IV':'12-bar blues'} in ${pcName(B.key,B.key)} · ${B.bpm} bpm · ${B.feel==='shuffle'?'Shuffle':'Straight'}${B.quick&&!isMajor()?' · Quick change':''}`;
+  document.getElementById('subtitle').append(bstatus);
 }
 
 /* ---------- Read | Improv | Drill ---------- */

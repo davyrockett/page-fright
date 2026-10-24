@@ -222,8 +222,13 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
   The Drill | Improv | Read switch (that order, David's call v55; Drill opens first for new visitors, then the last-used section) is a pill that must NEVER move between sections (header is a grid: its own
   column level with the title; on phones title → tagline → switch → settings line). In Read, the Play box comes first (matching Improv),
   then New exercise and Customize, then the score.
-- Improv layout (David liked it, v29): controls row Play, Key, Quick change (right after Key, so it stays on
-  the first line when the row wraps), then Tempo and Feel dropdown. One row above the fretboard, in this order: scale dropdown (no label), Note names, Chord tones + I/IV/V, then
+- Improv layout (David, 2026-10-24, v116): the top card is the BACKING TRACK ONLY, on one line: Play, Track, Feel
+  (no captions), Quick change, then the tempo slider taking what's left. Everything that changes what you SEE is in
+  the card below, starting with Key (David: "everything that changes what we see is near what we see"). The bar /
+  count-in status shows in the subtitle while playing (`bstatus` is appended by describeImprov). Phones: Quick change
+  and tempo share a second line; the Key caption is hidden and Note names reads "Names" so Key + scale + Names share
+  the first line. (Was v29: Play, Key, Quick change, Tempo, Feel, Track in the top card.)
+  The row above the fretboard, in this order: Key, scale dropdown (no label), Note names, Chord tones + I/IV/V, then
   LAST a Shapes toggle (last so its reserved space trails the line and nothing floats) that reveals compact shape
   buttons (All A G E D C; it only shows/hides them: picks stay highlighted while hidden; their space is always reserved so turning
   Shapes on never pushes other controls to a new line), and Chord tones +
@@ -232,4 +237,4 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
   other buttons on the left and wraps to its own row if needed. Its I/IV/V buttons disappear when it's off
   (no empty gap); the shape buttons, last in the row, keep their space when hidden.
 - Phones (≤560px): smaller buttons and tighter spacing; the Shapes button and its shape buttons always share
-  one line (no blank row); Play, Key and Quick change fit on one line down to 360px wide.
+  one line (no blank row); Play, Track and Feel fit on one line down to 360px wide.

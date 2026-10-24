@@ -266,6 +266,16 @@ p{margin:0}
 .chip.now{box-shadow:0 0 0 2px var(--hl)}
 .fb-opts{justify-content:space-between}
 .pick-row{gap:10px 18px}
+/* Improv's backing track row: one line on a wide screen, the tempo slider taking what's left; on a narrow one the
+   tempo wraps to a line of its own. The bar / count-in status shows in the subtitle (improv.js). */
+.track-row{gap:10px 14px}
+.track-row .track-tempo{flex:1 1 200px;min-width:0}
+.track-row .track-tempo input{width:auto;flex:1;min-width:80px}
+#bstatus:not(:empty)::before{content:" · "}
+/* Phones: Quick change and the tempo share the second line; the Key caption goes ("A ▾ Blues scale" reads fine) and
+   Note names says Names, so Key, the scale and it share the first line. */
+#blab .short{display:none}
+@media (max-width:560px){.track-row .track-tempo{flex-basis:150px}.key-pick .cap{display:none}#blab .long{display:none}#blab .short{display:inline}}
 /* Chord tones follows the other buttons, left-aligned; if it doesn't fit it wraps to its own row. */
 .pick-row .tones{flex-wrap:nowrap}
 #bchips{flex-wrap:nowrap}
@@ -352,20 +362,20 @@ p{margin:0}
   </div>
 
   <div id="improv-view" class="view" hidden>
-    <div class="controls card">
+    <!-- Backing track only, on one line (everything that changes what's on the fretboard is in the card below). -->
+    <div class="controls card track-row">
       <button type="button" class="btn primary play" id="bplay" title="Play / stop (space)"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M3 1.5v13l11-6.5z"/></svg><span>Play</span></button>
-      <label class="tempo"><span class="cap">Key</span><select id="bkey" aria-label="Key"></select></label>
+      <label class="tempo"><select id="btrack" aria-label="Backing track"><option value="blues">12-bar blues</option><option value="major">Major I–IV</option><option value="drone">Drone</option></select></label>
+      <label class="tempo"><select id="bfeel" aria-label="Feel"><option value="shuffle">Shuffle</option><option value="straight">Straight</option></select></label>
       <button type="button" class="btn" id="bquick" aria-pressed="false" title="IV chord in bar 2">Quick change</button>
-      <label class="tempo"><span class="cap">Tempo</span><input type="range" id="btempo" min="50" max="180" step="2"><output id="btempo-val"></output></label>
-      <label class="tempo"><span class="cap">Feel</span><select id="bfeel" aria-label="Feel"><option value="shuffle">Shuffle</option><option value="straight">Straight</option></select></label>
-      <label class="tempo"><span class="cap">Track</span><select id="btrack" aria-label="Backing track"><option value="blues">12-bar blues</option><option value="major">Major I–IV</option><option value="drone">Drone</option></select></label>
-      <span class="cap status" id="bstatus" aria-live="polite"></span>
+      <label class="tempo track-tempo"><input type="range" id="btempo" min="50" max="180" step="2" aria-label="Tempo"><output id="btempo-val"></output></label>
     </div>
 
     <div class="card scales">
       <div class="row pick-row">
+        <label class="tempo key-pick"><span class="cap">Key</span><select id="bkey" aria-label="Key"></select></label>
         <label class="tempo"><select id="bscale" aria-label="Scale"></select></label>
-        <button type="button" class="btn" id="blab" aria-pressed="false" title="Off: intervals (R, ♭3, 5…). On: note names.">Note names</button>
+        <button type="button" class="btn" id="blab" aria-pressed="false" title="Off: intervals (R, ♭3, 5…). On: note names."><span class="long">Note names</span><span class="short">Names</span></button>
         <div class="row tones"><button type="button" class="btn" id="btones" aria-pressed="true">Chord tones</button><div class="seg" id="bchips" role="group" aria-label="Preview a chord's tones"></div></div>
         <button type="button" class="btn" id="blicks" aria-pressed="false" title="Show a blues lick on the fretboard">Licks</button>
         <div class="row shapes-group"><button type="button" class="btn" id="bshapes" aria-pressed="false" title="Highlight scale shapes">Shapes</button><div class="seg" role="group" aria-label="Shapes" id="bshape"></div></div>
@@ -1268,7 +1278,7 @@ document.getElementById('custom-open').onclick=()=>{customPop.open();document.qu
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v115';
+window.APP_VERSION = 'v116';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
