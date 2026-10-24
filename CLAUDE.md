@@ -226,8 +226,9 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
   (no captions), Quick change, then the tempo slider taking what's left. Everything that changes what you SEE is in
   the card below, starting with Key (David: "everything that changes what we see is near what we see"). The bar /
   count-in status shows in the subtitle while playing (`bstatus` is appended by describeImprov). Phones: Quick change
-  and tempo share a second line; the Key caption is hidden and Note names reads "Names" so Key + scale + Names share
-  the first line. (Was v29: Play, Key, Quick change, Tempo, Feel, Track in the top card.)
+  and tempo share a second line. RULE (David): Note names always says "Note names" (never shortened). Phones: the Key
+  caption is hidden, so Key + scale + Note names share the first line (at 375px; at 360px Note names wraps), and
+  LICKS COMES BEFORE CHORD TONES (CSS order, phones only) so it never floats right past the I/IV/V space. (Was v29: Play, Key, Quick change, Tempo, Feel, Track in the top card.)
   The row above the fretboard, in this order: Key, scale dropdown (no label), Note names, Chord tones + I/IV/V, then
   LAST a Shapes toggle (last so its reserved space trails the line and nothing floats) that reveals compact shape
   buttons (All A G E D C; it only shows/hides them: picks stay highlighted while hidden; their space is always reserved so turning

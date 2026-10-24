@@ -272,10 +272,14 @@ p{margin:0}
 .track-row .track-tempo{flex:1 1 200px;min-width:0}
 .track-row .track-tempo input{width:auto;flex:1;min-width:80px}
 #bstatus:not(:empty)::before{content:" · "}
-/* Phones: Quick change and the tempo share the second line; the Key caption goes ("A ▾ Blues scale" reads fine) and
-   Note names says Names, so Key, the scale and it share the first line. */
-#blab .short{display:none}
-@media (max-width:560px){.track-row .track-tempo{flex-basis:150px}.key-pick .cap{display:none}#blab .long{display:none}#blab .short{display:inline}}
+/* Phones: Quick change and the tempo share the second line; the Key caption goes ("A ▾ Blues scale" reads fine).
+   Note names always says Note names (David). */
+@media (max-width:560px){.track-row .track-tempo{flex-basis:150px}.key-pick .cap{display:none}
+  /* Licks comes before Chord tones, so it never sits out on the right past the space kept for the I/IV/V chords;
+     the first line is a little tighter so Key, the scale and Note names share it. */
+  #blicks{order:1}.pick-row .tones{order:2}.pick-row .shapes-group{order:3}
+  .pick-row .key-pick select{padding-left:5px;padding-right:4px}
+}
 @media (max-width:400px){.track-row{gap:8px}.track-row .tempo select{padding:6px 4px;font-size:13px}.track-row .btn.play{min-width:0}}  /* Play, Track, Feel: one line down to 360px */
 /* Chord tones follows the other buttons, left-aligned; if it doesn't fit it wraps to its own row. */
 .pick-row .tones{flex-wrap:nowrap}
@@ -295,7 +299,7 @@ p{margin:0}
   .pick-row #bshapes,.pick-row #blab,.pick-row #btones,.pick-row #blicks{padding:6px 9px;font-size:13px}
   .shapes-group #bshape .btn,.pick-row .chip{padding:6px 6px;font-size:13px;min-width:28px}
   .shapes-group,.shapes-group #bshape,.pick-row .tones{gap:4px}
-  .pick-row{gap:8px 10px}
+  .pick-row{gap:8px}
   .controls{gap:10px 12px;padding:12px}
   .btn.play{min-width:80px}
   .tempo{gap:6px}
@@ -376,7 +380,7 @@ p{margin:0}
       <div class="row pick-row">
         <label class="tempo key-pick"><span class="cap">Key</span><select id="bkey" aria-label="Key"></select></label>
         <label class="tempo"><select id="bscale" aria-label="Scale"></select></label>
-        <button type="button" class="btn" id="blab" aria-pressed="false" title="Off: intervals (R, ♭3, 5…). On: note names."><span class="long">Note names</span><span class="short">Names</span></button>
+        <button type="button" class="btn" id="blab" aria-pressed="false" title="Off: intervals (R, ♭3, 5…). On: note names.">Note names</button>
         <div class="row tones"><button type="button" class="btn" id="btones" aria-pressed="true">Chord tones</button><div class="seg" id="bchips" role="group" aria-label="Preview a chord's tones"></div></div>
         <button type="button" class="btn" id="blicks" aria-pressed="false" title="Show a blues lick on the fretboard">Licks</button>
         <div class="row shapes-group"><button type="button" class="btn" id="bshapes" aria-pressed="false" title="Highlight scale shapes">Shapes</button><div class="seg" role="group" aria-label="Shapes" id="bshape"></div></div>
@@ -1279,7 +1283,7 @@ document.getElementById('custom-open').onclick=()=>{customPop.open();document.qu
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v117';
+window.APP_VERSION = 'v118';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
