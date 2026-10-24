@@ -167,7 +167,10 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
   "E shape", "E + D shapes" (crossing into the next shape up), …, "Across shapes" (`lickGroups()`/`lickGroup()`). A
   note fits a shape if its pressed fret is within the shape's frets in any octave (passing notes outside the scale may
   be 1 fret outside). No licks for the shapes picked: the list says so and ‹ › Hear it grey out. Every lick lands in
-  the same group in all 12 keys (checked); lick 80 has no room on the neck in C, so it isn't listed there.
+  the same group in all 12 keys (checked for the blues scale; minor pentatonic / minor scale shapes differ a little).
+  ‹ › go through a group before the next. 2026-10-24 (David): EVERY bridge must have at least 5 licks (Claude added
+  84–88 D + C and 89–93 G + E), and more double-stop licks in every shape: 94–103, two each for E, D, C, A, G. Licks
+  80, 86 and 89 were reworked so every lick fits the neck in all 12 keys (no bend or slide onto an open string).
 - Improv note names are spelled from the scale (C minor: B♭ and E♭, never A♯/D♯): `nameFrom()` / `scaleRoot()`.
   Minor scales in A♭ are spelled from G♯; the blues ♭5 becomes ♯4 where ♭5 would be C♭/F♭ (F blues: B).
   Chord tones are spelled from the chord's root (F7 = F A C E♭).
