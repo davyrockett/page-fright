@@ -517,9 +517,9 @@ function drawBoard(){
   // Chord tones: over the blues, the I/IV/V chord (tapped or playing); over the drone, the mode's home chord.
   const drone=B.track==='drone', step=drone?(tonesOn()&&bp.on?0:null):toneStep();  // like the blues: only while it plays
   const chordIv=drone?droneTriad():isMajor()?[0,4,7]:[0,4,7,10], tones=step===null?null:chordIv.map(i=>(key+step+i)%12);
-  // The lick showing (Licks on): the frets its notes are played on (rakes aside), and which ones get bent.
+  // The lick showing (Licks on): the frets its notes are played on (rakes too), and which ones get bent.
   const lk=lickSteps(),lpos=new Map();
-  if(lk)lk.forEach(st=>st.notes.forEach(n=>{if(n.mute)return;const k=n.s+','+n.f;if(!lpos.has(k))lpos.set(k,{s:n.s,f:n.f,bend:false});
+  if(lk)lk.forEach(st=>st.notes.forEach(n=>{const k=n.s+','+n.f;if(!lpos.has(k))lpos.set(k,{s:n.s,f:n.f,bend:false});
     if(n.bend!==null||n.link==='b')lpos.get(k).bend=true;}));
   let svg=`<rect class="wood" x="${NUT}" y="${TOP-10}" width="${LAST*FW}" height="${5*GAP+20}" rx="3"/>`;
   // The chosen shapes' areas, under the fret lines so those still show
@@ -550,7 +550,7 @@ function drawBoard(){
   // Bends: a small arrow up beside the note; and while the lick plays, a ring on the note(s) sounding.
   lpos.forEach(L=>{if(!L.bend)return;const x=fx(L.f)+DOT+2,y=sy(L.s);
     svg+=`<path class="bend" d="M${x} ${y} q8 0 8 -12 M${x+4} ${y-8} l4 -4 l4 4"/>`;});
-  if(lk&&lp.on&&lp.cur>=0)lk[lp.cur].notes.filter(n=>!n.mute).forEach(n=>{svg+=`<circle class="lick-now" cx="${fx(n.f)}" cy="${sy(n.s)}" r="${DOT+4.5}"/>`;});
+  if(lk&&lp.on&&lp.cur>=0)lk[lp.cur].notes.forEach(n=>{svg+=`<circle class="lick-now" cx="${fx(n.f)}" cy="${sy(n.s)}" r="${DOT+4.5}"/>`;});
   // Chord tones the scale doesn't have (like the IV chord's major 3rd over minor pentatonic): hollow blue dots,
   // labeled by their job in the chord. Only with Chord tones on, for a tapped chord or the one playing,
   // and only inside the chosen shapes (or anywhere with All shapes).

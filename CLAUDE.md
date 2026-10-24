@@ -160,6 +160,7 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
   of place. Blues note spelled ♯4 when bent/hammered up to or leading up, else ♭5. Playback: `pluck()` returns its
   source; legato notes change that source's playbackRate (one pick per string chain), vibrato is an LFO on it.
   Licks is greyed out for Modes and CAGED; Chord tones rings only lick notes; out-of-scale lick notes are hollow blue.
+  Rake (muted) notes show on the fretboard too (David, 2026-10-23), like the lick's other notes.
 - Improv note names are spelled from the scale (C minor: B♭ and E♭, never A♯/D♯): `nameFrom()` / `scaleRoot()`.
   Minor scales in A♭ are spelled from G♯; the blues ♭5 becomes ♯4 where ♭5 would be C♭/F♭ (F blues: B).
   Chord tones are spelled from the chord's root (F7 = F A C E♭).
