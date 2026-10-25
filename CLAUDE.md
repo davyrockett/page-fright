@@ -90,7 +90,9 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
   dotted underline) that opens a small pop-up with just that
   section's buttons (`pickPops`); the long explanations (`.intro`, `.more`) stay in Customize only. The sections come
   from one place (`custSecs()`), wired by `custWire()`; every pop-up re-marks the others after a change (`custMarks`).
-  RULE (David): the chips NEVER take 3 rows. Phones (≤560px) use the text look (dotted underlines, " · ", no ▾; parts
+  RULE (David): the chips NEVER take 3 rows. Phones (≤560px) use the text look (" · ", no ▾; ON PHONES the parts are
+  orange with no underline and grey dots between — David's pick, he found underlines didn't read as tappable;
+  phone-only, don't change other sizes; parts
   are spans so they can break mid-part), and wider screens switch to it too whenever the chips would need a 3rd row
   (`fitSubtitle()`, on describe/resize/font load). The header subtitle spans the full width under title + switch
   ("sub sub"). Short wording on ALL sizes (David): "8th" / "16th" notes; "Single notes" alone, otherwise
