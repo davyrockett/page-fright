@@ -655,8 +655,11 @@ function generate(sel=store.get('positions',[]),tex=store.get('textures',['singl
   const pool=options(anyType()), first=homeChords(pool.some(c=>c.some(isHome))?pool:tex.flatMap(options));
   let cur=first[Math.floor(Math.random()*first.length)];
   let pos=cur.at(-1), last=null;
-  const newTarget=()=>{let t,tries=0;do t=lo+Math.floor(Math.random()*(hi-lo+1));while(Math.abs(t-pos)<5&&++tries<50);return t;};
-  let target=newTarget();
+  // Targets are only top notes some chosen texture can reach (no double stop has its top on the lowest notes),
+  // and a target that the walk stops getting closer to is dropped, so it never gets stuck bouncing around one spot.
+  const tops=[...new Set(tex.flatMap(t=>options(t).map(c=>c.at(-1))))];
+  const newTarget=()=>{let t,tries=0;do t=tops[Math.floor(Math.random()*tops.length)];while(Math.abs(t-pos)<5&&++tries<50);stall=0;closest=Math.abs(t-pos);return t;};
+  let stall=0, closest=0, target=newTarget();
   const out=[cur];
   for(let n=1;n<N;n++){
     if(n===N-1){out.push(iChord()||nearest(homeChords(tex.flatMap(options)),pos));break;}
@@ -678,6 +681,7 @@ function generate(sel=store.get('positions',[]),tex=store.get('textures',['singl
     }
     if(!pick)pick=[want];
     last=pick.at(-1)-pos;pos=pick.at(-1);out.push(pick);
+    if(Math.abs(target-pos)<closest){closest=Math.abs(target-pos);stall=0;}else if(++stall>=4)target=newTarget();
   }
   sounding.forEach((e,i)=>{e.keys=out[i].map(j=>SC[j].key);});
   // Accidentals: some single notes (never the first or last) become chromatic approach notes to the next one.
@@ -1356,7 +1360,7 @@ Object.entries(custSecs()).forEach(([id,[,title]])=>{pickPops[id]=Popup(title,()
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v127';
+window.APP_VERSION = 'v128';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
