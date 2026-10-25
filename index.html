@@ -105,6 +105,11 @@ p{margin:0}
 .fabs{transition:opacity .2s,transform .2s}
 .fabs:not(.shown){opacity:0;transform:translateY(12px);pointer-events:none;visibility:hidden}
 .fab:not(.primary){background:var(--surface);min-width:96px;justify-content:center}
+.fab[aria-pressed="true"]{background:var(--accent-soft)}
+/* Phones: four floating buttons on one line, kept compact so none wraps or runs off the left edge. */
+@media (max-width:560px){.fabs{gap:6px;left:calc(8px + env(safe-area-inset-left,0px));right:calc(8px + env(safe-area-inset-right,0px));justify-content:flex-end}
+  .fabs .fab{padding:9px 11px;gap:5px;font-size:15px;white-space:nowrap}.fab:not(.primary){min-width:0}}
+@media (max-width:380px){.fabs{gap:5px}.fabs .fab{padding:9px 8px;font-size:14px}.fab svg{width:13px;height:13px}}
 #read-view{padding-bottom:64px}   /* room so the floating button never covers the last line */
 .read-tempo .tstep{width:36px;height:36px;justify-content:center;padding:0;border-radius:50%}
 .cap{font-size:13px;color:var(--muted)}
@@ -354,6 +359,7 @@ p{margin:0}
 
   <div class="score card" id="score" aria-label="Sight-reading exercise, 16 measures"></div>
   <div class="fabs">
+  <button type="button" class="btn fab" id="fab-nonstop" aria-pressed="false" title="When an exercise ends, a new one appears and plays after a 4-beat count-in">Non-stop</button>
   <button type="button" class="btn fab" id="fab-play" title="Play / stop (space)"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M3 1.5v13l11-6.5z"/></svg><span>Play</span></button>
   <button type="button" class="btn fab" id="fab-new" title="New exercise (same settings), no playback"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9"/><path fill="currentColor" d="M14.5 1.5v4.5H10z"/></svg><span>New</span></button>
   <button type="button" class="btn primary fab" id="new-play" title="New exercise and play (same settings)"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M3 1.5v13l11-6.5z"/></svg><span>New + Play</span></button>
@@ -984,8 +990,10 @@ document.querySelectorAll('.read-tempo .tstep').forEach(b=>b.onclick=()=>setTemp
 subBtn.onclick=()=>{subdiv=!subdiv;store.set('subdivide',subdiv);subBtn.setAttribute('aria-pressed',subdiv);};
 // Subdivide only matters with the metronome on: greyed out (not hidden) when it's off.
 const subAvail=()=>{subBtn.disabled=!metro;};subAvail();
-const nonstopBtn=document.getElementById('nonstop');nonstopBtn.setAttribute('aria-pressed',nonstop);
-nonstopBtn.onclick=()=>{nonstop=!nonstop;store.set('nonstop',nonstop);nonstopBtn.setAttribute('aria-pressed',nonstop);};
+// Non-stop: the button in the Play box and the floating one (bottom right) are the same switch, kept in step.
+const nonstopBtns=[document.getElementById('nonstop'),document.getElementById('fab-nonstop')];
+nonstopBtns.forEach(b=>{b.setAttribute('aria-pressed',nonstop);
+  b.onclick=()=>{nonstop=!nonstop;store.set('nonstop',nonstop);nonstopBtns.forEach(x=>x.setAttribute('aria-pressed',nonstop));};});
 clickBtn.onclick=()=>{metro=!metro;store.set('metronome',metro);clickBtn.setAttribute('aria-pressed',metro);subAvail();};
 
 // Tap a note to hear it.
@@ -1302,7 +1310,7 @@ document.getElementById('custom-open').onclick=()=>{customPop.open();document.qu
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v120';
+window.APP_VERSION = 'v121';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');

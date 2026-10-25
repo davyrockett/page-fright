@@ -82,7 +82,9 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
 - Read Non-stop (2026-10-24, David): a toggle after Subdivide (saved as `nonstop`). When an exercise's last bar ends,
   `advance()` swaps in a new one (same settings), scrolls its first line to ~12% from the top, and it plays after a
   4-beat count-in that keeps the old beat (those clicks are queued at the end of every queue as `next`, played only
-  with Non-stop on). Turning it off mid-play just stops at the end as before.
+  with Non-stop on). Turning it off mid-play just stops at the end as before. A floating Non-stop (first of the
+  floating buttons, David) is the same switch, kept in step. Phones: the four floating buttons stay on one line
+  (compact `.fabs .fab` padding; checked at 375 and 360 wide).
 - Customize (Read): Key / Rhythm / Notes / Positions are collapsible cards (`.csec` details): icon tile, title, a live
   summary of what's chosen, round chevron that turns orange when open. Every section starts closed each time
   (Notes: the Intervals buttons are HIDDEN with Single notes only. David chose hiding over greying here; leave it.)
