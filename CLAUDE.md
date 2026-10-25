@@ -86,7 +86,8 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
   floating buttons, David) is the same switch, kept in step. Phones: the four floating buttons stay on one line
   (compact `.fabs .fab` padding; checked at 375 and 360 wide).
 - Read subtitle pop-ups (2026-10-24, David chose this over opening Customize at a section): each part of the Read
-  subtitle (key · rhythm · notes · positions) is a button (dotted underline) that opens a small pop-up with just that
+  subtitle (key · rhythm · notes · positions) is a chip with an orange ▾ (David asked to make it obvious; was a
+  dotted underline) that opens a small pop-up with just that
   section's buttons (`pickPops`); the long explanations (`.intro`, `.more`) stay in Customize only. The sections come
   from one place (`custSecs()`), wired by `custWire()`; every pop-up re-marks the others after a change (`custMarks`).
 - Customize (Read): Key / Rhythm / Notes / Positions are collapsible cards (`.csec` details): icon tile, title, a live

@@ -76,10 +76,12 @@ p{margin:0}
   :root:not([data-theme]) .logo-bang{filter:drop-shadow(0 0 12px rgba(240,235,227,.35))}}
 .tagline{color:var(--muted);font-size:clamp(15px,2vw,18px)}
 .brand p{font-size:13px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-top:6px}
-/* Read subtitle: each part is a button that opens a small pop-up to change it. */
-.sub-pick{font:inherit;letter-spacing:inherit;text-transform:inherit;color:inherit;background:none;border:0;padding:2px 0;cursor:pointer;
-  text-decoration:underline dotted;text-decoration-thickness:1px;text-underline-offset:4px}
-.sub-pick:hover,.sub-pick:focus-visible{color:var(--accent-ink);text-decoration-style:solid}
+/* Read subtitle: each part is a chip with a ▾ that opens a small pop-up to change it (David: make it obvious). */
+#subtitle:has(.sub-pick){display:flex;flex-wrap:wrap;gap:6px}
+.sub-pick{font:inherit;letter-spacing:inherit;text-transform:inherit;color:var(--ink);background:var(--surface);
+  border:1px solid var(--line);border-radius:999px;padding:4px 8px 4px 11px;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.sub-pick svg{color:var(--accent);flex:none}
+.sub-pick:hover,.sub-pick:focus-visible{border-color:var(--accent);color:var(--accent-ink)}
 .pick-pop .intro,.pick-pop .more{display:none}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .btn{border:1.5px solid var(--line);background:var(--surface);padding:9px 14px;border-radius:8px;cursor:pointer;font-weight:700;font-size:15px;line-height:1.2;touch-action:manipulation}
@@ -1236,9 +1238,9 @@ function describe(){
   const rh=store.get('rhythms',['quarter']);
   const rhName=cap(rh.map(r=>RHYTHMS[r]).join(' + ')+' notes')+(store.get('dotted',false)?', dotted':'')+(store.get('rests',false)?', rests':'');
   // Each part opens its own small pop-up to change it (David).
-  const part=(id,label,t)=>`<button type="button" class="sub-pick" data-pick="${id}" title="Change ${label}">${t}</button>`;
+  const part=(id,label,t)=>`<button type="button" class="sub-pick" data-pick="${id}" title="Change ${label}">${t}<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg></button>`;
   document.getElementById('subtitle').innerHTML=[part('key','the key',`${keyLabel(exercise.key)} major`),part('rhy','the rhythm',rhName),part('tex','the notes',texName),
-    part('pos','the positions',sel.length?sel.map(ORD).join(' + ')+(sel.length>1?' positions':' position'):'Whole neck')].join(' · ');
+    part('pos','the positions',sel.length?sel.map(ORD).join(' + ')+(sel.length>1?' positions':' position'):'Whole neck')].join('');
   document.getElementById('range-note').textContent=sel.length
     ?`Everything fits in ${sel.length>1?'these positions':'this position'}: ${sel.map(p=>`${ORD(p)} (${p===1?'open strings to fret 4':`frets ${p}–${p+3}, reaching back to ${p-1}`})`).join(', ')}.`
     :'Range: low E (open 6th string) up to the 20th fret on the 1st string.';
@@ -1330,7 +1332,7 @@ document.getElementById('subtitle').addEventListener('click',e=>{const b=e.targe
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v122';
+window.APP_VERSION = 'v123';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
