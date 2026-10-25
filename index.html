@@ -90,8 +90,8 @@ p{margin:0}
   text-decoration:underline dotted;text-decoration-thickness:1px;text-underline-offset:4px}
 #subtitle.flat .sub-pick svg{display:none}
 #subtitle.flat .sub-pick:hover,#subtitle.flat .sub-pick:focus-visible{color:var(--accent-ink);text-decoration-style:solid}
-/* Phones only (David): orange text, no underline, grey dots between. */
-@media (max-width:560px){#subtitle.flat .sub-pick{color:var(--accent);text-decoration:none}#subtitle.flat .sub-sep{color:var(--muted)}}
+/* Phones only (David): plain grey text like the original, no underline; still tappable. */
+@media (max-width:560px){#subtitle.flat .sub-pick{text-decoration:none}}
 .pick-pop .intro,.pick-pop .more{display:none}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .btn{border:1.5px solid var(--line);background:var(--surface);padding:9px 14px;border-radius:8px;cursor:pointer;font-weight:700;font-size:15px;line-height:1.2;touch-action:manipulation}
@@ -1356,7 +1356,7 @@ Object.entries(custSecs()).forEach(([id,[,title]])=>{pickPops[id]=Popup(title,()
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v126';
+window.APP_VERSION = 'v127';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');

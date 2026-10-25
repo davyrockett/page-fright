@@ -91,8 +91,8 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
   section's buttons (`pickPops`); the long explanations (`.intro`, `.more`) stay in Customize only. The sections come
   from one place (`custSecs()`), wired by `custWire()`; every pop-up re-marks the others after a change (`custMarks`).
   RULE (David): the chips NEVER take 3 rows. Phones (≤560px) use the text look (" · ", no ▾; ON PHONES the parts are
-  orange with no underline and grey dots between — David's pick, he found underlines didn't read as tappable;
-  phone-only, don't change other sizes; parts
+  plain grey text, no underline (David tried underlines and orange, liked neither; phones will mostly be used in
+  landscape, where the chips show, so he decided it's not worth more time); phone-only, don't change other sizes; parts
   are spans so they can break mid-part), and wider screens switch to it too whenever the chips would need a 3rd row
   (`fitSubtitle()`, on describe/resize/font load). The header subtitle spans the full width under title + switch
   ("sub sub"). Short wording on ALL sizes (David): "8th" / "16th" notes; "Single notes" alone, otherwise
