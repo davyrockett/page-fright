@@ -53,7 +53,7 @@ button{font:inherit;color:inherit}
 h1,h2{font-family:var(--f-display);font-weight:800;letter-spacing:.01em;line-height:1.02;margin:0;text-transform:uppercase}
 p{margin:0}
 .wrap{max-width:1240px;margin:0 auto;padding:24px clamp(16px,3vw,40px) 64px;display:flex;flex-direction:column;gap:16px}
-.top{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"title nav" "sub nav";gap:6px 16px;align-items:start}
+.top{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"title nav" "sub sub";gap:6px 16px;align-items:start}  /* the subtitle uses the full width under both (fewer rows for the Read chips) */
 /* The Read | Improv | Drill switch never moves: it has its own column (or its own row on phones),
    and nothing above it changes height between sections. */
 .top .brand{display:contents}
@@ -82,6 +82,14 @@ p{margin:0}
   border:1px solid var(--line);border-radius:999px;padding:4px 8px 4px 11px;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
 .sub-pick svg{color:var(--accent);flex:none}
 .sub-pick:hover,.sub-pick:focus-visible{border-color:var(--accent);color:var(--accent-ink)}
+.sub-sep{display:none}
+/* Text look (phones, or whenever the chips would need a 3rd row; fitSubtitle()): plain text with dotted underlines. */
+#subtitle.flat{display:block}
+#subtitle.flat .sub-sep{display:inline}
+#subtitle.flat .sub-pick{display:inline;color:inherit;background:none;border:0;border-radius:0;padding:2px 0;
+  text-decoration:underline dotted;text-decoration-thickness:1px;text-underline-offset:4px}
+#subtitle.flat .sub-pick svg{display:none}
+#subtitle.flat .sub-pick:hover,#subtitle.flat .sub-pick:focus-visible{color:var(--accent-ink);text-decoration-style:solid}
 .pick-pop .intro,.pick-pop .more{display:none}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .btn{border:1.5px solid var(--line);background:var(--surface);padding:9px 14px;border-radius:8px;cursor:pointer;font-weight:700;font-size:15px;line-height:1.2;touch-action:manipulation}
@@ -1238,13 +1246,23 @@ function describe(){
   const rh=store.get('rhythms',['quarter']);
   const rhName=cap(rh.map(r=>RHYTHMS[r]).join(' + ')+' notes')+(store.get('dotted',false)?', dotted':'')+(store.get('rests',false)?', rests':'');
   // Each part opens its own small pop-up to change it (David).
-  const part=(id,label,t)=>`<button type="button" class="sub-pick" data-pick="${id}" title="Change ${label}">${t}<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg></button>`;
+  // Spans (not buttons) so the text look can break inside a part and stay on two lines on phones.
+  const part=(id,label,t)=>`<span class="sub-pick" role="button" tabindex="0" data-pick="${id}" title="Change ${label}">${t}<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg></span>`;
   document.getElementById('subtitle').innerHTML=[part('key','the key',`${keyLabel(exercise.key)} major`),part('rhy','the rhythm',rhName),part('tex','the notes',texName),
-    part('pos','the positions',sel.length?sel.map(ORD).join(' + ')+(sel.length>1?' positions':' position'):'Whole neck')].join('');
+    part('pos','the positions',sel.length?sel.map(ORD).join(' + ')+(sel.length>1?' positions':' position'):'Whole neck')].join('<span class="sub-sep"> · </span>');
+  fitSubtitle();
   document.getElementById('range-note').textContent=sel.length
     ?`Everything fits in ${sel.length>1?'these positions':'this position'}: ${sel.map(p=>`${ORD(p)} (${p===1?'open strings to fret 4':`frets ${p}–${p+3}, reaching back to ${p-1}`})`).join(', ')}.`
     :'Range: low E (open 6th string) up to the 20th fret on the 1st string.';
 }
+// Chips on wider screens; the text look on phones, and anywhere the chips would need a 3rd row (David: never 3 rows).
+function fitSubtitle(){
+  const s=document.getElementById('subtitle');if(!s.querySelector('.sub-pick'))return;
+  s.classList.remove('flat');
+  if(matchMedia('(max-width:560px)').matches){s.classList.add('flat');return;}
+  if(new Set([...s.querySelectorAll('.sub-pick')].map(b=>b.offsetTop)).size>2)s.classList.add('flat');
+}
+{let ft;addEventListener('resize',()=>{clearTimeout(ft);ft=setTimeout(fitSubtitle,60);});document.fonts?.ready.then(fitSubtitle);}
 describe();
 // A row of buttons where you can turn on several, but at least one stays on.
 function multi(storeKey,def,order){
@@ -1320,7 +1338,9 @@ document.getElementById('custom-open').onclick=()=>{customPop.open();document.qu
 // The small pop-ups: just the buttons (the long explanations stay in Customize).
 const pickPops={};
 Object.entries(custSecs()).forEach(([id,[,title]])=>{pickPops[id]=Popup(title,()=>custWire(h(`<div class="settings pick-pop">${custSecs()[id][2]}<p class="cap">Changes make a new exercise right away.</p></div>`)));});
-document.getElementById('subtitle').addEventListener('click',e=>{const b=e.target.closest('[data-pick]');if(b)pickPops[b.dataset.pick].open();});
+{const sub=document.getElementById('subtitle'),go=b=>pickPops[b.dataset.pick].open();
+  sub.addEventListener('click',e=>{const b=e.target.closest('[data-pick]');if(b)go(b);});
+  sub.addEventListener('keydown',e=>{const b=e.target.closest('[data-pick]');if(b&&(e.key==='Enter'||e.key===' ')){e.preventDefault();go(b);}});}
 </script>
 
 <script src="licks.js"></script>
@@ -1332,7 +1352,7 @@ document.getElementById('subtitle').addEventListener('click',e=>{const b=e.targe
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v123';
+window.APP_VERSION = 'v124';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');

@@ -90,6 +90,10 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
   dotted underline) that opens a small pop-up with just that
   section's buttons (`pickPops`); the long explanations (`.intro`, `.more`) stay in Customize only. The sections come
   from one place (`custSecs()`), wired by `custWire()`; every pop-up re-marks the others after a change (`custMarks`).
+  RULE (David): the chips NEVER take 3 rows. Phones (≤560px) use the text look (dotted underlines, " · ", no ▾; parts
+  are spans so they can break mid-part), and wider screens switch to it too whenever the chips would need a 3rd row
+  (`fitSubtitle()`, on describe/resize/font load). The header subtitle spans the full width under title + switch
+  ("sub sub"). Text look: your usual settings fit 2 rows at 360–375px; many options on can still take 3+.
 - Customize (Read): Key / Rhythm / Notes / Positions are collapsible cards (`.csec` details): icon tile, title, a live
   summary of what's chosen, round chevron that turns orange when open. Every section starts closed each time
   (Notes: the Intervals buttons are HIDDEN with Single notes only. David chose hiding over greying here; leave it.)
