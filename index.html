@@ -76,6 +76,11 @@ p{margin:0}
   :root:not([data-theme]) .logo-bang{filter:drop-shadow(0 0 12px rgba(240,235,227,.35))}}
 .tagline{color:var(--muted);font-size:clamp(15px,2vw,18px)}
 .brand p{font-size:13px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-top:6px}
+/* Read subtitle: each part is a button that opens a small pop-up to change it. */
+.sub-pick{font:inherit;letter-spacing:inherit;text-transform:inherit;color:inherit;background:none;border:0;padding:2px 0;cursor:pointer;
+  text-decoration:underline dotted;text-decoration-thickness:1px;text-underline-offset:4px}
+.sub-pick:hover,.sub-pick:focus-visible{color:var(--accent-ink);text-decoration-style:solid}
+.pick-pop .intro,.pick-pop .more{display:none}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .btn{border:1.5px solid var(--line);background:var(--surface);padding:9px 14px;border-radius:8px;cursor:pointer;font-weight:700;font-size:15px;line-height:1.2;touch-action:manipulation}
 .btn:hover{border-color:var(--accent)}
@@ -1230,7 +1235,10 @@ function describe(){
   const texName=cap(tex.map(t=>TEXTURES[t]).join(' + '))+(store.get('accidentals',false)?', accidentals':'');
   const rh=store.get('rhythms',['quarter']);
   const rhName=cap(rh.map(r=>RHYTHMS[r]).join(' + ')+' notes')+(store.get('dotted',false)?', dotted':'')+(store.get('rests',false)?', rests':'');
-  document.getElementById('subtitle').textContent=`${keyLabel(exercise.key)} major · ${rhName} · ${texName} · ${sel.length?sel.map(ORD).join(' + ')+(sel.length>1?' positions':' position'):'Whole neck'}`;
+  // Each part opens its own small pop-up to change it (David).
+  const part=(id,label,t)=>`<button type="button" class="sub-pick" data-pick="${id}" title="Change ${label}">${t}</button>`;
+  document.getElementById('subtitle').innerHTML=[part('key','the key',`${keyLabel(exercise.key)} major`),part('rhy','the rhythm',rhName),part('tex','the notes',texName),
+    part('pos','the positions',sel.length?sel.map(ORD).join(' + ')+(sel.length>1?' positions':' position'):'Whole neck')].join(' · ');
   document.getElementById('range-note').textContent=sel.length
     ?`Everything fits in ${sel.length>1?'these positions':'this position'}: ${sel.map(p=>`${ORD(p)} (${p===1?'open strings to fret 4':`frets ${p}–${p+3}, reaching back to ${p-1}`})`).join(', ')}.`
     :'Range: low E (open 6th string) up to the 20th fret on the 1st string.';
@@ -1244,28 +1252,29 @@ function multi(storeKey,def,order){
 }
 const keySel=multi('keys',['C'],Object.keys(KEYS)), rhySel=multi('rhythms',['quarter'],Object.keys(RHYTHMS)), texSel=multi('textures',['single'],Object.keys(TEXTURES));
 const dintSel=multi('dints',[3,5],Object.keys(INTERVALS).map(Number));
-const customPop=Popup('Customize',()=>{
-  const btns=(attr,pairs)=>pairs.map(([v,t])=>`<button type="button" class="btn" data-${attr}="${v}">${t}</button>`).join('');
-  const CHEV='<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>';
-  const sec=(id,icon,title,body)=>`<details class="csec" data-sec="${id}"><summary><span class="csec-ic" aria-hidden="true">${icon}</span><span class="csec-t"><b>${title}</b><span class="csec-sum"></span></span><span class="csec-chev" aria-hidden="true">${CHEV}</span></summary><div class="csec-body">${body}</div></details>`;
-  const FRETS='<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/><path d="M6 4v16M12 4v16M18 4v16" stroke-width="1.4"/></g><circle cx="9" cy="12" r="2.4" fill="currentColor"/></svg>';
-  const el=h(`<div class="settings csecs">
-    ${sec('key','♯','Key',`<p class="cap">Major keys. Choose several and each new exercise picks one of them. It starts and ends on the key's home note. Accidentals adds some sharps, flats and naturals outside the key, each leading by a half step into the next note.</p>
+// Customize's four sections (Key, Rhythm, Notes, Positions): [icon, title, body]. The Customize pop-up shows all four;
+// tapping a part of the Read subtitle opens a small pop-up with just that section's buttons (David).
+const btns=(attr,pairs)=>pairs.map(([v,t])=>`<button type="button" class="btn" data-${attr}="${v}">${t}</button>`).join('');
+const FRETS='<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/><path d="M6 4v16M12 4v16M18 4v16" stroke-width="1.4"/></g><circle cx="9" cy="12" r="2.4" fill="currentColor"/></svg>';
+const custSecs=()=>({
+  key:['♯','Key',`<p class="cap intro">Major keys. Choose several and each new exercise picks one of them. It starts and ends on the key's home note. Accidentals adds some sharps, flats and naturals outside the key, each leading by a half step into the next note.</p>
     <div class="seg" role="group" aria-label="Key">${btns('key',Object.keys(KEYS).map(k=>[k,keyLabel(k)]))}</div>
-    <div class="seg" role="group" aria-label="Accidentals">${btns('flag',[['accidentals','Accidentals']])}</div>`)}
-    ${sec('rhy','♩','Rhythm',`<p class="cap">The note lengths to use. Dotted adds dotted halves, dotted quarter + eighth, and dotted eighth + sixteenth (each needs the matching lengths turned on). Rests turns some notes into rests.</p>
+    <div class="seg" role="group" aria-label="Accidentals">${btns('flag',[['accidentals','Accidentals']])}</div>`],
+  rhy:['♩','Rhythm',`<p class="cap intro">The note lengths to use. Dotted adds dotted halves, dotted quarter + eighth, and dotted eighth + sixteenth (each needs the matching lengths turned on). Rests turns some notes into rests.</p>
     <div class="seg" role="group" aria-label="Note lengths">${btns('rhy',Object.entries(RHYTHMS))}</div>
-    <div class="seg" role="group" aria-label="Rhythm extras">${btns('flag',[['dotted','Dotted'],['rests','Rests']])}</div>`)}
-    ${sec('tex','♫','Notes',`<p class="cap">Choose more than one to mix them. Every chord fits your positions.</p>
+    <div class="seg" role="group" aria-label="Rhythm extras">${btns('flag',[['dotted','Dotted'],['rests','Rests']])}</div>`],
+  tex:['♫','Notes',`<p class="cap intro">Choose more than one to mix them. Every chord fits your positions.</p>
     <div class="seg" role="group" aria-label="Notes">${btns('tex',Object.entries(TEXTURES))}</div>
-    <div class="sub-opts"><p class="cap"><b>Intervals</b>: double stops use these. Triple stops stack two of them on neighboring strings (3rds + 3rds make a triad, 3rds + 4ths an inversion). Double stop 6ths, 7ths and octaves may skip a string. Exercises end on the key's I chord: the home note, two notes of the chord, or all three, to match the notes chosen.</p>
-      <div class="seg" role="group" aria-label="Intervals">${btns('dint',Object.entries(INTERVALS))}</div></div>`)}
-    ${sec('pos',FRETS,'Positions',`<p class="cap">Only use notes you can play without leaving the positions you choose. A position is named for its lowest fret and covers four frets, plus the index finger's reach back one fret; 1st position uses the open strings. Choose several to combine them, or Whole neck for everything.</p>
+    <div class="sub-opts"><p class="cap"><b>Intervals</b><span class="more">: double stops use these. Triple stops stack two of them on neighboring strings (3rds + 3rds make a triad, 3rds + 4ths an inversion). Double stop 6ths, 7ths and octaves may skip a string. Exercises end on the key's I chord: the home note, two notes of the chord, or all three, to match the notes chosen.</span></p>
+      <div class="seg" role="group" aria-label="Intervals">${btns('dint',Object.entries(INTERVALS))}</div></div>`],
+  pos:[FRETS,'Positions',`<p class="cap intro">Only use notes you can play without leaving the positions you choose. A position is named for its lowest fret and covers four frets, plus the index finger's reach back one fret; 1st position uses the open strings. Choose several to combine them, or Whole neck for everything.</p>
     <div class="seg" role="group" aria-label="Positions">
       <button type="button" class="btn" data-whole>Whole neck</button>
       ${POSITIONS.map(p=>`<button type="button" class="btn" data-pos="${p}">${ORD(p)}</button>`).join('')}
-    </div>`)}
-    <p class="cap">Changes make a new exercise right away.</p></div>`);
+    </div>`]});
+// Every pop-up with these buttons, so a change in one shows in the others.
+const custMarks=[];
+function custWire(el){
   const press=(sel,on)=>el.querySelectorAll(sel).forEach(b=>b.setAttribute('aria-pressed',on(b)));
   const mark=()=>{const sel=store.get('positions',[]);
     press('[data-whole]',()=>sel.length===0);
@@ -1276,9 +1285,9 @@ const customPop=Popup('Customize',()=>{
     press('[data-flag]',b=>store.get(b.dataset.flag,false));
     press('[data-dint]',b=>dintSel.get().includes(+b.dataset.dint));
     // The interval choices only show when double or triple stops are on.
-    el.querySelector('.sub-opts').hidden=!texSel.get().some(t=>t!=='single');
-    // What's chosen, shown under each heading.
-    const sum=(id,t)=>{el.querySelector(`[data-sec="${id}"] .csec-sum`).textContent=t;},on=f=>store.get(f,false);
+    const so=el.querySelector('.sub-opts');if(so)so.hidden=!texSel.get().some(t=>t!=='single');
+    // What's chosen, shown under each heading (Customize only).
+    const sum=(id,t)=>{const x=el.querySelector(`[data-sec="${id}"] .csec-sum`);if(x)x.textContent=t;},on=f=>store.get(f,false);
     sum('key',[...keySel.get().map(keyLabel),...(on('accidentals')?['accidentals']:[])].join(' · '));
     sum('rhy',[...Object.keys(RHYTHMS).filter(r=>rhySel.get().includes(r)).map(r=>RHYTHMS[r]),...(on('dotted')?['dotted']:[]),...(on('rests')?['rests']:[])].join(' · '));
     const tx=Object.keys(TEXTURES).filter(t=>texSel.get().includes(t));
@@ -1294,11 +1303,22 @@ const customPop=Popup('Customize',()=>{
     if(d.flag)store.set(d.flag,!store.get(d.flag,false));
     if(d.whole!==undefined)store.set('positions',[]);
     if(d.pos){const p=+d.pos,sel=store.get('positions',[]);store.set('positions',sel.includes(p)?sel.filter(x=>x!==p):[...sel,p].sort((a,b)=>a-b));}
-    mark();newExercise();
+    custMarks.forEach(f=>f());newExercise();
   });
-  mark();return el;
+  custMarks.push(mark);mark();return el;
+}
+const customPop=Popup('Customize',()=>{
+  const CHEV='<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>';
+  const sec=(id,icon,title,body)=>`<details class="csec" data-sec="${id}"><summary><span class="csec-ic" aria-hidden="true">${icon}</span><span class="csec-t"><b>${title}</b><span class="csec-sum"></span></span><span class="csec-chev" aria-hidden="true">${CHEV}</span></summary><div class="csec-body">${body}</div></details>`;
+  return custWire(h(`<div class="settings csecs">
+    ${Object.entries(custSecs()).map(([id,[icon,title,body]])=>sec(id,icon,title,body)).join('')}
+    <p class="cap">Changes make a new exercise right away.</p></div>`));
 });
 document.getElementById('custom-open').onclick=()=>{customPop.open();document.querySelectorAll('.csec').forEach(d=>d.open=false);};  // always opens with every section closed
+// The small pop-ups: just the buttons (the long explanations stay in Customize).
+const pickPops={};
+Object.entries(custSecs()).forEach(([id,[,title]])=>{pickPops[id]=Popup(title,()=>custWire(h(`<div class="settings pick-pop">${custSecs()[id][2]}<p class="cap">Changes make a new exercise right away.</p></div>`)));});
+document.getElementById('subtitle').addEventListener('click',e=>{const b=e.target.closest('[data-pick]');if(b)pickPops[b.dataset.pick].open();});
 </script>
 
 <script src="licks.js"></script>
@@ -1310,7 +1330,7 @@ document.getElementById('custom-open').onclick=()=>{customPop.open();document.qu
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v121';
+window.APP_VERSION = 'v122';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
