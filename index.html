@@ -1242,9 +1242,11 @@ const ORD=n=>n===1?'1st':n+'th';
 function describe(){
   const sel=store.get('positions',[]), tex=store.get('textures',['single']);
   const cap=t=>t.toLowerCase().replace(/^./,c=>c.toUpperCase());
-  const texName=cap(tex.map(t=>TEXTURES[t]).join(' + '))+(store.get('accidentals',false)?', accidentals':'');
+  // Short wording (David): "Single notes" alone, otherwise "Single + double stops"; "8th" / "16th".
+  const texName=(tex.length===1?TEXTURES[tex[0]]:cap(tex.join(' + ')+' stops'))+(store.get('accidentals',false)?', accidentals':'');
   const rh=store.get('rhythms',['quarter']);
-  const rhName=cap(rh.map(r=>RHYTHMS[r]).join(' + ')+' notes')+(store.get('dotted',false)?', dotted':'')+(store.get('rests',false)?', rests':'');
+  const SHORT={eighth:'8th',sixteenth:'16th'};
+  const rhName=cap(rh.map(r=>SHORT[r]||RHYTHMS[r].toLowerCase()).join(' + ')+' notes')+(store.get('dotted',false)?', dotted':'')+(store.get('rests',false)?', rests':'');
   // Each part opens its own small pop-up to change it (David).
   // Spans (not buttons) so the text look can break inside a part and stay on two lines on phones.
   const part=(id,label,t)=>`<span class="sub-pick" role="button" tabindex="0" data-pick="${id}" title="Change ${label}">${t}<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg></span>`;
@@ -1352,7 +1354,7 @@ Object.entries(custSecs()).forEach(([id,[,title]])=>{pickPops[id]=Popup(title,()
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v124';
+window.APP_VERSION = 'v125';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');

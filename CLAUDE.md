@@ -93,7 +93,9 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
   RULE (David): the chips NEVER take 3 rows. Phones (≤560px) use the text look (dotted underlines, " · ", no ▾; parts
   are spans so they can break mid-part), and wider screens switch to it too whenever the chips would need a 3rd row
   (`fitSubtitle()`, on describe/resize/font load). The header subtitle spans the full width under title + switch
-  ("sub sub"). Text look: your usual settings fit 2 rows at 360–375px; many options on can still take 3+.
+  ("sub sub"). Short wording on ALL sizes (David): "8th" / "16th" notes; "Single notes" alone, otherwise
+  "Single + double stops" (any mix: "Double + triple stops", "Single + double + triple stops"). Phones: 2 rows up to
+  e.g. "Quarter + 8th notes, dotted"; with rests + triple stops, or many positions, still 3–4 rows.
 - Customize (Read): Key / Rhythm / Notes / Positions are collapsible cards (`.csec` details): icon tile, title, a live
   summary of what's chosen, round chevron that turns orange when open. Every section starts closed each time
   (Notes: the Intervals buttons are HIDDEN with Single notes only. David chose hiding over greying here; leave it.)
