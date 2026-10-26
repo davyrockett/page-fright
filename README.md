@@ -17,6 +17,7 @@ iPhone and iPad Home Screens and the Mac's Dock, and works with no signal once i
 | `index.html` | The whole app: exercise generator, notation, playback, settings |
 | `drill.js` | The Drill section: triad shapes on any three strings |
 | `chords.js` | Drill > Chords: shapes from David's two chord books (plus major and open chords) for 32 chord types, moved to any root |
+| `warmup.js` | Drill > Warm-up: Robb Cappelletto's six-position scale routine, one key a day |
 | `licks.js` | Improv licks: 1–50 from David's lick sheet plus 13 standard ones, written in A (format explained at the top of the file) |
 | `improv.js` | The Improv section: 12-bar blues backing track and scale shapes on the fretboard |
 | `vendor/vexflow-bravura.js` | [VexFlow](https://www.vexflow.com) 4.2.5, which draws the notation (MIT license, see `vendor/VEXFLOW-LICENSE`) |
@@ -97,6 +98,14 @@ Tap one to hear and highlight it; Play steps through them.
 m7♭5, °7 and 6: every arrangement of the three notes (any of them in the bass) on three neighbouring strings
 (no skipped strings), plus extended shells with no root (3rd, 7th and a 9th, 11th, 13th or altered note).
 Same screen as Chords.
+
+**Warm-up** (the fourth Drill mode): Robb Cappelletto's daily scale routine (Billy Strings' teacher, from Fret
+Science's video youtu.be/MY1F4-id64k). One major key a day, moving around the circle of fifths after each day it's
+played. Six positions that cover the neck, lowest first: root on the low E string and on the A string, each played
+behind the root (4th finger on the root), straddling it (2nd finger) and in front of it with three notes per string
+(1st finger). In each position: scale, major pentatonic, major arpeggio (18 steps). Play counts in a bar, then plays
+the step up and back down in 8ths, lighting each note on the fretboard and in the notation + tab. Non-stop runs
+straight through all 18 steps with a bar of clicks between them.
 
 ## Publishing a change
 

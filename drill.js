@@ -205,7 +205,7 @@ document.getElementById('drill-view').addEventListener('click',e=>{
 document.getElementById('dlab').setAttribute('aria-pressed',D.lab==='note');
 function describeDrill(){
   if(document.getElementById('drill-view').hidden)return;
-  if(typeof drillMode!=='undefined'&&drillMode!=='triads'){describeChords();return;}
+  if(typeof drillMode!=='undefined'&&drillMode!=='triads'){drillMode==='warmup'?describeWarm():describeChords();return;}
   const strs=[...D.strings].sort((a,b)=>a-b).map(s=>STRING_NAMES[s]).join(' ');
   document.getElementById('subtitle').textContent=`Triads · ${ROOT_SPELL[D.root]} ${QUALITIES[D.qual].name} · strings ${strs||'none'}`;
 }
@@ -213,8 +213,8 @@ document.addEventListener('keydown',e=>{
   if(document.getElementById('drill-view').hidden)return;
   if(e.metaKey||e.ctrlKey||e.altKey||document.querySelector('.tmodal:not([hidden])'))return;
   if(e.target.closest('input,select,textarea'))return;
-  if(e.key===' '){e.preventDefault();if(typeof drillMode!=='undefined'&&drillMode!=='triads')cp.on?cstop():cstart();else dp.on?dstop():dstart();}
+  if(e.key===' '){e.preventDefault();if(drillMode==='warmup')wp.on?wstop():wstart();else if(drillMode!=='triads')cp.on?cstop():cstart();else dp.on?dstop():dstart();}
 });
 
 drawStrings();drawInv();drawDrill();
-// The first view is shown at the end of chords.js, once every section is set up.
+// The first view is shown at the end of warmup.js, once every section is set up.

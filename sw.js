@@ -2,7 +2,7 @@
 //
 // IMPORTANT: whenever any file below changes, bump VERSION (run tools/bump.sh).
 // That is how phones and iPads learn there's an update to download.
-const VERSION = 'v128';
+const VERSION = 'v129';
 const CACHE = `pagefright-${VERSION}`;
 const FONTS = 'pagefright-fonts';
 
@@ -18,6 +18,7 @@ const ASSETS = [
   './improv.js',
   './drill.js',
   './chords.js',
+  './warmup.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/apple-touch-icon.png',

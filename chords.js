@@ -275,27 +275,28 @@ ctypeSel.onchange=()=>{cstop();CH.type=ctypeSel.value;CH.sel=0;store.set(typeKey
 const clab=document.getElementById('clab');clab.setAttribute('aria-pressed',CH.lab==='note');
 clab.onclick=()=>{CH.lab=CH.lab==='note'?'int':'note';store.set('clab',CH.lab);clab.setAttribute('aria-pressed',CH.lab==='note');drawChordBoard();};
 function describeChords(){
-  if(document.getElementById('drill-view').hidden||drillMode==='triads')return;
+  if(document.getElementById('drill-view').hidden||!chordsLike())return;
   document.getElementById('subtitle').textContent=`${drillMode==='shells'?'Shells':'Chords'} · ${chordSymbol()} · ${voicings.length} voicing${voicings.length===1?'':'s'}`;
 }
 
-/* ---------- Triads | Chords | Shells ----------
-   Shells uses the Chords screen with its own list of chords. */
+/* ---------- Triads | Chords | Shells | Warm-up ----------
+   Shells uses the Chords screen with its own list of chords. Warm-up is in warmup.js. */
 let drillMode=store.get('dmode','triads');
+const chordsLike=()=>drillMode==='chords'||drillMode==='shells';
 function showMode(m){
-  drillMode=['chords','shells'].includes(m)?m:'triads';store.set('dmode',drillMode);
+  drillMode=['chords','shells','warmup'].includes(m)?m:'triads';store.set('dmode',drillMode);
   document.getElementById('triads-mode').hidden=drillMode!=='triads';
-  document.getElementById('chords-mode').hidden=drillMode==='triads';
-  if(drillMode!=='triads'){
+  document.getElementById('chords-mode').hidden=!chordsLike();
+  document.getElementById('warmup-mode').hidden=drillMode!=='warmup';
+  if(chordsLike()){
     TYPES=drillMode==='shells'?SHELL_TYPES:CHORD_TYPES;fillTypes(drillMode==='shells'?SHELL_GROUPS:CHORD_GROUPS);
     document.getElementById('chelp-chords').hidden=drillMode!=='chords';document.getElementById('chelp-shells').hidden=drillMode!=='shells';
   }
   document.querySelectorAll('.drill-modes [data-mode]').forEach(b=>{b.setAttribute('aria-pressed',b.dataset.mode===drillMode);b.setAttribute('aria-selected',b.dataset.mode===drillMode);});
-  if(drillMode!=='triads'){cstop();dstop();drawChords();}else{cstop();drawDrill();}
+  cstop();dstop();wstop();
+  if(drillMode==='warmup')drawWarm();else if(chordsLike())drawChords();else drawDrill();
   describeDrill();
 }
 document.querySelector('.drill-modes').addEventListener('click',e=>{const b=e.target.closest('[data-mode]');if(b)showMode(b.dataset.mode);});
 
-showMode(drillMode);
-// Now that every section is set up, open the one asked for (#improv / #drill) or the last one used.
-showView({'#improv':'improv','#drill':'drill'}[location.hash]||store.get('view','drill'));
+// The first view is shown at the end of warmup.js, once every section is set up.

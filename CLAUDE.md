@@ -232,6 +232,20 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
   v69 (David asked for 9s, 11s, 13s): an "Extended shells (no root)" group: 3rd, 7th and extension, rootless
   (maj9 9 m9 m11 13 maj7♯11 7♯11 7♭9 7♯9 7♭13), found by the same generator.
   drill.js shares improv.js globals (fx, sy, W, H, NUT, FW, TOP, GAP, LAST, pcAt) — avoid reusing their names.
+- Drill > Warm-up (2026-10-26, `warmup.js`; David asked for the routine in youtu.be/MY1F4-id64k, Fret Science / Robb
+  Cappelletto): fourth Drill mode (Triads | Chords | Shells | Warm-up). One major key a day around the circle of fifths
+  (C G D A E B F♯ D♭ A♭ E♭ B♭ F): the key moves on (and the step resets to 1) on the first day after a day Play was
+  used, so days off don't skip keys (`wplayed`, `wkeyday`). Six positions (`WPOS`, frets relative to the root, same for
+  every key): low E root behind (4th finger on root, G shape; reach back to the G string's root−4), straddle (2nd
+  finger, E shape), front (1st finger, 3 notes per string); A-string root behind (C shape), straddle (A shape, pinky
+  stretch on the B string), front (3nps from the 5th on the low E). Root frets: lowest place it fits (E ≥ 4, A ≥ 3);
+  the string with the lower root goes first (in D the A string first, as in the video). Fretboard grows past 17 when a
+  key needs it (up to 20 in G). Each position: Scale, Pentatonic, Arpeggio = the scale's notes filtered (in the 3nps
+  positions this gives Keith's diagonal pentatonic/arpeggio). 18 steps, ‹ › in order; position 1–6 buttons; other
+  positions greyed on the fretboard (tap to jump). Play: one-bar count-in, straight 8ths up and back down, last note
+  to the end of its beat, metronome on beats (Metronome toggle); notation + tab underneath, wrapping to the card's
+  width; the playing note lit on both. Non-stop: next step after a bar of clicks, through all 18. Tempo changes act
+  at once. Not chosen by David yet: anything beyond the video's first half (modes, D shape from the B string).
 - Planned (2026-10-09): David will provide a MIDI file of exactly the backing track he wants. Play it with
   the app's own synths, transposed to the chosen key and at the chosen tempo (no recorded audio: he decided
   against pitch-shifting a found recording). Ask for one track per part and the key it's written in.
