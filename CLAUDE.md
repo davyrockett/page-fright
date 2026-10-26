@@ -243,8 +243,8 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
   key needs it (up to 20 in G). Each position: Scale, Pentatonic, Arpeggio = the scale's notes filtered (in the 3nps
   positions this gives Keith's diagonal pentatonic/arpeggio). 18 steps, ‹ › in order; position 1–6 buttons; other
   positions greyed on the fretboard (tap to jump). Play: one-bar count-in, straight 8ths up and back down, last note
-  to the end of its beat, metronome on beats (Metronome toggle); notation + tab underneath, wrapping to the card's
-  width; the playing note lit on both. Non-stop: next step after a bar of clicks, through all 18. Tempo changes act
+  to the end of its beat, metronome on beats (Metronome toggle); the playing note lit on the fretboard. NO notation
+  or tab for the warm-up (David: "we don't actually need any notation or tab for this"). Non-stop: next step after a bar of clicks, through all 18. Tempo changes act
   at once. Not chosen by David yet: anything beyond the video's first half (modes, D shape from the B string).
 - Planned (2026-10-09): David will provide a MIDI file of exactly the backing track he wants. Play it with
   the app's own synths, transposed to the chosen key and at the chosen tempo (no recorded audio: he decided

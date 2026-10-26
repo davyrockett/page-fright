@@ -104,7 +104,7 @@ Science's video youtu.be/MY1F4-id64k). One major key a day, moving around the ci
 played. Six positions that cover the neck, lowest first: root on the low E string and on the A string, each played
 behind the root (4th finger on the root), straddling it (2nd finger) and in front of it with three notes per string
 (1st finger). In each position: scale, major pentatonic, major arpeggio (18 steps). Play counts in a bar, then plays
-the step up and back down in 8ths, lighting each note on the fretboard and in the notation + tab. Non-stop runs
+the step up and back down in 8ths, lighting each note on the fretboard (no notation or tab: David's call). Non-stop runs
 straight through all 18 steps with a bar of clicks between them.
 
 ## Publishing a change

@@ -49,7 +49,7 @@ const wRun=notes=>[...notes,...notes.slice(0,-1).reverse()];
 const wLast=positions=>Math.max(17,...positions.flatMap(p=>p.notes.map(n=>n.f)));
 
 /* ---------- fretboard ---------- */
-const wfb=document.getElementById('wfb'),wscore=document.getElementById('wscore');
+const wfb=document.getElementById('wfb');
 let wPlaying=-1;   // index into the run of the note playing now
 function drawWarm(){
   if(WU.step<0||WU.step>17)WU.step=0;
@@ -79,7 +79,6 @@ function drawWarm(){
   const [where,finger]=WWHERE[cur.where];
   document.getElementById('wdesc').innerHTML=`<span><b>Step ${WU.step+1} of 18</b> · ${where}: root on the ${cur.str?'A':'low E'} string (fret ${cur.root}) under your ${finger} finger · ${cur.shape}</span>`;
   document.getElementById('wkey').value=WU.key;
-  drawWarmScore();
   describeWarm();
 }
 function wScrollTo(){
@@ -94,67 +93,8 @@ wfb.addEventListener('click',e=>{
   pluck(freqOf(STRINGS[+dot.dataset.s]+ +dot.dataset.f),{dur:1.4});
 });
 
-/* ---------- notation and tab ----------
-   Straight 8th notes, up and back down, the last note held to the end of its beat with rests to fill the bar.
-   Lines wrap to fit the card. */
-let wEls=[],wSig='';
-function wVfKey(n){
-  const name=nameFrom(WKEYS[WU.key][0],wIv(n.m)),acc=(name.match(/♯/g)||[]).length-(name.match(/♭/g)||[]).length;
-  return name[0].toLowerCase()+(acc>0?'#'.repeat(acc):'b'.repeat(-acc))+'/'+(Math.round((n.m-acc-NAT_PC[name[0]])/12)-1);
-}
-function drawWarmScore(){
-  if(!wscore.offsetParent){wSig='';return;}   // VexFlow measures text, so draw only while it can be seen
-  const cw=wscore.clientWidth,sig=[WU.key,WU.step,cw].join('|');if(sig===wSig)return;wSig=sig;
-  const P=wPositions(),{pos,kind}=wStepInfo(),run=wRun(wNotes(P[pos],kind));
-  const key=WKEYS[WU.key][0].replace('♭','b').replace('♯','#');
-  // Bars of eight 8ths; the last note is a quarter on a beat, an 8th off it (a half or whole note when it starts the bar's half).
-  const bars=[];for(let i=0;i<run.length;i+=8)bars.push(run.slice(i,i+8).map((n,j)=>({n,i:i+j,dur:'8'})));
-  const lb=bars[bars.length-1],used=lb.length-1,end=lb[used];
-  if(lb.length<8){end.dur=used===0?'w':used===4?'h':used%2?'8':'q';
-    for(let k=used+({w:8,h:4,q:2,'8':1})[end.dur];k<8;k+=2)lb.push({rest:true,dur:'qr'});}
-  const stepOf=k=>{const [,l,,o]=/^([a-g])(#+|b+)?\/(\d)$/.exec(k);return 7*(+o)+'cdefgab'.indexOf(l);};
-  const steps=run.map(n=>stepOf(wVfKey(n)));
-  const above=Math.max(3,(Math.max(...steps)-stepOf('f/5'))/2+1.5),below=Math.max(2,(stepOf('e/4')-Math.min(...steps))/2+1.5);
-  const TAB_Y=(above+4+below)*10-30,lineH=Math.ceil(new VF.TabStave(0,TAB_Y,100).getYForLine(5)+26);
-  const startX=s=>s.getNoteStartX()-s.getX();
-  const extra=startX(new VF.Stave(0,0,200).addClef('treble').addKeySignature(key).addTimeSignature('4/4'))-startX(new VF.Stave(0,0,200));
-  const perLine=Math.max(1,Math.min(bars.length,Math.floor((cw-16-extra)/250))),nLines=Math.ceil(bars.length/perLine);
-  const total=Math.max(cw,16+extra+perLine*250);
-  wscore.replaceChildren();
-  const r=new VF.Renderer(wscore,VF.Renderer.Backends.SVG);r.resize(total,lineH*nLines);
-  const ctx=r.getContext();wEls=[];
-  bars.forEach((bar,b)=>{
-    const line=Math.floor(b/perLine),col=b%perLine,y=line*lineH,bw=(total-16-extra)/perLine;
-    const x=8+(col?extra+col*bw:0),w=bw+(col?0:extra);
-    const stave=new VF.Stave(x,y,w,{space_above_staff_ln:above,space_below_staff_ln:below}),ts=new VF.TabStave(x,y+TAB_Y,w);
-    if(!col){stave.addClef('treble').addKeySignature(key);ts.addClef('tab');if(!b)stave.addTimeSignature('4/4');}
-    if(b===bars.length-1){stave.setEndBarType(VF.Barline.type.END);ts.setEndBarType(VF.Barline.type.END);}
-    const nx=Math.max(stave.getNoteStartX(),ts.getNoteStartX());stave.setNoteStartX(nx);ts.setNoteStartX(nx);
-    stave.setContext(ctx).draw();ts.setContext(ctx).draw();
-    if(!col)new VF.StaveConnector(stave,ts).setType(VF.StaveConnector.type.SINGLE_LEFT).setContext(ctx).draw();
-    const notes=[],tabs=[];
-    bar.forEach(it=>{
-      if(it.rest){notes.push(new VF.StaveNote({keys:['b/4'],duration:it.dur}));tabs.push(new VF.GhostNote({duration:it.dur.replace('r','')}));return;}
-      const n=new VF.StaveNote({keys:[wVfKey(it.n)],duration:it.dur,auto_stem:true}),t=new VF.TabNote({positions:[{str:6-it.n.s,fret:it.n.f}],duration:it.dur});
-      notes.push(n);tabs.push(t);it.sn=n;it.tn=t;
-    });
-    const beams=VF.Beam.generateBeams(notes.filter(n=>n.getDuration()==='8'),{groups:[new VF.Fraction(1,4)]});
-    const nv=new VF.Voice({num_beats:4,beat_value:4}).setMode(VF.Voice.Mode.SOFT).addTickables(notes);
-    const tv=new VF.Voice({num_beats:4,beat_value:4}).setMode(VF.Voice.Mode.SOFT).addTickables(tabs);
-    VF.Accidental.applyAccidentals([nv],key);
-    new VF.Formatter().joinVoices([nv]).joinVoices([tv]).format([nv,tv],stave.getNoteEndX()-stave.getNoteStartX()-12);
-    nv.draw(ctx,stave);beams.forEach(bm=>bm.setContext(ctx).draw());tv.draw(ctx,ts);
-    bar.forEach(it=>{if(it.sn)wEls[it.i]=[it.sn,it.tn].map(q=>q.getSVGElement?q.getSVGElement():null).filter(Boolean);});
-  });
-  const svg=wscore.querySelector('svg');svg.setAttribute('viewBox',`0 0 ${total} ${lineH*nLines}`);svg.style.width=total+'px';
-  wLight(wPlaying);
-}
-function wLight(i){wscore.querySelectorAll('.on').forEach(e=>e.classList.remove('on'));(wEls[i]||[]).forEach(e=>e.classList.add('on'));}
-let wrt=0,wcw=0;
-new ResizeObserver(()=>{if(wscore.clientWidth!==wcw){wcw=wscore.clientWidth;clearTimeout(wrt);wrt=setTimeout(drawWarmScore,80);}}).observe(wscore);
-
 /* ---------- playing ----------
-   A one-bar count-in, then the step up and back down in 8ths with the metronome on the beat. Non-stop goes straight
+   A one-bar count-in, then the step up and back down in 8ths (lit on the fretboard) with the metronome on the beat. Non-stop goes straight
    on to the next step after one bar of clicks (to move your hand), through all 18. Tempo changes act right away. */
 const wp={on:false,bus:null,start:0,spb:.75,ev:[],i:0,segs:[],timer:0,raf:0};
 const wplay=document.getElementById('wplay');
@@ -188,7 +128,7 @@ function wFrame(){
   const b=wBeat(AC.currentTime),seg=[...wp.segs].reverse().find(s=>s.b0<=b+1e-6)||wp.segs[0];
   const i=seg.notesAt.filter(x=>x<=b+.02).length-1;
   if(seg.step!==WU.step){WU.step=seg.step;store.set('wstep',WU.step);wPlaying=-1;drawWarm();wScrollTo();}
-  if(i!==wPlaying){wPlaying=i;wLight(i);
+  if(i!==wPlaying){wPlaying=i;
     const ring=wfb.querySelector('.lick-now'),run=wRun(wNotes(wPositions()[wStepInfo().pos],wStepInfo().kind)),n=run[i];
     if(n){if(ring){ring.setAttribute('cx',fx(n.f));ring.setAttribute('cy',sy(n.s));}else wfb.insertAdjacentHTML('beforeend',`<circle class="lick-now" cx="${fx(n.f)}" cy="${sy(n.s)}" r="${DOT+4}"/>`);}
     else ring?.remove();
@@ -207,7 +147,7 @@ function wstart(){
 function wstop(){
   if(!wp.on)return;wp.on=false;clearTimeout(wp.timer);cancelAnimationFrame(wp.raf);
   const c=AC,g=wp.bus;g.gain.setTargetAtTime(0,c.currentTime,.03);setTimeout(()=>g.disconnect(),400);
-  wPlaying=-1;wLight(-1);wfb.querySelector('.lick-now')?.remove();
+  wPlaying=-1;wfb.querySelector('.lick-now')?.remove();
   wplay.querySelector('span').textContent='Play';wplay.querySelector('path').setAttribute('d','M3 1.5v13l11-6.5z');
 }
 wplay.onclick=()=>wp.on?wstop():wstart();
