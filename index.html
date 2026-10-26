@@ -244,6 +244,7 @@ p{margin:0}
 @media (max-width:560px){.drill-modes{flex-wrap:nowrap;gap:4px}.drill-modes .btn{padding:7px 10px;flex:1 1 auto}}
 /* Drill > Warm-up: step arrows around the step's description (room for its longest, so nothing below moves). */
 .warm-steps{display:flex;align-items:center;gap:10px;margin:12px 0 6px}
+.warm-steps #wprev{margin-left:-4px}
 .warm-steps .btn.step{padding:5px 11px;font-size:20px;line-height:1;flex:none}
 #wdesc{margin:0;flex:1;min-height:2.8em;display:flex;align-items:center}
 @media (max-width:560px){#wdesc{min-height:4.2em}}
@@ -504,7 +505,7 @@ p{margin:0}
           <div class="seg" role="group" aria-label="Scale, pentatonic or arpeggio" id="wkind"></div>
           <div class="row"><span class="cap">Position</span><div class="seg" role="group" aria-label="Position" id="wpos"></div></div>
         </div>
-        <div class="warm-steps"><button type="button" class="btn step" id="wprev" aria-label="Previous step">‹</button><p class="cap" id="wdesc"></p><button type="button" class="btn step" id="wnext" aria-label="Next step">›</button></div>
+        <div class="warm-steps"><button type="button" class="btn step" id="wfirst" aria-label="Back to step 1" title="Back to step 1">«</button><button type="button" class="btn step" id="wprev" aria-label="Previous step">‹</button><p class="cap" id="wdesc"></p><button type="button" class="btn step" id="wnext" aria-label="Next step">›</button></div>
         <div class="fb-wrap"><svg id="wfb" class="fretboard" role="img" aria-label="This step on the fretboard"></svg></div>
       </div>
 
@@ -512,7 +513,7 @@ p{margin:0}
         <summary>How it works</summary>
         <p>A daily scale warm-up from Robb Cappelletto (Billy Strings' teacher), as shown in Fret Science's video. Each day, play one major key: the scale, the major pentatonic and the major triad arpeggio in six positions that cover the whole neck, lowest first. Three have the root on the low E string and three on the A string: behind the root (root under your 4th finger), straddling it (2nd finger), and in front of it with three notes per string (1st finger). In the three-notes-per-string positions, the pentatonic and arpeggio are the notes of that shape that belong to them (a diagonal shape; that's Keith's addition from the video).</p>
         <p>The key moves one step around the circle of fifths (C G D A E B F♯ D♭ A♭ E♭ B♭ F) on the first day you open it after a day you played it, so twelve days of practice cover every key. Pick another key any time.</p>
-        <p><b>Play</b> (or <b>space</b>) counts you in for a bar, then plays the step up and back down in 8th notes, lighting up each note on the fretboard. <b>‹ ›</b> go through the 18 steps in order (scale, pentatonic, arpeggio, then the next position). Tap a position number, or a grey note on the fretboard, to jump to that position. <b>Non-stop</b> goes straight on to the next step after one bar of clicks, all the way through.</p>
+        <p><b>Play</b> (or <b>space</b>) counts you in for a bar, then plays the step up and back down in 8th notes, lighting up each note on the fretboard. <b>‹ ›</b> go through the 18 steps in order (scale, pentatonic, arpeggio, then the next position); <b>«</b> goes back to step 1. Tap a position number, or a grey note on the fretboard, to jump to that position. <b>Non-stop</b> goes straight on to the next step after one bar of clicks, all the way through.</p>
       </details>
     </div>
   </div>
@@ -1396,7 +1397,7 @@ Object.entries(custSecs()).forEach(([id,[,title]])=>{pickPops[id]=Popup(title,()
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v130';
+window.APP_VERSION = 'v131';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');

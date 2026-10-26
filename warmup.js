@@ -79,6 +79,7 @@ function drawWarm(){
   const [where,finger]=WWHERE[cur.where];
   document.getElementById('wdesc').innerHTML=`<span><b>Step ${WU.step+1} of 18</b> · ${where}: root on the ${cur.str?'A':'low E'} string (fret ${cur.root}) under your ${finger} finger · ${cur.shape}</span>`;
   document.getElementById('wkey').value=WU.key;
+  document.getElementById('wfirst').classList.toggle('greyed',WU.step===0);
   describeWarm();
 }
 function wScrollTo(){
@@ -163,6 +164,7 @@ document.getElementById('warmup-mode').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;const d=b.dataset;
   if(d.kind)wGo(Math.floor(WU.step/3)*3+WKINDS.findIndex(k=>k[0]===d.kind));
   else if(d.pos!==undefined)wGo(+d.pos*3+WU.step%3);
+  else if(b.id==='wfirst')wGo(0);
   else if(b.id==='wprev')wGo(WU.step-1);
   else if(b.id==='wnext')wGo(WU.step+1);
   else if(b.id==='wlab'){WU.lab=WU.lab==='note'?'int':'note';store.set('wlab',WU.lab);b.setAttribute('aria-pressed',WU.lab==='note');drawWarm();}

@@ -241,7 +241,7 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
   stretch on the B string), front (3nps from the 5th on the low E). Root frets: lowest place it fits (E ≥ 4, A ≥ 3);
   the string with the lower root goes first (in D the A string first, as in the video). Fretboard grows past 17 when a
   key needs it (up to 20 in G). Each position: Scale, Pentatonic, Arpeggio = the scale's notes filtered (in the 3nps
-  positions this gives Keith's diagonal pentatonic/arpeggio). 18 steps, ‹ › in order; position 1–6 buttons; other
+  positions this gives Keith's diagonal pentatonic/arpeggio). 18 steps, ‹ › in order, « back to step 1 (greyed out on step 1; David asked); position 1–6 buttons; other
   positions greyed on the fretboard (tap to jump). Play: one-bar count-in, straight 8ths up and back down, last note
   to the end of its beat, metronome on beats (Metronome toggle); the playing note lit on the fretboard. NO notation
   or tab for the warm-up (David: "we don't actually need any notation or tab for this"). Non-stop: next step after a bar of clicks, through all 18. Tempo changes act
