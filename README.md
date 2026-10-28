@@ -63,6 +63,8 @@ The **Read | Improv** switch under the header changes sections (`#improv` links 
 
 - **Backing track:** 12-bar blues in any key, made live in the browser (drums, a soft boogie bass, and short organ chords
   on 1 and the "and" of 2). Tempo, shuffle or straight, and quick change (IV in bar 2). Counts in one bar, then loops.
+  Other tracks: Major I–IV, Minor vamp (a mellow, sparse two-bar groove on the i chord, m7: soft kick, brushes, held
+  bass, electric piano), and Drone.
 - **Fretboard (frets 0–17):** minor pentatonic, blues scale, minor scale, major pentatonic, major scale, or the CAGED
   chord shapes for the key. Full-scale shapes are the pentatonic box plus the two missing notes (4 & 7 major; 2 & ♭6 minor).
   Show all shapes or pick one or more (named E, D, C, A, G for the chord shape each sits around). Dots show intervals or note

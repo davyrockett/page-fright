@@ -52,6 +52,9 @@ const FORM=[0,0,0,0,5,5,0,0,7,5,0,7], QUICK=[0,5,0,0,5,5,0,0,7,5,0,7];
 // Major: a two-bar loop, one bar on the I chord and one on the IV (David), same drums, bass and organ.
 const MAJOR=[0,5];
 const isMajor=()=>B.track==='major';
+// Minor vamp: two quiet bars on the i chord (m7), looped: soft drums, a sparse bass and electric piano.
+const MINOR=[0,0];
+const isMinor=()=>B.track==='minor';
 const B={key:store.get('bkey',9),bpm:store.get('btempo',92),feel:store.get('bfeel','shuffle'),quick:store.get('bquick',false),
   scale:store.get('bscale','minor'),shapes:store.get('bshapes',[]),lab:store.get('blab','int'),tones:store.get('btones',true),
   mode:store.get('bmode','dorian'),track:store.get('btrack','blues'),
@@ -59,23 +62,28 @@ const B={key:store.get('bkey',9),bpm:store.get('btempo',92),feel:store.get('bfee
 if(!MODES[B.mode])B.mode='dorian';
 B.shapesOn=store.get('bshapesOn',B.shapes.length>0); // the Shapes button only shows or hides the shape buttons
 const activeShapes=()=>B.shapes;                      // picks stay highlighted either way
-const form=()=>isMajor()?MAJOR:B.quick?QUICK:FORM;
+const form=()=>isMajor()?MAJOR:isMinor()?MINOR:B.quick?QUICK:FORM;
 // Which chord's tones to show (steps above the key): a tapped chord, else the one playing, else none.
 B.preview=null;
 const tonesOn=()=>B.tones&&B.scale!=='modes';  // Chord tones is greyed out for Modes (for now)
 const toneStep=()=>!tonesOn()?null:B.preview!==null?B.preview:bp.on&&bp.bar>=0?form()[bp.bar]:null;
-const chordName=bar=>pcName(B.key+form()[bar],B.key)+(isMajor()?'':'7');
+const chordName=bar=>pcName(B.key+form()[bar],B.key)+(isMajor()?'':isMinor()?'m7':'7');
 
 /* ---------- sounds ---------- */
 let NOISE=null;
 function noise(c){if(!NOISE){NOISE=c.createBuffer(1,c.sampleRate,c.sampleRate);const d=NOISE.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;}return NOISE;}
 function env(c,at,peak,decay){const g=c.createGain();g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(peak,at+.003);g.gain.exponentialRampToValueAtTime(.0001,at+decay);g.connect(OUT);return g;}
-function kick(at){const c=AC,o=c.createOscillator(),g=env(c,at,.9,.32);o.frequency.setValueAtTime(140,at);o.frequency.exponentialRampToValueAtTime(45,at+.12);o.connect(g);o.start(at);o.stop(at+.35);}
+function kick(at,vol=.9){const c=AC,o=c.createOscillator(),g=env(c,at,vol,.32);o.frequency.setValueAtTime(140,at);o.frequency.exponentialRampToValueAtTime(45,at+.12);o.connect(g);o.start(at);o.stop(at+.35);}
 function snare(at){const c=AC,n=c.createBufferSource(),f=c.createBiquadFilter(),g=env(c,at,.45,.18);
   n.buffer=noise(c);f.type='bandpass';f.frequency.value=1900;f.Q.value=.7;n.connect(f);f.connect(g);n.start(at,Math.random()*.5);n.stop(at+.2);
   const o=c.createOscillator(),g2=env(c,at,.25,.09);o.frequency.value=185;o.connect(g2);o.start(at);o.stop(at+.1);}
 function hat(at,vol=.16){const c=AC,n=c.createBufferSource(),f=c.createBiquadFilter(),g=env(c,at,vol,.05);
   n.buffer=noise(c);f.type='highpass';f.frequency.value=7000;n.connect(f);f.connect(g);n.start(at,Math.random()*.5);n.stop(at+.06);}
+// Brush: a soft, short swish of noise (the minor vamp's backbeat).
+function brush(at){const c=AC,n=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();
+  n.buffer=noise(c);f.type='bandpass';f.frequency.value=2800;f.Q.value=.5;
+  g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(.07,at+.025);g.gain.exponentialRampToValueAtTime(.0001,at+.3);
+  n.connect(f);f.connect(g);g.connect(OUT);n.start(at,Math.random()*.5);n.stop(at+.32);}
 // Bass: a round, quiet triangle tone (not a buzzy sawtooth), sitting under the drums and guitar.
 function bass(midi,at,dur){const c=AC,o=c.createOscillator(),f=c.createBiquadFilter(),g=c.createGain();
   o.type='triangle';o.frequency.value=440*Math.pow(2,(midi-69)/12);f.type='lowpass';f.frequency.value=420;f.Q.value=.7;
@@ -94,6 +102,22 @@ function organ(pc,at,dur,ivs=[4,7,10]){
   ivs.forEach(iv=>{const fr=440*Math.pow(2,(root+iv-69)/12);
     [[1,1],[2,.4],[3,.08]].forEach(([h,a])=>{const o=c.createOscillator(),og=c.createGain();
       o.frequency.value=fr*h;og.gain.value=a;o.connect(og);og.connect(trem);o.start(at);o.stop(end+.05);});});
+  live.add(g);setTimeout(()=>live.delete(g),(end-c.currentTime+.5)*1000); // so Stop fades it out
+}
+
+// Electric piano: a mellow bell-less tone (fundamental + a little octave) that rings and fades, with a slow
+// gentle tremolo, the notes rolled a touch. Built on a root between C3 and B3 like the organ.
+function epiano(pc,at,dur,ivs,vol=.06){
+  const c=AC,root=48+((pc%12)+12)%12,end=at+dur;
+  const g=c.createGain(),trem=c.createGain(),f=c.createBiquadFilter(),lfo=c.createOscillator(),depth=c.createGain();
+  f.type='lowpass';f.frequency.value=1600;g.gain.value=1;
+  lfo.frequency.value=3.2;depth.gain.value=.12;trem.gain.value=1;lfo.connect(depth);depth.connect(trem.gain);
+  trem.connect(g);g.connect(f);f.connect(OUT);lfo.start(at);lfo.stop(end+.1);
+  ivs.forEach((iv,i)=>{const fr=440*Math.pow(2,(root+iv-69)/12),t=at+i*.014,ng=c.createGain();
+    ng.gain.setValueAtTime(0,t);ng.gain.linearRampToValueAtTime(vol,t+.008);ng.gain.exponentialRampToValueAtTime(vol*.45,t+.5);
+    ng.gain.exponentialRampToValueAtTime(.0001,end);ng.connect(trem);
+    [[1,1],[2,.18]].forEach(([h,a])=>{const o=c.createOscillator(),og=c.createGain();
+      o.frequency.value=fr*h;og.gain.value=a;o.connect(og);og.connect(ng);o.start(t);o.stop(end+.05);});});
   live.add(g);setTimeout(()=>live.delete(g),(end-c.currentTime+.5)*1000); // so Stop fades it out
 }
 
@@ -146,6 +170,7 @@ function bschedule(){
     else{
       const k=b-BCOUNT,bar=Math.floor(k/4)%form().length,beat=k%4,step=form()[bar],pc=(B.key+step)%12;
       const root=28+((pc-4)%12+12)%12;                 // bass root between low E and D♯
+      if(isMinor()){vamp(bar,beat,pc,root,at);bp.next++;continue;}
       if(beat===0||beat===2)kick(at); else snare(at);
       hat(at,.16);hat(at2,.1);
       const line=isMajor()?BOOGIE_MAJ:BOOGIE,voice=isMajor()?[4,7,12]:[4,7,10];   // major: 3, 5 and octave on the organ
@@ -156,6 +181,19 @@ function bschedule(){
     }
     bp.next++;
   }
+}
+// Minor vamp, kept sparse: a soft kick on 1, brushes on 2 and 4, quiet hats on the beats; the bass holds the root
+// (bar 2 adds the 5th on 3); the electric piano plays the m7 (5, ♭7, root, ♭3) on 1, plus a soft push on the
+// "and" of 3 in bar 2.
+function vamp(bar,beat,pc,root,at){
+  const spb=bp.spb,and=at+off8()*spb,ep=[7,10,12,15];
+  if(beat===0)kick(at,.45);
+  if(beat===1||beat===3)brush(at);
+  hat(at,.05);
+  if(beat===0)bass(root,at,spb*(bar===0?3.6:1.9));
+  if(bar===1&&beat===2)bass(root+7,at,spb*1.4);
+  if(beat===0)epiano(pc,at,spb*(bar===0?3.9:2.3),ep);
+  if(bar===1&&beat===2)epiano(pc,and,spb*(2-off8()),ep,.04);
 }
 function bframe(){
   if(!bp.on)return;
@@ -531,7 +569,7 @@ function drawBoard(){
   const sel=placed.filter(x=>activeShapes().includes(x.name)), any=sel.length>0; // chosen shapes (none = all)
   // Chord tones: over the blues, the I/IV/V chord (tapped or playing); over the drone, the mode's home chord.
   const drone=B.track==='drone', step=drone?(tonesOn()&&bp.on?0:null):toneStep();  // like the blues: only while it plays
-  const chordIv=drone?droneTriad():isMajor()?[0,4,7]:[0,4,7,10], tones=step===null?null:chordIv.map(i=>(key+step+i)%12);
+  const chordIv=drone?droneTriad():isMajor()?[0,4,7]:isMinor()?[0,3,7,10]:[0,4,7,10], tones=step===null?null:chordIv.map(i=>(key+step+i)%12);
   // The lick showing (Licks on): the frets its notes are played on (rakes too), and which ones get bent.
   const lk=lickSteps(),lpos=new Map();
   if(lk)lk.forEach(st=>st.notes.forEach(n=>{const k=n.s+','+n.f;if(!lpos.has(k))lpos.set(k,{s:n.s,f:n.f,bend:false});
@@ -632,7 +670,7 @@ document.getElementById('bmodes').innerHTML=Object.entries(MODES).map(([k,m])=>`
 function greyOut(el,off){el.classList.toggle('greyed',off);el.setAttribute('aria-disabled',off);el.querySelectorAll('input,select').forEach(i=>i.disabled=off);if(el.matches('button'))el.disabled=off;}
 function setTrack(t){
   if(t===B.track)return;const playing=bp.on;if(playing)bstop();
-  B.track=t;store.set('btrack',t);if(t==='major'&&B.preview===7)B.preview=null;pressAll();if(playing)bstart();
+  B.track=t;store.set('btrack',t);if(t==='major'&&B.preview===7||t==='minor'&&B.preview)B.preview=null;pressAll();if(playing)bstart();
 }
 document.getElementById('btrack').onchange=e=>{setTrack(e.target.value);drawChips();drawBoard();describeImprov();};
 document.getElementById('bfeel').onchange=e=>{B.feel=e.target.value;store.set('bfeel',B.feel);describeImprov();};
@@ -665,8 +703,9 @@ function drawChips(){
   el.classList.toggle('off',hide);el.setAttribute('aria-hidden',hide);
   const now=bp.on&&bp.bar>=0?form()[bp.bar]:null;
   // Major: the I and IV triads (no 7ths); the V isn't in the loop, so it's greyed out, keeping its place.
-  const sfx=isMajor()?'':'7';
-  el.innerHTML=[0,5,7].map(st=>{const nm=pcName(B.key+st,B.key)+sfx,off=isMajor()&&st===7;
+  // Minor vamp: only the i chord (m7); iv and v greyed out the same way.
+  const sfx=isMajor()?'':isMinor()?'m7':'7';
+  el.innerHTML=[0,5,7].map(st=>{const nm=pcName(B.key+st,B.key)+sfx,off=isMajor()&&st===7||isMinor()&&st!==0;
     return `<button type="button" class="btn chip${st===now?' now':''}${off?' greyed':''}" data-chip="${st}" aria-pressed="${B.preview===st}"${off?' disabled aria-disabled="true"':''} title="Show the tones of ${nm}">${nm}</button>`;}).join('');
   keepLines();
 }
@@ -689,7 +728,7 @@ function describeImprov(){
   if(document.getElementById('improv-view').hidden)return;
   const sc=B.scale==='modes'?`${scaleRoot()} ${MODES[B.mode].name}`:`${scaleRoot()} ${SCALES[B.scale].name.toLowerCase()}`;
   document.getElementById('subtitle').textContent=B.track==='drone'?`Drone on ${scaleRoot()} · ${sc}`
-      :`${isMajor()?'Major I–IV':'12-bar blues'} in ${pcName(B.key,B.key)} · ${B.bpm} bpm · ${B.feel==='shuffle'?'Shuffle':'Straight'}${B.quick&&!isMajor()?' · Quick change':''}`;
+      :`${isMajor()?'Major I–IV':isMinor()?'Minor vamp':'12-bar blues'} in ${pcName(B.key,B.key)}${isMinor()?'m':''} · ${B.bpm} bpm · ${B.feel==='shuffle'?'Shuffle':'Straight'}${B.quick&&B.track==='blues'?' · Quick change':''}`;
   document.getElementById('subtitle').append(bstatus);
 }
 
