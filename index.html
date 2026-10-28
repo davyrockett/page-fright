@@ -401,7 +401,7 @@ p{margin:0}
     <!-- Backing track only, on one line (everything that changes what's on the fretboard is in the card below). -->
     <div class="controls card track-row">
       <button type="button" class="btn primary play" id="bplay" title="Play / stop (space)"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M3 1.5v13l11-6.5z"/></svg><span>Play</span></button>
-      <label class="tempo"><select id="btrack" aria-label="Backing track"><option value="blues">12-bar blues</option><option value="major">Major I–IV</option><option value="minor">Minor vamp</option><option value="drone">Drone</option></select></label>
+      <label class="tempo"><select id="btrack" aria-label="Backing track"><option value="blues">12-bar blues</option><option value="major">Major I–IV</option><option value="minor">Minor vamp</option><option value="majvamp">Major vamp</option><option value="drone">Drone</option></select></label>
       <label class="tempo"><select id="bfeel" aria-label="Feel"><option value="shuffle">Shuffle</option><option value="straight">Straight</option></select></label>
       <button type="button" class="btn" id="bquick" aria-pressed="false" title="IV chord in bar 2">Quick change</button>
       <label class="tempo track-tempo"><input type="range" id="btempo" min="50" max="180" step="2" aria-label="Tempo"><output id="btempo-val"></output></label>
@@ -428,7 +428,7 @@ p{margin:0}
 
     <details class="notes cap help">
       <summary>How it works</summary>
-      <p>The backing track is 12-bar blues: drums, a boogie bass line, and organ. Quick change moves to the IV chord in bar 2. Major I–IV uses the same band on a two-bar loop: one bar of the I chord, one of the IV. Minor vamp is a quiet, sparse groove on the minor i chord (m7) for soloing over one chord. Play counts you in for one measure, then loops until you stop it.</p>
+      <p>The backing track is 12-bar blues: drums, a boogie bass line, and organ. Quick change moves to the IV chord in bar 2. Major I–IV uses the same band on a two-bar loop: one bar of the I chord, one of the IV. Minor vamp and Major vamp are quiet, sparse grooves on one chord (the home m7 or maj7) for soloing over. Play counts you in for one measure, then loops until you stop it.</p>
       <p>Orange dots are the root. With <b>Chord tones</b> on, notes of the chord being played get a blue ring while the track runs, so you can aim for them as the chords change. Chord tones that aren't in the scale (like the IV chord's major 3rd over minor pentatonic) show as hollow blue dots, labeled by their part in the chord: R, 3, 5 or ♭7. Pick <b>Modes</b> to play the seven modes: tap Ion, Dor, Phr, Lyd, Mix, Aeo or Loc. Each mode's color note (the one that gives it its sound, like Dorian's 6 or Lydian's ♯4) has a purple ring, and the backing switches to a <b>Drone</b> on the root (you can pick the blues under Track instead). Over the drone, Chord tones rings the mode's home chord while it plays. Tap a chord beside Chord tones to see its tones any time (tap it again to go back to following the track); the chord being played is outlined in blue. Tap a dot to hear it. <b>Space</b> plays or stops.</p>
       <p><b>Licks</b> shows a blues lick, moved to your key: its notes are marked on the fretboard (with intervals or note names, like the scale, and an arrow on notes that get bent), and it's written out underneath in notation and tab, with bends, hammer-ons (H), pull-offs (P), releases (RB), slides and vibrato. Licks 1–50 are from David's lick sheet; 51–63 are standard licks with a tip each. Pick one from the list (grouped by where it sits on the neck) or step through them with ‹ and ›. <b>Hear it</b> plays it, lighting up each note as it goes; while the band is playing it comes in on the next bar, in time. <b>Half speed</b> slows it down. Minor licks show with the minor scales and major licks with the major ones.</p>
     </details>
@@ -1397,7 +1397,7 @@ Object.entries(custSecs()).forEach(([id,[,title]])=>{pickPops[id]=Popup(title,()
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v132';
+window.APP_VERSION = 'v133';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');

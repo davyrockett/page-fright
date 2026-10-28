@@ -156,8 +156,11 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
 - Minor vamp track (2026-10-27, David asked for "a very mellow vamp on the 1 chord, not busy"): Track select option
   "Minor vamp" (`minor`, `vamp()` in improv.js). Two-bar loop on the i chord (m7): soft kick on 1, brushes on 2 and 4,
   quiet hats on the beats; bass holds the root (bar 2 adds the 5th on 3); electric piano (`epiano()`, fundamental + a
-  little octave, slow tremolo, rolled) plays 5-♭7-R-♭3 on 1, plus a soft push on the "and" of 3 in bar 2. Chord tones
-  = m7, chips show only Im7 (iv/v greyed). Quick change greyed; Tempo and Feel work. Keep it understated.
+  little octave, slow tremolo, rolled) plays 5-♭7-R-♭3 once per loop, on 1 of bar 1, ringing
+  through both bars (David, same day: "don't rearticulate the right hand chord as much"; it used to hit on 1 of each bar
+  plus a push in bar 2). Chord tones
+  = m7, chips show only Im7 (iv/v greyed). Major vamp (`majvamp`, David: "do the same for major") is the same
+  groove on Imaj7 (piano 5-7-R-3), chord tones = maj7. Quick change greyed; Tempo and Feel work. Keep it understated.
 - Improv modes (v70, David picked layout "C"): "Modes" in the scale list shows a row of mode buttons
   (Ion…Loc, `MODES`, own row so nothing jumps); shapes = 5-note box + 2 notes; colour note (Dorian ♮6, Lydian ♯4,
   Mixolydian ♭7, Phrygian ♭2, Aeolian ♭6, Locrian ♭5, Ionian 7) ringed purple; Lydian labels/spells ♯4. Track
