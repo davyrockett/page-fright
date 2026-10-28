@@ -154,13 +154,13 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
   notes in the chord; chord tones outside the scale as hollow blue dots labeled by role (R/3/5/♭7); tap I/IV/V
   beside Chord tones to preview a chord. David asked to remove the 12-bar chord chart; don't bring it back.
 - Minor vamp track (2026-10-27, David asked for "a very mellow vamp on the 1 chord, not busy"): Track select option
-  "Minor vamp" (`minor`, `vamp()` in improv.js). Two-bar loop on the i chord (m7): soft kick on 1, brushes on 2 and 4,
+  "Minor vamp" (`minor`, `vamp()` in improv.js). Two-bar loop on the i chord (a plain triad: David took the 7th out, same day): soft kick on 1, brushes on 2 and 4,
   quiet hats on the beats; bass holds the root (bar 2 adds the 5th on 3); electric piano (`epiano()`, fundamental + a
-  little octave, slow tremolo, rolled) plays 5-♭7-R-♭3 once per loop, on 1 of bar 1, ringing
+  little octave, slow tremolo, rolled) plays 5-R-♭3 once per loop, on 1 of bar 1, ringing
   through both bars (David, same day: "don't rearticulate the right hand chord as much"; it used to hit on 1 of each bar
   plus a push in bar 2). Chord tones
-  = m7, chips show only Im7 (iv/v greyed). Major vamp (`majvamp`, David: "do the same for major") is the same
-  groove on Imaj7 (piano 5-7-R-3), chord tones = maj7. Quick change greyed; Tempo and Feel work. Keep it understated.
+  = the triad, chips show only Im (iv/v greyed). Major vamp (`majvamp`, David: "do the same for major") is the same
+  groove on the I triad (piano 5-R-3), chord tones = the triad. Quick change greyed; Tempo and Feel work. Keep it understated.
 - Improv modes (v70, David picked layout "C"): "Modes" in the scale list shows a row of mode buttons
   (Ion…Loc, `MODES`, own row so nothing jumps); shapes = 5-note box + 2 notes; colour note (Dorian ♮6, Lydian ♯4,
   Mixolydian ♭7, Phrygian ♭2, Aeolian ♭6, Locrian ♭5, Ionian 7) ringed purple; Lydian labels/spells ♯4. Track

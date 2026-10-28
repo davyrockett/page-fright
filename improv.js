@@ -52,11 +52,11 @@ const FORM=[0,0,0,0,5,5,0,0,7,5,0,7], QUICK=[0,5,0,0,5,5,0,0,7,5,0,7];
 // Major: a two-bar loop, one bar on the I chord and one on the IV (David), same drums, bass and organ.
 const MAJOR=[0,5];
 const isMajor=()=>B.track==='major';
-// Minor and major vamps: two quiet bars on the home chord (m7 / maj7), looped: soft drums, a sparse bass and
+// Minor and major vamps: two quiet bars on the home triad (no 7th, David), looped: soft drums, a sparse bass and
 // electric piano.
 const VAMP=[0,0];
 const isMinor=()=>B.track==='minor', isVamp=()=>isMinor()||B.track==='majvamp';
-const vampSfx=()=>isMinor()?'m7':'maj7';
+const vampSfx=()=>isMinor()?'m':'';
 const B={key:store.get('bkey',9),bpm:store.get('btempo',92),feel:store.get('bfeel','shuffle'),quick:store.get('bquick',false),
   scale:store.get('bscale','minor'),shapes:store.get('bshapes',[]),lab:store.get('blab','int'),tones:store.get('btones',true),
   mode:store.get('bmode','dorian'),track:store.get('btrack','blues'),
@@ -185,10 +185,10 @@ function bschedule(){
   }
 }
 // Vamps, kept sparse: a soft kick on 1, brushes on 2 and 4, quiet hats on the beats; the bass holds the root
-// (bar 2 adds the 5th on 3); the electric piano plays the m7 (5, ♭7, root, ♭3) or maj7 (5, 7, root, 3) once, on 1 of bar 1, and lets it
+// (bar 2 adds the 5th on 3); the electric piano plays the triad (5, root, 3) once, on 1 of bar 1, and lets it
 // ring through both bars (David: don't re-strike it much).
 function vamp(bar,beat,pc,root,at){
-  const spb=bp.spb,ep=isMinor()?[7,10,12,15]:[7,11,12,16];
+  const spb=bp.spb,ep=isMinor()?[7,12,15]:[7,12,16];
   if(beat===0)kick(at,.45);
   if(beat===1||beat===3)brush(at);
   hat(at,.05);
@@ -570,7 +570,7 @@ function drawBoard(){
   const sel=placed.filter(x=>activeShapes().includes(x.name)), any=sel.length>0; // chosen shapes (none = all)
   // Chord tones: over the blues, the I/IV/V chord (tapped or playing); over the drone, the mode's home chord.
   const drone=B.track==='drone', step=drone?(tonesOn()&&bp.on?0:null):toneStep();  // like the blues: only while it plays
-  const chordIv=drone?droneTriad():isMajor()?[0,4,7]:isMinor()?[0,3,7,10]:isVamp()?[0,4,7,11]:[0,4,7,10], tones=step===null?null:chordIv.map(i=>(key+step+i)%12);
+  const chordIv=drone?droneTriad():isMajor()?[0,4,7]:isMinor()?[0,3,7]:isVamp()?[0,4,7]:[0,4,7,10], tones=step===null?null:chordIv.map(i=>(key+step+i)%12);
   // The lick showing (Licks on): the frets its notes are played on (rakes too), and which ones get bent.
   const lk=lickSteps(),lpos=new Map();
   if(lk)lk.forEach(st=>st.notes.forEach(n=>{const k=n.s+','+n.f;if(!lpos.has(k))lpos.set(k,{s:n.s,f:n.f,bend:false});
@@ -704,7 +704,7 @@ function drawChips(){
   el.classList.toggle('off',hide);el.setAttribute('aria-hidden',hide);
   const now=bp.on&&bp.bar>=0?form()[bp.bar]:null;
   // Major: the I and IV triads (no 7ths); the V isn't in the loop, so it's greyed out, keeping its place.
-  // Vamps: only the home chord (m7 / maj7); the other two greyed out the same way.
+  // Vamps: only the home chord (a triad); the other two greyed out the same way.
   const sfx=isMajor()?'':isVamp()?vampSfx():'7';
   el.innerHTML=[0,5,7].map(st=>{const nm=pcName(B.key+st,B.key)+sfx,off=isMajor()&&st===7||isVamp()&&st!==0;
     return `<button type="button" class="btn chip${st===now?' now':''}${off?' greyed':''}" data-chip="${st}" aria-pressed="${B.preview===st}"${off?' disabled aria-disabled="true"':''} title="Show the tones of ${nm}">${nm}</button>`;}).join('');
