@@ -18,6 +18,7 @@ iPhone and iPad Home Screens and the Mac's Dock, and works with no signal once i
 | `drill.js` | The Drill section: triad shapes on any three strings |
 | `chords.js` | Drill > Chords: shapes from David's two chord books (plus major and open chords) for 32 chord types, moved to any root |
 | `warmup.js` | Drill > Warm-up: Robb Cappelletto's six-position scale routine, one key a day |
+| `pedal.js` | Page-turner pedal: left and right pedals (and holding right) in every section |
 | `licks.js` | Improv licks: 1–50 from David's lick sheet plus 13 standard ones, written in A (format explained at the top of the file) |
 | `improv.js` | The Improv section: 12-bar blues backing track and scale shapes on the fretboard |
 | `vendor/vexflow-bravura.js` | [VexFlow](https://www.vexflow.com) 4.2.5, which draws the notation (MIT license, see `vendor/VEXFLOW-LICENSE`) |

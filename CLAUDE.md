@@ -254,6 +254,13 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
   to the end of its beat, metronome on beats (Metronome toggle); the playing note lit on the fretboard. NO notation
   or tab for the warm-up (David: "we don't actually need any notation or tab for this"). Non-stop: next step after a bar of clicks, through all 18. Tempo changes act
   at once. Not chosen by David yet: anything beyond the video's first half (modes, D shape from the B string).
+- Page-turner pedal (2026-10-30, `pedal.js`; David's two-pedal Bluetooth turner): left = ←/PageUp/↑, right =
+  →/PageDown/↓ (all three pairs, so any pedal mode works). Taps act on key-up. ONLY THE RIGHT PEDAL HAS A HOLD (0.5 s):
+  holding the left one shows the iPad keyboard (David), so a long left press does nothing. Read: L play/stop, R New +
+  Play, hold R tab. Improv: L band play/stop, R next lick + Hear it (on the next bar with the band; nothing with Licks
+  off), hold R previous lick. Warm-up: L play/stop the step, R next step + play, hold R previous step + play. Triads /
+  Chords / Shells: R strum the next shape/voicing, L the same one again, hold R the previous one. Help text in each
+  section's "How it works" says so.
 - Planned (2026-10-09): David will provide a MIDI file of exactly the backing track he wants. Play it with
   the app's own synths, transposed to the chosen key and at the chosen tempo (no recorded audio: he decided
   against pitch-shifting a found recording). Ask for one track per part and the key it's written in.
