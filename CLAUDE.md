@@ -289,3 +289,7 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
   (no empty gap); the shape buttons, last in the row, keep their space when hidden.
 - Phones (≤560px): smaller buttons and tighter spacing; the Shapes button and its shape buttons always share
   one line (no blank row); Play, Track and Feel fit on one line down to 360px wide.
+- **📺 TV (2026-10-31, David):** with TV on (`localStorage['davyrockett-tv']`), Read's music and Improv's lick music
+  are also drawn a second time, wide and out of sight (`#score-tv`, 4 bars a line; `#lscore-tv`), and the TV page
+  (website `tv/tv.js`) shows those instead, so a phone's narrow layout never reaches the TV. The playing note lights
+  up in both. Drill needed nothing: its fretboard and notation stretch to the TV's width by themselves.

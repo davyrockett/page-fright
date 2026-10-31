@@ -144,6 +144,8 @@ p{margin:0}
 .score .vf-tabnote text{font-family:var(--f-body);font-weight:700;font-size:11px}
 .score .vf-stavenote.on,.score .vf-stavenote.on [fill]:not([fill="none"]){fill:var(--accent)}
 .score .vf-stavenote.on,.score .vf-stavenote.on [stroke]:not([stroke="none"]){stroke:var(--accent)}
+/* The TV's copies of the music (Read: drawTV; Improv's lick: drawLickScore): drawn wide, out of sight here; only the TV shows them. */
+.score-tv{position:absolute;left:-99999px;top:0;width:1000px;visibility:hidden;pointer-events:none}
 .notes{display:flex;flex-direction:column;gap:4px;max-width:75ch}
 /* Pop-up (settings) */
 .tmodal{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.55);display:flex;align-items:flex-start;justify-content:center;padding:calc(24px + env(safe-area-inset-top,0px)) 16px 24px;overflow:auto}
@@ -382,6 +384,7 @@ p{margin:0}
   </div>
 
   <div class="score card" id="score" aria-label="Sight-reading exercise, 16 measures"></div>
+  <div class="score card score-tv" id="score-tv" aria-hidden="true"></div>
   <div class="fabs">
   <button type="button" class="btn fab" id="fab-nonstop" aria-pressed="false" title="When an exercise ends, a new one appears and plays after a 4-beat count-in">Non-stop</button>
   <button type="button" class="btn fab" id="fab-play" title="Play / stop (space)"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M3 1.5v13l11-6.5z"/></svg><span>Play</span></button>
@@ -423,7 +426,7 @@ p{margin:0}
         <button type="button" class="btn" id="blslow" aria-pressed="false"><span class="long">Half speed</span><span class="short">½ speed</span></button>
       </div>
       <div class="fb-wrap"><svg id="fb" class="fretboard" role="img" aria-label="Fretboard"></svg></div>
-      <div class="lick-tab" id="blicktab" hidden><div class="lick-score" id="lscore" aria-label="The lick in notation and tab"></div><p class="cap" id="ltip"></p></div>
+      <div class="lick-tab" id="blicktab" hidden><div class="lick-score" id="lscore" aria-label="The lick in notation and tab"></div><div class="lick-score score-tv" id="lscore-tv" aria-hidden="true"></div><p class="cap" id="ltip"></p></div>
     </div>
 
     <details class="notes cap help">
@@ -797,15 +800,34 @@ index();
 
 /* ---------- drawing ---------- */
 const scoreEl=document.getElementById('score');
-let noteEls=[], tabEls={}, lineOf=[], lastWidth=0, tabOn=store.get('tab',false);
+const tvScoreEl=document.getElementById('score-tv');
+let noteEls=[], tabEls={}, lineOf=[], lastWidth=0, tabOn=store.get('tab',false), tvNotes={noteEls:[],tabEls:{}};
 const VF_DUR={16:['w',0],12:['h',1],8:['h',0],6:['q',1],4:['q',0],3:['8',1],2:['8',0],1:['16',0]};
 function render(){
   const W=scoreEl.clientWidth-16; if(W<=0)return; lastWidth=scoreEl.clientWidth;
-  const scale=W>=1000?1.4:W>=760?1.25:W>=560?1.1:1;
+  ({noteEls,tabEls,lineOf}=draw(scoreEl,W,W>=1000?1.4:W>=760?1.25:W>=560?1.1:1));
+  // Tab numbers are drawn in the same order as the notes, skipping rests.
+  const ev=exercise.events;
+  Object.entries(tabEls).forEach(([i,el])=>{
+    el.setAttribute('role','img');el.setAttribute('aria-label',`Tab: ${fing[i].strs.map((s,j)=>`string ${6-s} fret ${fing[i].frets[j]}`).join(', ')}`);});
+  noteEls.forEach((el,i)=>{const e=ev[i];
+    el.setAttribute('role','img');el.setAttribute('aria-label',`${e.rest?'Rest':nameOf(e.keys)}, measure ${measureOf[i]+1}`);});
+  drawTV();
+}
+// With 📺 TV on (switched on the Apps screen), the TV gets its own copy of the music, laid out for a wide screen
+// (4 measures a line), so a narrow phone layout isn't squeezed onto the TV (David). It is drawn out of sight here.
+function drawTV(){
+  let on=false;try{on=localStorage.getItem('davyrockett-tv')==='1';}catch(e){}
+  if(!on){if(tvScoreEl.firstChild)tvScoreEl.replaceChildren();tvNotes={noteEls:[],tabEls:{}};return;}
+  tvNotes=draw(tvScoreEl,1000,1,true);
+}
+function draw(el,W,scale,wide){
   const ev=exercise.events, key=exercise.key;
   // Busier measures need more room: up to 4 measures a line, fewer when there are lots of short notes.
   const busiest=Math.max(...Array.from({length:MEASURES},(_,m)=>measureOf.filter(x=>x===m).length));
-  const lw=W/scale, minW=40+busiest*16;
+  const minW=40+busiest*16;
+  if(wide)W=Math.max(W,4*minW+100);   // the TV's copy always has 4 measures a line
+  const lw=W/scale;
   const per=[4,2,1].find(n=>lw/n>=minW)||1;
   // High notes go up to 5 ledger lines, so give each line headroom for the highest note in the exercise.
   const steps=k=>{const [,l,,o]=/^([a-g])(#|b)?\/(\d)$/.exec(k);return 7*(+o)+LETTERS.indexOf(l);};
@@ -813,8 +835,8 @@ function render(){
   const above=Math.max(4,(topStep-steps('f/5'))/2+1.5);
   const tab=tabOn, TAB_GAP=48, TAB_H=65;
   const w=Math.floor(lw)-10, rowH=(above+4)*10+48+(tab?TAB_GAP-48+TAB_H+40:0), rows=Math.ceil(MEASURES/per);
-  scoreEl.replaceChildren();
-  const r=new VF.Renderer(scoreEl,VF.Renderer.Backends.SVG);
+  el.replaceChildren();
+  const r=new VF.Renderer(el,VF.Renderer.Backends.SVG);
   r.resize(W,Math.ceil((rows*rowH+10)*scale));
   const ctx=r.getContext();ctx.scale(scale,scale);
   // Extra room the clef and key signature (and the time signature on line 1) take at the start of a line.
@@ -822,7 +844,7 @@ function render(){
   const plain=startX(new VF.Stave(0,0,200));
   const clefX=startX(new VF.Stave(0,0,200).addClef('treble').addKeySignature(key))-plain;
   const timeX=startX(new VF.Stave(0,0,200).addClef('treble').addKeySignature(key).addTimeSignature('4/4'))-plain;
-  lineOf=[];
+  const lineOf=[];
   for(let row=0;row<rows;row++){
     const extra=row===0?timeX:clefX, mw=(w-extra)/per;
     let x=8; // room for the measure number
@@ -869,13 +891,12 @@ function render(){
       x+=sw;
     }
   }
-  noteEls=[...scoreEl.querySelectorAll('.vf-stavenote')];
+  const noteEls=[...el.querySelectorAll('.vf-stavenote')];
   // Tab numbers are drawn in the same order as the notes, skipping rests.
-  tabEls={};const sounding=ev.map((e,i)=>e.rest?-1:i).filter(i=>i>=0);
-  scoreEl.querySelectorAll('.vf-tabnote').forEach((el,n)=>{const i=sounding[n];el.dataset.i=i;tabEls[i]=el;
-    el.setAttribute('role','img');el.setAttribute('aria-label',`Tab: ${fing[i].strs.map((s,j)=>`string ${6-s} fret ${fing[i].frets[j]}`).join(', ')}`);});
-  noteEls.forEach((el,i)=>{el.dataset.i=i;const e=ev[i];
-    el.setAttribute('role','img');el.setAttribute('aria-label',`${e.rest?'Rest':nameOf(e.keys)}, measure ${measureOf[i]+1}`);});
+  const tabEls={}, sounding=ev.map((e,i)=>e.rest?-1:i).filter(i=>i>=0);
+  el.querySelectorAll('.vf-tabnote').forEach((t,n)=>{const i=sounding[n];t.dataset.i=i;tabEls[i]=t;});
+  noteEls.forEach((n,i)=>{n.dataset.i=i;});
+  return {noteEls,tabEls,lineOf};
 }
 let rt=0;
 new ResizeObserver(()=>{if(scoreEl.clientWidth!==lastWidth){clearTimeout(rt);rt=setTimeout(()=>{render();if(player.on)mark(player.cur,false);},80);}}).observe(scoreEl);
@@ -959,10 +980,11 @@ const player={on:false,start:0,spb:1,next:0,cur:-1,timer:0,raf:0,queue:[],upto:-
 let nonstop=store.get('nonstop',false);
 const COUNT=BEATS, TOTAL=COUNT+MEASURES*BEATS;
 
+function unmark(){[scoreEl,tvScoreEl].forEach(s=>s.querySelectorAll('.on').forEach(el=>el.classList.remove('on')));}
 function mark(i,scroll=true){
-  scoreEl.querySelectorAll('.on').forEach(el=>el.classList.remove('on'));
+  unmark();
   const el=noteEls[i];if(!el)return;
-  el.classList.add('on');tabEls[i]?.classList.add('on');
+  [el,tabEls[i],tvNotes.noteEls[i],tvNotes.tabEls[i]].forEach(x=>x?.classList.add('on'));
   // Look ahead: when playback reaches a new line, bring that line up near the top of the screen, so the lines after it
   // are in view below (David). Lines already near the top are left alone, so nothing jumps needlessly.
   if(scroll&&(i===0||lineOf[i]!==lineOf[i-1])){
@@ -1026,7 +1048,7 @@ function play(){
 function stop(cut=true){
   player.on=false;clearInterval(player.timer);cancelAnimationFrame(player.raf);
   if(cut)hush();
-  scoreEl.querySelectorAll('.on').forEach(el=>el.classList.remove('on'));statusEl.textContent='';
+  unmark();statusEl.textContent='';
   [playBtn,fabPlay].forEach(b=>{b.querySelector('span').textContent='Play';b.querySelector('path').setAttribute('d','M3 1.5v13l11-6.5z');});
 }
 playBtn.onclick=fabPlay.onclick=()=>player.on?stop():play();   // the floating one (bottom right) does the same, without scrolling
@@ -1056,7 +1078,7 @@ clickBtn.onclick=()=>{metro=!metro;store.set('metronome',metro);clickBtn.setAttr
 scoreEl.addEventListener('click',e=>{
   const el=e.target.closest('.vf-stavenote,.vf-tabnote');if(!el)return;
   const i=+el.dataset.i,ev=exercise.events[i];if(!ev.rest)strike(ev.keys,0,1.8);
-  if(!player.on){const els=[noteEls[i],tabEls[i]].filter(Boolean);els.forEach(x=>x.classList.add('on'));setTimeout(()=>els.forEach(x=>x.classList.remove('on')),450);}
+  if(!player.on){const els=[noteEls[i],tabEls[i],tvNotes.noteEls[i],tvNotes.tabEls[i]].filter(Boolean);els.forEach(x=>x.classList.add('on'));setTimeout(()=>els.forEach(x=>x.classList.remove('on')),450);}
 });
 
 function newExercise({stay=false,go=false}={}){
@@ -1398,7 +1420,7 @@ Object.entries(custSecs()).forEach(([id,[,title]])=>{pickPops[id]=Popup(title,()
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v138';
+window.APP_VERSION = 'v139';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');

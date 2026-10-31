@@ -365,8 +365,8 @@ function stepLick(d){const ls=lickList();if(!ls.length)return;const i=ls.indexOf
 
 /* The lick written out: notation over tab, like a lick book. Bends are a grace note in the notation and an arrow in
    the tab; hammer-ons, pull-offs, bends into a note and releases are labelled arcs (H, P, B, RB) as on David's sheet. */
-const lscore=document.getElementById('lscore');
-let lickEls=[], lickScoreSig='';
+const lscore=document.getElementById('lscore'), lscoreTV=document.getElementById('lscore-tv');
+let lickEls=[], tvLickEls=[], lickScoreSig='';
 const vfDur=d=>d.base+(d.dots?'d':'');
 const BEND_TEXT={0.5:'¼',1:'½',1.5:'¾',2:'Full',3:'1½'};
 // A note's name in the key as a VexFlow key (up: spell the blues note as a ♯4 rather than a ♭5).
@@ -377,13 +377,21 @@ function lickKey(midi,iv,up){
 }
 function drawLickScore(){
   const box=document.getElementById('blicktab'),lk=lickSteps();box.hidden=!lk;
-  if(!lk){lickEls=[];lickScoreSig='';return;}
+  if(!lk){lickEls=[];tvLickEls=[];lickScoreSig='';return;}
   const L=curLick();
   document.getElementById('ltip').textContent=L.name?`${lickName(L)}: ${L.name}. ${L.tip}`:'';
   document.getElementById('ltip').hidden=!L.name;
   // Drawn only while it can be seen (VexFlow measures its text), and again only when the lick or key changes.
   if(!lscore.offsetParent){lickScoreSig='';return;}
   if(lk===lickScoreSig)return;lickScoreSig=lk;   // lickSteps() makes new steps when the lick or key changes
+  lickEls=drawLick(lscore,lscore.clientWidth,lk);
+  // With 📺 TV on, the TV gets its own copy laid out for a wide screen, so a phone's narrow one isn't shown there
+  // (David). It is drawn out of sight here, like Read's (drawTV in index.html).
+  let tv=false;try{tv=localStorage.getItem('davyrockett-tv')==='1';}catch(e){}
+  if(tv)tvLickEls=drawLick(lscoreTV,1000,lk);else{lscoreTV.replaceChildren();tvLickEls=[];}
+}
+// Draws the lick into el, laid out for a card cw wide. Returns each step's drawn notes, to light up the one playing.
+function drawLick(el,cw,lk){
   const root=pcName(B.key,B.key),key=root.replace('♭','b').replace('♯','#');
   const keyAcc={};[0,2,4,5,7,9,11].forEach(iv=>{const nm=nameFrom(root,iv);keyAcc[nm[0].toLowerCase()]=nm.includes('♯')?'#':nm.includes('♭')?'b':'';});
   const sounding=lk.filter(st=>!st.rest&&!st.grace);
@@ -402,14 +410,14 @@ function drawLickScore(){
   const firstX=startX(new VF.Stave(0,0,200).addClef('treble').addKeySignature(key).addTimeSignature('4/4'))-startX(new VF.Stave(0,0,200));
   // Room for each note (more for grace notes and dots), then stretched to fill the card when there's space.
   const need=Array.from({length:nBars},(_,b)=>lk.filter(st=>barOf(st)===b&&!st.grace).reduce((a,st)=>a+34+(st.notes.some(q=>q.bend!==null)?22:0)+(st.dur.dots?8:0),60));
-  const fit=Math.min(1.8,Math.max(1,(lscore.clientWidth-20-firstX)/need.reduce((a,b)=>a+b,0)));
+  const fit=Math.min(1.8,Math.max(1,(cw-20-firstX)/need.reduce((a,b)=>a+b,0)));
   const widths=need.map((w,b)=>Math.round(w*fit)+(b===0?firstX:0)),total=widths.reduce((a,b)=>a+b,0)+16;
-  lscore.replaceChildren();
+  el.replaceChildren();
   // Tall enough for fret numbers on the low E string (the tab's bottom line) to show whole.
   const H=Math.ceil(new VF.TabStave(0,TAB_Y,100).getYForLine(5)+14);
-  const r=new VF.Renderer(lscore,VF.Renderer.Backends.SVG);r.resize(total,H);
+  const r=new VF.Renderer(el,VF.Renderer.Backends.SVG);r.resize(total,H);
   const ctx=r.getContext(),N=[],T=[],marks=[],barEnd=[];
-  lickEls=[];let x=8;
+  let x=8;
   for(let b=0;b<nBars;b++){
     const w=widths[b],stave=new VF.Stave(x,0,w,{space_above_staff_ln:above}),ts=new VF.TabStave(x,TAB_Y,w);
     if(b===0){stave.addClef('treble').addKeySignature(key).addTimeSignature('4/4');ts.addClef('tab');}
@@ -493,13 +501,15 @@ function drawLickScore(){
     }
   });
   ctx.restore();
-  // Each step's drawn notes, to light up the one playing.
-  lickEls=lk.map((st,i)=>[N[i],T[i]].filter(Boolean).map(n=>n.getSVGElement?n.getSVGElement():null).filter(Boolean));
-  const svg=lscore.querySelector('svg');svg.setAttribute('viewBox',`0 0 ${total} ${H}`);
+  const svg=el.querySelector('svg');svg.setAttribute('viewBox',`0 0 ${total} ${H}`);
   // A little too wide for the card: shrink it to fit (up to about a quarter); much wider: scroll sideways.
-  const cw=lscore.clientWidth;svg.style.width=(total>cw?Math.max(cw,total/1.35):total)+'px';
+  svg.style.width=(total>cw?Math.max(cw,total/1.35):total)+'px';
+  return lk.map((st,i)=>[N[i],T[i]].filter(Boolean).map(n=>n.getSVGElement?n.getSVGElement():null).filter(Boolean));
 }
-function lightLick(i){lscore.querySelectorAll('.on').forEach(e=>e.classList.remove('on'));(lickEls[i]||[]).forEach(e=>e.classList.add('on'));}
+function lightLick(i){
+  [lscore,lscoreTV].forEach(s=>s.querySelectorAll('.on').forEach(e=>e.classList.remove('on')));
+  [...(lickEls[i]||[]),...(tvLickEls[i]||[])].forEach(e=>e.classList.add('on'));
+}
 
 /* Hear it: the lick alone at the tempo picked, or, when the band is playing, from the next bar line in time with it.
    Half speed doubles every note's length (still in time with the band). Each string rings like a real one: a
