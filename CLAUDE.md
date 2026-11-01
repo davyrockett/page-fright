@@ -86,7 +86,8 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
   4-beat count-in that keeps the old beat (those clicks are queued at the end of every queue as `next`, played only
   with Non-stop on). Turning it off mid-play just stops at the end as before. A floating Non-stop (first of the
   floating buttons, David) is the same switch, kept in step. Phones: the four floating buttons stay on one line
-  (compact `.fabs .fab` padding; checked at 375 and 360 wide).
+  (compact `.fabs .fab` padding; checked at 375 and 360 wide). When the suite's All apps button or the TV's "On TV" pill shows (bottom left), the floating
+  buttons move up a row on screens up to 820px wide so they don't overlap (2026-11-01, David).
 - Read subtitle pop-ups (2026-10-24, David chose this over opening Customize at a section): each part of the Read
   subtitle (key · rhythm · notes · positions) is a chip with an orange ▾ (David asked to make it obvious; was a
   dotted underline) that opens a small pop-up with just that
