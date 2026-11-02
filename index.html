@@ -247,6 +247,8 @@ p{margin:0}
 /* Drill > Chords */
 .drill-modes .btn{padding:7px 16px}
 @media (max-width:560px){.drill-modes{flex-wrap:nowrap;gap:4px}.drill-modes .btn{padding:7px 10px;flex:1 1 auto}}
+/* Drill > Warm-up: the routine switch (Cappelletto Six | Vai Fives) under the Drill switch. */
+.warm-routines{margin:0 0 12px}
 /* Drill > Warm-up: step arrows around the step's description (room for its longest, so nothing below moves). */
 .warm-steps{display:flex;align-items:center;gap:10px;margin:12px 0 6px}
 .warm-steps #wprev{margin-left:-4px}
@@ -497,6 +499,7 @@ p{margin:0}
     </div>
 
     <div id="warmup-mode" class="view" hidden>
+      <div class="seg warm-routines" role="tablist" aria-label="Warm-up routine" id="wroutine"></div>
       <div class="controls card track-row">
         <button type="button" class="btn primary play" id="wplay" title="Play this step up and back down (space)"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M3 1.5v13l11-6.5z"/></svg><span>Play</span></button>
         <label class="tempo key-pick"><span class="cap">Key</span><select id="wkey" aria-label="Key"></select></label>
@@ -509,7 +512,7 @@ p{margin:0}
         <div class="row pick-row">
           <button type="button" class="btn" id="wlab" aria-pressed="true" title="Off: intervals (R, 2, 3…). On: note names.">Note names</button>
           <div class="seg" role="group" aria-label="Scale, pentatonic or arpeggio" id="wkind"></div>
-          <div class="row"><span class="cap">Position</span><div class="seg" role="group" aria-label="Position" id="wpos"></div></div>
+          <div class="row"><span class="cap" id="wpos-cap">Position</span><div class="seg" role="group" aria-label="Position" id="wpos"></div></div>
         </div>
         <div class="warm-steps"><button type="button" class="btn step" id="wfirst" aria-label="Back to step 1" title="Back to step 1">«</button><button type="button" class="btn step" id="wprev" aria-label="Previous step">‹</button><p class="cap" id="wdesc"></p><button type="button" class="btn step" id="wnext" aria-label="Next step">›</button></div>
         <div class="fb-wrap"><svg id="wfb" class="fretboard" role="img" aria-label="This step on the fretboard"></svg></div>
@@ -517,9 +520,22 @@ p{margin:0}
 
       <details class="notes cap help">
         <summary>How it works</summary>
-        <p>A daily scale warm-up from Robb Cappelletto (Billy Strings' teacher), as shown in Fret Science's video. Each day, play one major key: the scale, the major pentatonic and the major triad arpeggio in six positions that cover the whole neck, lowest first. Three have the root on the low E string and three on the A string: behind the root (root under your 4th finger), straddling it (2nd finger), and in front of it with three notes per string (1st finger). In the three-notes-per-string positions, the pentatonic and arpeggio are the notes of that shape that belong to them (a diagonal shape; that's Keith's addition from the video).</p>
+        <p>Pick a routine at the top. All three use the key of the day.</p>
+        <div data-help="pairs" hidden>
+        <p><b>String Pairs</b>: the minor pentatonic two strings at a time, all the way up the neck and back. In each box, play its two notes on the lower string, then its two on the upper string; then shift up to the next box, which starts one note higher. Keep going up through every box to around the 17th fret, then come back down the same way. Slide or shift into each new box, whichever feels better.</p>
+        <p>It's the relative minor of the day's key, like Vai Fives. The five steps are the five string pairs, lowest first: 6–5, 5–4, 4–3, 3–2, 2–1.</p>
+        <p><b>Play</b> (or <b>space</b>) counts you in for a bar, then plays the pair in 8th notes, the first note of each box a little louder, lighting up each note on the fretboard (on a phone it scrolls to follow). <b>‹ ›</b> go through the five pairs; <b>«</b> goes back to the first. Tap a pair, or a grey note on the fretboard, to jump to it. <b>Non-stop</b> and the page-turner pedal work as in the other routines. String Pairs keeps its own tempo.</p>
+        </div>
+        <div data-help="fives" hidden>
+        <p><b>Vai Fives</b>: the minor pentatonic in groups of five, from Fundamental Changes' lesson on Steve Vai's warm-up (an Eric Johnson pattern). Play five notes, then start again one note higher, all the way to the top of the box; then the same coming down, ending on the lowest note. Hammer on going up and pull off coming down. Each group is one beat ("u-ni-ver-si-ty"), so start with a slow tempo.</p>
+        <p>It's the relative minor of the day's key (C major: A minor, the same notes as C major pentatonic). The five steps are the five boxes, lowest on the neck first; the box numbers count from the one with the root on the low E string under your 1st finger.</p>
+        <p><b>Play</b> (or <b>space</b>) counts you in for a bar, then plays the box, the first note of each group a little louder, lighting up each note on the fretboard. <b>‹ ›</b> go through the five boxes; <b>«</b> goes back to the first. Tap a box number, or a grey note on the fretboard, to jump to that box. <b>Non-stop</b> goes straight on to the next box after one bar of clicks. With a page-turner pedal, <b>right</b> goes to the next box and plays it, <b>left</b> plays or stops the box you're on, and <b>holding right</b> goes back a box and plays it. Vai Fives keeps its own tempo.</p>
+        </div>
+        <div data-help="six">
+        <p><b>Cappelletto Six</b>: a daily scale warm-up from Robb Cappelletto (Billy Strings' teacher), as shown in Fret Science's video. Each day, play one major key: the scale, the major pentatonic and the major triad arpeggio in six positions that cover the whole neck, lowest first. Three have the root on the low E string and three on the A string: behind the root (root under your 4th finger), straddling it (2nd finger), and in front of it with three notes per string (1st finger). In the three-notes-per-string positions, the pentatonic and arpeggio are the notes of that shape that belong to them (a diagonal shape; that's Keith's addition from the video).</p>
         <p>The key moves one step around the circle of fifths (C G D A E B F♯ D♭ A♭ E♭ B♭ F) on the first day you open it after a day you played it, so twelve days of practice cover every key. Pick another key any time.</p>
         <p><b>Play</b> (or <b>space</b>) counts you in for a bar, then plays the step up and back down in 8th notes, lighting up each note on the fretboard. <b>‹ ›</b> go through the 18 steps in order (scale, pentatonic, arpeggio, then the next position); <b>«</b> goes back to step 1. Tap a position number, or a grey note on the fretboard, to jump to that position. <b>Non-stop</b> goes straight on to the next step after one bar of clicks, all the way through. With a page-turner pedal, <b>right</b> goes to the next step and plays it, <b>left</b> plays or stops the step you're on, and <b>holding right</b> goes back a step and plays it.</p>
+        </div>
       </details>
     </div>
   </div>
@@ -915,9 +931,12 @@ function audio(){
 }
 const live=new Set();
 // Returns the sound source, so Improv licks can bend its pitch (playbackRate) for hammer-ons, slides and bends.
-function pluck(freq,{at=0,dur=2.6,vol=.55,out=null}={}){
+/* How long a note sounds, the way a guitarist would: give `hold` (seconds) and the note is damped then, quickly, like
+   a finger lifting off the string (melodies: its written length, or up to the next note when they're joined). Without
+   `hold` it rings out and fades over `dur` (a note or chord on its own, the last note of a phrase). */
+function pluck(freq,{at=0,dur=2.6,vol=.55,out=null,hold=null}={}){
   const c=audio();if(!c)return;
-  const sr=c.sampleRate,len=Math.floor(sr*dur);
+  const sr=c.sampleRate,len=Math.floor(sr*(hold===null?dur:hold+.25));
   const buf=c.createBuffer(1,len,sr),d=buf.getChannelData(0);
   const P=Math.max(2,Math.round(sr/freq-.5)),ring=new Float32Array(P);
   for(let i=0;i<P;i++)ring[i]=Math.random()*2-1;
@@ -928,7 +947,7 @@ function pluck(freq,{at=0,dur=2.6,vol=.55,out=null}={}){
   let pk=0;for(let i=0;i<len;i++)pk=Math.max(pk,Math.abs(d[i]));if(pk)for(let i=0;i<len;i++)d[i]/=pk;
   const src=c.createBufferSource(),g=c.createGain(),t=Math.max(at,c.currentTime)+.01;
   src.buffer=buf;g.gain.setValueAtTime(vol,t);
-g.gain.setTargetAtTime(0,t+dur*.75,.12);
+  if(hold===null)g.gain.setTargetAtTime(0,t+dur*.75,.12);else g.gain.setTargetAtTime(0,t+hold,.022);
   src.connect(g);g.connect(out||OUT);src.start(t);src.stop(t+len/sr+.6);
   live.add(g);src.onended=()=>live.delete(g);
   return src;
@@ -968,9 +987,13 @@ function rclick(at,strong,sub){
   const n=c.createBufferSource(),bp=c.createBiquadFilter(),ng=c.createGain();n.buffer=CLICKNOISE;bp.type='bandpass';bp.frequency.value=3200;bp.Q.value=.9;
   ng.gain.value=peak*.9;n.connect(bp);bp.connect(ng);ng.connect(out);n.start(at);
 }
-// Play a note or chord: chords are a quick low-to-high strum, a little softer per string.
-function strike(keys,at,dur){const c=audio();if(!c)return;const t=Math.max(at,c.currentTime);
-  keys.forEach((k,j)=>pluck(freqOf(midiOf(k)),{at:t+j*.018,dur,vol:keys.length>1?.42:.6,out:bus('notes')}));}
+// Play a note or chord: chords are a quick low-to-high strum, a little softer per string. hold: as in pluck().
+function strike(keys,at,hold=null){const c=audio();if(!c)return;const t=Math.max(at,c.currentTime);
+  keys.forEach((k,j)=>pluck(freqOf(midiOf(k)),{at:t+j*.018,hold:hold===null?null:Math.max(.06,hold-j*.018),vol:keys.length>1?.42:.6,out:bus('notes')}));}
+/* How long an exercise's note sounds: its written length, joined to the next note (a hair of overlap, legato); cut
+   off at its written end before a rest; the last note rings out. */
+function holdFor(i,spb){const evs=exercise.events,next=evs[i+1];
+  return next?evs[i].d/4*spb+(next.rest?0:.03):null;}
 function hush(){const c=AC;if(!c)return;live.forEach(g=>{g.gain.cancelScheduledValues(c.currentTime);g.gain.setTargetAtTime(0,c.currentTime,.03);});}
 
 /* ---------- playback ---------- */
@@ -1015,7 +1038,7 @@ function schedule(){
     // Clicks follow the Metronome and Subdivide buttons as they are when each click comes up, so both can change
     // during playback. The count-in always clicks on the beat.
     if(it.click){if(it.sub){if(subdiv&&(it.count||metro))rclick(at,false,true);}else if(it.count||metro)rclick(at,it.strong,false);}
-    else{const e=exercise.events[it.i];strike(e.keys,at,Math.min(2.4,Math.max(.35,e.d/4*player.spb*1.1+.15)));}
+    else strike(exercise.events[it.i].keys,at,holdFor(it.i,player.spb));
   }
 }
 function frame(){
@@ -1080,7 +1103,7 @@ clickBtn.onclick=()=>{metro=!metro;store.set('metronome',metro);clickBtn.setAttr
 // Tap a note to hear it.
 scoreEl.addEventListener('click',e=>{
   const el=e.target.closest('.vf-stavenote,.vf-tabnote');if(!el)return;
-  const i=+el.dataset.i,ev=exercise.events[i];if(!ev.rest)strike(ev.keys,0,1.8);
+  const i=+el.dataset.i,ev=exercise.events[i];if(!ev.rest)strike(ev.keys,0);
   if(!player.on){const els=[noteEls[i],tabEls[i],tvNotes.noteEls[i],tvNotes.tabEls[i]].filter(Boolean);els.forEach(x=>x.classList.add('on'));setTimeout(()=>els.forEach(x=>x.classList.remove('on')),450);}
 });
 
@@ -1423,7 +1446,7 @@ Object.entries(custSecs()).forEach(([id,[,title]])=>{pickPops[id]=Popup(title,()
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v140';
+window.APP_VERSION = 'v142';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');

@@ -529,11 +529,12 @@ function lplay(){
   const bus=c.createGain();bus.connect(OUT);
   const voice={};   // what's ringing on each string: its source, the pitch it was picked at, and its pitch now
   // How long a picked note rings: through every note joined to it on that string (hammer-ons, ties, bends…).
+  const lickEnd=Math.max(...lk.map(x=>x.start+x.ticks));
   const ringEnd=(i,s)=>{let e=lk[i].start+lk[i].ticks;for(let k=i+1;k<lk.length;k++){const q=lk[k].notes.find(n=>n.s===s);if(!q||!q.link||q.link==='/')break;e=lk[k].start+lk[k].ticks;}return e;};
   lk.forEach((st,i)=>{
     if(st.rest)return;const t0=st.grace?at(st.start)-.06:at(st.start);
     st.notes.forEach((q,j)=>{
-      if(q.mute){pluck(hz(q.s,q.f),{at:t0+j*.012,dur:.09,vol:.25,out:bus});return;}
+      if(q.mute){pluck(hz(q.s,q.f),{at:t0+j*.012,hold:.05,vol:.25,out:bus});return;}
       const v=voice[q.s];
       if(v&&q.link&&q.link!=='/'){   // legato: bend the pitch of the string already ringing
         const ratio=hz(q.s,q.snd)/v.base,p=v.src.playbackRate;
@@ -541,7 +542,10 @@ function lplay(){
         else if(q.link!=='_'){p.setValueAtTime(v.ratio,t0);p.exponentialRampToValueAtTime(ratio,t0+(q.link==='s'?.07:.14));}
         v.ratio=ratio;
       }else{
-        const end=at(ringEnd(i,q.s)),base=hz(q.s,q.snd),src=pluck(base,{at:t0,dur:Math.max(.5,end-t0+.35),vol:.5,out:bus});
+        // Damped at the end of its written length (just into the next note when one follows straight on); the
+        // lick's last note rings out.
+        const e=ringEnd(i,q.s),end=at(e),joined=lk.some(x=>!x.rest&&x.start===e),
+          base=hz(q.s,q.snd),src=pluck(base,{at:t0,...(e>=lickEnd?{dur:Math.max(2.6,end-t0+1.5)}:{hold:Math.max(.06,end-t0+(joined?.03:0))}),vol:.5,out:bus});
         if(!src)return;voice[q.s]={src,base,ratio:1};
         if(q.link==='/'){src.playbackRate.setValueAtTime(Math.pow(2,-2/12),t0);src.playbackRate.exponentialRampToValueAtTime(1,t0+.08);}
         if(q.bend!==null){const ratio=hz(q.s,q.bend)/base;src.playbackRate.setValueAtTime(1,t0+.03);src.playbackRate.exponentialRampToValueAtTime(ratio,t0+.16);voice[q.s].ratio=ratio;}
@@ -637,7 +641,7 @@ function scrollToShape(){
   const k=fb.clientWidth/W,x=lick.length?Math.min(...lick)-DOT-20:+r.getAttribute('x');wrap.scrollLeft=Math.max(0,x*k-16);
 }
 fb.addEventListener('click',e=>{const g=e.target.closest('.dot');if(!g)return;
-  pluck(440*Math.pow(2,(STRINGS[+g.dataset.s]+ +g.dataset.f-12-69)/12),{dur:1.6});});
+  pluck(440*Math.pow(2,(STRINGS[+g.dataset.s]+ +g.dataset.f-12-69)/12));});
 
 /* ---------- controls ---------- */
 const keySelect=document.getElementById('bkey');

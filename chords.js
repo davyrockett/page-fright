@@ -236,23 +236,24 @@ function drawChords(){
 }
 
 /* ---------- sound and playback ---------- */
-const strumVoicing=(v,at)=>v.snd.forEach((s,j)=>pluck(freqOf(STRINGS[s]+v.frets[s]),{at:at+j*.035,dur:2,vol:.36}));
-function selectVoicing(i,sound=true){
+// hold: as in strumShape (drill.js).
+const strumVoicing=(v,at,hold=null)=>v.snd.forEach((s,j)=>pluck(freqOf(STRINGS[s]+v.frets[s]),{at:at+j*.035,hold:hold===null?null:hold-j*.035,vol:.36}));
+function selectVoicing(i,sound=true,hold=null){
   CH.sel=i;drawChordBoard();drawChordNotation();
-  if(sound&&voicings[i])strumVoicing(voicings[i],audio()?.currentTime||0);
+  if(sound&&voicings[i])strumVoicing(voicings[i],audio()?.currentTime||0,hold);
 }
 cfb.addEventListener('click',e=>{
   const line=e.target.closest('.shape');if(line){if(cp.on)cstop();selectVoicing(+line.dataset.i);return;}
   const d=e.target.closest('.dot');if(!d)return;
   if(d.classList.contains('ghost')){if(cp.on)cstop();selectVoicing(+d.dataset.v);return;}  // a grey dot picks its voicing
-  pluck(freqOf(STRINGS[+d.dataset.s]+ +d.dataset.f),{dur:1.4});
+  pluck(freqOf(STRINGS[+d.dataset.s]+ +d.dataset.f));
 });
 cnot.addEventListener('click',e=>{const g=e.target.closest('.vf-stavenote');if(g){if(cp.on)cstop();selectVoicing(+g.dataset.i);}});
 const cp={on:false,timer:0,i:0},cplay=document.getElementById('cplay'),cstatus=document.getElementById('cstatus');
 function cstep(){
   if(!cp.on)return;
   if(cp.i>=voicings.length){cstop();cstatus.textContent='Done.';return;}
-  selectVoicing(cp.i);cstatus.textContent=`Voicing ${cp.i+1} of ${voicings.length}`;
+  selectVoicing(cp.i,true,cp.i<voicings.length-1?1.52:null);cstatus.textContent=`Voicing ${cp.i+1} of ${voicings.length}`;
   cp.i++;cp.timer=setTimeout(cstep,1500);
 }
 function cstart(){if(!audio()||!voicings.length)return;cp.on=true;cp.i=0;cplay.querySelector('span').textContent='Stop';cplay.querySelector('path').setAttribute('d','M3 3h10v10H3z');cstep();}

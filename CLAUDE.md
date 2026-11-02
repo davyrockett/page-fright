@@ -257,6 +257,31 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
   to the end of its beat, metronome on beats (Metronome toggle); the playing note lit on the fretboard. NO notation
   or tab for the warm-up (David: "we don't actually need any notation or tab for this"). Non-stop: next step after a bar of clicks, through all 18. Tempo changes act
   at once. Not chosen by David yet: anything beyond the video's first half (modes, D shape from the B string).
+- Warm-up routines (2026-11-02, v141; David asked for "a new submenu within warmup that has each of these routines"):
+  a chip row at the top of Warm-up (`#wroutine`, `WROUTINES`, stored `wrt`). The six-position routine above is now
+  named **Cappelletto Six** (Claude's name, David let Claude pick). **Vai Fives** (David's name): the minor pentatonic in groups of five
+  (Eric Johnson pattern from Fundamental Changes' Steve Vai warm-up lesson, fundamental-changes.com/?p=4396), up to
+  the top then down from the note below the top, ending on the lowest note; one group a beat (quintuplets), first note
+  of each group louder. Key = relative minor of the key of the day (same `wkey`; the select shows minor names).
+  Five steps = the five boxes (box N starts on the pentatonic's Nth note on the low E, 12 notes two per string), each
+  shifted so its lowest fret is 1–12, lowest box first; buttons show box numbers. Own step and tempo (`vstep`,
+  `vtempo`, default 60). Claude chose these details (fives as a separate routine with its own five steps, quintuplets,
+  relative minor), not yet confirmed by David. Researched next candidates (2026-11-02): scale sequences (3s, 4s,
+  thirds), Vai octave slides, bend to pitch.
+- **String Pairs** (2026-11-02, v142; David asked for "the 2 strings at a time routine"; Claude named it): third
+  routine (`WR` table in warmup.js holds all routines: positions, kinds, tonic, gap, group size, own step/tempo keys
+  `pstep`/`ptempo`). Relative minor pentatonic on one pair of neighbouring strings per step (6–5 … 2–1, buttons show
+  the pair). Box by box up the neck: the box's two notes on the lower string then its two on the upper (a group of
+  four); the next box starts one note higher. Every box whose four notes fit in frets 1–17 (usually 6), then the whole
+  thing backwards. 8ths, first note of each group louder. The fretboard scrolls to follow the playing note on phones.
+- Note lengths (2026-11-02, v142; David: "be more deliberate with note durations — ring out when appropriate and cut
+  off when appropriate"): `pluck()` takes `hold` (seconds until the note is damped, quickly, like a finger lifting);
+  without it a note rings out over `dur`. Rules: single-note lines (Warm-up runs, Read, licks) sound until the next note
+  with a hair (.03 s) of legato overlap, so scales are one note at a time; a note before a rest is cut at its written
+  end; the last note of a run / exercise / lick rings out; licks keep a picked note ringing through its hammer-ons,
+  slides and bends; Drill's Play damps each strum when the next shape is strummed, the last one rings; anything
+  tapped to hear (a dot, a chord, a note) rings out; dead notes (x) are choked at .05 s. The backing-track synths
+  (bass, organ, e-piano, drums) were not changed.
 - Page-turner pedal (2026-10-30, `pedal.js`; David's two-pedal Bluetooth turner): left = ←/PageUp/↑, right =
   →/PageDown/↓ (all three pairs, so any pedal mode works). Taps act on key-up. ONLY THE RIGHT PEDAL HAS A HOLD (0.5 s):
   holding the left one shows the iPad keyboard (David), so a long left press does nothing. Read: L play/stop, R New +

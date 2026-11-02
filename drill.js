@@ -140,16 +140,17 @@ function drawNotation(){
 // Tap a chord: hear all its notes and highlight its shapes on the fretboard.
 dnot.addEventListener('click',e=>{const g=e.target.closest('.vf-stavenote');if(!g)return;
   const c=dnot.clusters[+g.dataset.c],t=audio()?.currentTime||0;
-  c.keys.forEach((k,j)=>pluck(freqOf(k.midi),{at:t+j*.03,dur:1.6,vol:.34}));
+  c.keys.forEach((k,j)=>pluck(freqOf(k.midi),{at:t+j*.03,vol:.34}));
   tFocus=c.shapes;drawDrill();});
 
 /* ---------- sound ---------- */
-const strumShape=(sh,at=0)=>[...sh.notes].sort((a,b)=>a.s-b.s).forEach((n,j)=>pluck(freqOf(STRINGS[n.s]+n.f),{at:at+j*.03,dur:1.6,vol:.4}));
+// hold: the strum is damped then (when Play goes on to the next shape); without it, it rings out.
+const strumShape=(sh,at=0,hold=null)=>[...sh.notes].sort((a,b)=>a.s-b.s).forEach((n,j)=>pluck(freqOf(STRINGS[n.s]+n.f),{at:at+j*.03,hold:hold===null?null:hold-j*.03,vol:.4}));
 dfb.addEventListener('click',e=>{
   const line=e.target.closest('.shape');
   if(line){const i=+line.dataset.i;tFocus=[i];strumShape(tShapes[i],audio()?.currentTime||0);drawDrill();return;}
   const dot=e.target.closest('.dot');
-  if(dot)pluck(freqOf(STRINGS[+dot.dataset.s]+ +dot.dataset.f),{dur:1.4});
+  if(dot)pluck(freqOf(STRINGS[+dot.dataset.s]+ +dot.dataset.f));
   else if(tFocus.length&&!dp.on){tFocus=[];drawDrill();}
 });
 
@@ -159,7 +160,7 @@ const dplay=document.getElementById('dplay'),dstatus=document.getElementById('ds
 function dstep(){
   if(!dp.on)return;
   if(dp.i>=tShapes.length){dstop();dstatus.textContent='Done.';return;}
-  tFocus=[dp.i];strumShape(tShapes[dp.i],audio().currentTime);drawDrill();
+  tFocus=[dp.i];strumShape(tShapes[dp.i],audio().currentTime,dp.i<tShapes.length-1?1.12:null);drawDrill();
   dstatus.textContent=`Shape ${dp.i+1} of ${tShapes.length} · ${INVERSIONS[tShapes[dp.i].inv]}`;
   scrollToFocus();
   dp.i++;dp.timer=setTimeout(dstep,1100);
