@@ -136,6 +136,16 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
 - Keys: C G D A E F B♭ E♭ A♭ major, multi-select, one picked per exercise; starts and ends on the home note.
 - Rhythms: whole/half/quarter/eighth/sixteenth + Dotted + Rests, built from beat "cells" (`CELLS`); two-beat
   cells start on beat 1 or 3; never two rests in a row.
+- Melodic exercises (2026-11-02, v143; David: "make the generated exercises more musical? More melodic?"; the
+  details are Claude's choices, not yet confirmed by David). Form: four 4-bar phrases, A A' B A'. Bars 5–6 and
+  13–14 repeat bars 1–2 exactly (rhythm, rests and notes: `COPY_BAR`); bar 11 has bar 9's rhythm and its notes a
+  step up or down, a sequence (`SEQ_BAR`). Cadence bars 4/8/12/16 end on their longest note (a whole bar, a half on
+  beat 3, or a quarter on beat 4, whichever the chosen rhythms allow). Harmony: one chord a bar from `PROGS` (four
+  16-bar progressions; bars 4 and 12 are V, 8 and 16 are I). Phrases 1 and 3 end on a V-chord note (half cadence),
+  2 and 4 on the home note. Each phrase rises to a high point and comes back down. Strong beats (beat 1 or 3, or a
+  half note or longer) land on a note of the bar's chord (double/triple stops prefer chords made of its notes);
+  weak beats mostly step (passing and neighbour notes); after a leap of a 4th or more, it steps back the other way.
+  The rest of the generator is as before (positions, textures, accidentals, start/end rules).
 - Double stops: intervals chosen in Customize (v71, David's request: 2nds 3rds 4ths 5ths 6ths 7ths octaves; default
   3rds and 5ths; `GEN.dints`), on neighboring strings or skipping one string (`stringSets()`). Triple stops (v72, David's
   call): no separate options; two of the chosen intervals stacked (3rds+3rds = triad, 3rds+4ths = inversion), on

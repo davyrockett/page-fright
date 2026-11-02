@@ -629,28 +629,54 @@ const CELLS=[
   {d:[2,1,1],  need:['eighth','sixteenth'],          at:null,     w:2},
   {d:[1,1,2],  need:['eighth','sixteenth'],          at:null,     w:1},
 ];
+/* Phrases (2026-11-02, David asked for more musical, melodic exercises): the 16 bars are four 4-bar phrases, A A' B A'.
+   Phrases 2 and 4 start with phrase 1's first two bars (same rhythm, same notes); in phrase 3 the third bar has the
+   first bar's rhythm, its notes a step higher or lower (a sequence). Each phrase ends on its longest note, on beat 3
+   (a half note) or beat 4 (a quarter), or a whole bar: a cadence. */
+const COPY_BAR={4:0,5:1,12:0,13:1}, SEQ_BAR={10:8}, CADENCE_BARS=[3,7,11,15];
 function rhythmFor(r=store.get('rhythms',['quarter']),dotted=store.get('dotted',false),rests=store.get('rests',false)){
   const have=new Set([...r,...(dotted?['dotted']:[])]);
   const cells=CELLS.filter(c=>c.need.every(n=>have.has(n)));
-  const out=[];
-  for(let m=0;m<MEASURES;m++){
-    let t=0;
-    while(t<BAR){
-      const fit=cells.filter(c=>{const len=c.d.reduce((a,b)=>a+b);return t+len<=BAR&&(c.at?c.at.includes(t):t%4===0);});
+  const has=d=>cells.some(c=>c.d.length===1&&c.d[0]===d);
+  const fill=(t,end,out)=>{
+    while(t<end){
+      const fit=cells.filter(c=>{const len=c.d.reduce((a,b)=>a+b);return t+len<=end&&(c.at?c.at.includes(t):t%4===0);});
       const c=fit.length?pickWeighted(fit.map(c=>[c,c.w])):{d:[4]}; // a quarter if nothing else fits
       for(const d of c.d){out.push({d});t+=d;}
-    }
+    }};
+  const bars=[];
+  for(let m=0;m<MEASURES;m++){
+    const from=COPY_BAR[m]??SEQ_BAR[m];
+    if(from!==undefined){bars.push(bars[from].map(e=>({...e})));continue;}
+    const out=[];
+    // A cadence bar ends on its longest note: a whole bar, a half note on beat 3, or a quarter on beat 4.
+    const endLen=CADENCE_BARS.includes(m)?(has(16)&&(Math.random()<.4||!has(8)&&!has(4))?16:has(8)?8:has(4)?4:0):0;
+    fill(0,BAR-endLen,out);if(endLen)out.push({d:endLen,cad:true});
+    // Some notes become rests (never the note a phrase ends on); copies keep them, so a repeat is a real repeat.
+    if(rests)out.forEach((e,i)=>{if(!e.cad&&!(m===0&&i===0)&&!(i&&out[i-1].rest)&&Math.random()<.12)e.rest=true;});
+    bars.push(out);
   }
-  // Some notes become rests, never two in a row, and never the first or last note.
-  if(rests)for(let i=1;i<out.length-1;i++)if(!out[i-1].rest&&Math.random()<.12)out[i].rest=true;
+  const out=bars.flat();
+  // Never two rests in a row (across a bar line), and never the first or last note.
+  out[0].rest=false;out.at(-1).rest=false;
+  for(let i=1;i<out.length;i++)if(out[i].rest&&out[i-1].rest)out[i].rest=false;
+  out.forEach(e=>delete e.cad);
   return out;
 }
 
 /* ---------- exercise generator ----------
-   A walk that heads toward a random target somewhere in the range, mostly by step with some
-   skips and leaps. When it gets there it picks a new target, so the exercise covers the range.
-   The walk is the top voice; double and triple stops add notes under it.
+   A melody over a chord progression, one chord a bar, in four 4-bar phrases (see rhythmFor for the form).
+   Each phrase rises to a high point (phrase 3 the highest) and comes back down to its cadence: phrases 1 and 3 end on
+   a note of the V chord (a half cadence, so the music asks a question), phrases 2 and 4 on the home note (the answer).
+   On strong beats (beats 1 and 3, or a half note or longer anywhere) the melody lands on a note of the bar's chord,
+   by step or a small leap; in between it moves mostly by step (passing and neighbour notes). A leap of a 4th or more
+   is followed by a step back the other way. Repeated bars copy their notes.
+   The melody is the top voice; double and triple stops add notes under it (chord notes first on strong beats).
    With positions chosen, every note can be played without leaving them. Starts and ends on the key's home note. */
+// Chord progressions, as scale degrees from the home chord (0 = I, 3 = IV, 4 = V, 5 = vi…). Bars 1–2, 5–6 and 13–14
+// share their chords (they're the same music); bars 4 and 12 are V, 8 and 16 are I.
+const PROGS=[[0,3,0,4, 0,3,4,0, 3,0,3,4, 0,3,4,0],[0,5,3,4, 0,5,4,0, 3,3,0,4, 0,5,4,0],
+  [0,0,3,4, 0,0,4,0, 5,3,1,4, 0,0,4,0],[0,2,3,4, 0,2,4,0, 5,1,3,4, 0,2,4,0]];
 const TEXTURES={single:'Single notes',double:'Double stops',triple:'Triple stops'};
 function pickWeighted(pairs){let t=Math.random()*pairs.reduce((s,p)=>s+p[1],0);for(const [v,w] of pairs){if((t-=w)<=0)return v;}return pairs[0][0];}
 const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
@@ -659,8 +685,10 @@ const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math
 // intervals stacked (3rds + 3rds = a triad). The tritone (diminished 5th / augmented 4th) is left out of both.
 const INTERVALS={2:'2nds',3:'3rds',4:'4ths',5:'5ths',6:'6ths',7:'7ths',8:'Octaves'};
 let GEN={dints:[3,5]};   // read from Customize when an exercise is made
-function chordOn(SC,top,type,lo,hi,sel){
-  const shapes=type==='single'?[[0]]:type==='double'?shuffle(GEN.dints.map(n=>[1-n,0])):shuffle(GEN.dints.flatMap(a=>GEN.dints.map(b=>[2-a-b,1-b,0])));
+// pref (letters): try first the chords whose notes are all in it (the bar's chord, on a strong beat).
+function chordOn(SC,top,type,lo,hi,sel,pref=null){
+  let shapes=type==='single'?[[0]]:type==='double'?shuffle(GEN.dints.map(n=>[1-n,0])):shuffle(GEN.dints.flatMap(a=>GEN.dints.map(b=>[2-a-b,1-b,0])));
+  if(pref){const ok=sh=>sh.every(d=>pref.has(SC[top+d]?.letter));shapes=[...shapes.filter(ok),...shapes.filter(sh=>!ok(sh))];}
   for(const sh of shapes){
     const idx=sh.map(d=>top+d);
     if(idx[0]<lo||top>hi)continue;
@@ -709,41 +737,74 @@ function generate(sel=store.get('positions',[]),tex=store.get('textures',['singl
       if((endType==='single'?isHome(i):c.every(j=>tri.has(SC[j].letter)))&&playable(c.map(j=>SC[j].midi),sel))b.push(c);}
     return b.length?nearest(b,pos):null;};
   const events=rhythmFor(), sounding=events.filter(e=>!e.rest), N=sounding.length;
+  // Where each note falls: its bar, how far into it, whether it's on a strong beat (beat 1 or 3, or a half note or
+  // longer), and its number in the bar (so a
+  // bar that repeats another can copy it note for note).
+  const info=[];{let t=0;events.forEach(e=>{if(!e.rest){const bar=Math.floor(t/BAR),r=t%BAR;
+    info.push({bar,r,strong:r%8===0||e.d>=8});}t+=e.d;});}
+  info.forEach((x,i)=>{x.j=i&&info[i-1].bar===x.bar?info[i-1].j+1:0;x.lastInBar=info[i+1]?.bar!==x.bar;});
+  const firstIn=new Map(),count=new Map();info.forEach((x,i)=>{if(!x.j)firstIn.set(x.bar,i);count.set(x.bar,(count.get(x.bar)||0)+1);});
+  // A bar repeats another only if they have the same number of notes (a rest can be dropped at a bar line).
+  const copyOf=(map,bar)=>map[bar]!==undefined&&count.get(bar)===count.get(map[bar])?map[bar]:undefined;
+  const prog=PROGS[Math.floor(Math.random()*PROGS.length)],h=LETTERS.indexOf(home);
+  const tones=deg=>new Set([0,2,4].map(d=>LETTERS[(h+deg+d)%7]));
+  const near=(letters,from,maxD=7,minD=0)=>{let b=null;for(let d=minD;d<=maxD&&b===null;d++)for(const i of [from-d,from+d])if(i>=lo&&i<=hi&&letters.has(SC[i].letter)){b=i;break;}return b;};
   const pool=options(anyType()), first=homeChords(pool.some(c=>c.some(isHome))?pool:tex.flatMap(options));
   let cur=first[Math.floor(Math.random()*first.length)];
-  let pos=cur.at(-1), last=null;
-  // Targets are only top notes some chosen texture can reach (no double stop has its top on the lowest notes),
-  // and a target that the walk stops getting closer to is dropped, so it never gets stuck bouncing around one spot.
-  const tops=[...new Set(tex.flatMap(t=>options(t).map(c=>c.at(-1))))];
-  const newTarget=()=>{let t,tries=0;do t=tops[Math.floor(Math.random()*tops.length)];while(Math.abs(t-pos)<5&&++tries<50);stall=0;closest=Math.abs(t-pos);return t;};
-  let stall=0, closest=0, target=newTarget();
-  const out=[cur];
+  let pos=cur.at(-1), prevMove=0;
+  const out=[cur],src=[-1];   // src: the note a repeated or sequenced note copies (for its accidental), or -1
+  const typeOf=c=>c.length===1?'single':c.length===2?'double':'triple';
+  // Use the wanted top note if that kind of chord works there, otherwise the closest one that does.
+  const chordNear=(want,type,pref,dir)=>{
+    for(const t of [type,...shuffle(tex.filter(x=>x!==type))])
+      for(let d=0;d<=6;d++)for(const s of d?[dir||1,-(dir||1)]:[0]){const c=chordOn(SC,want+s*d,t,lo,hi,sel,pref);if(c)return c;}
+    return [want];};
+  // Each phrase's plan: its high (or low) point, and the note it heads for after that.
+  let plan=null,seqShift=0;
+  const cadTones=ph=>ph%2?new Set([home]):tones(4);
+  const newPlan=(ph,bar)=>{
+    const lift=pickWeighted(ph===2?[[5,3],[6,3],[7,2]]:[[3,2],[4,3],[5,3]]);
+    let apex=pos+lift;if(apex>hi)apex=Math.max(lo,pos-lift);   // no room above: dip down instead
+    const back=near(cadTones(ph),apex+(apex>pos?-3:3))??pos;
+    return {ph,apex,back,up:true,turn:bar+(ph*4+4-bar)/2};};   // the turn: halfway through what's left of the phrase
   for(let n=1;n<N;n++){
-    if(n===N-1){out.push(iChord()||nearest(homeChords(tex.flatMap(options)),pos));break;}
-    const type=anyType();
-    if(pos===target)target=newTarget();
+    const x=info[n],bar=x.bar,ph=Math.floor(bar/4);
+    // Bars that repeat an earlier bar: the same notes.
+    if(copyOf(COPY_BAR,bar)!==undefined){const k=firstIn.get(COPY_BAR[bar])+x.j;out.push(out[k]);src.push(k);prevMove=out[k].at(-1)-pos;pos=out[k].at(-1);continue;}
+    // The sequence: the same notes a step higher or lower (when every one still works there).
+    if(copyOf(SEQ_BAR,bar)!==undefined){const k=firstIn.get(SEQ_BAR[bar])+x.j,o=out[k];
+      if(!x.j)seqShift=o.at(-1)+1<=hi&&Math.random()<.6?1:-1;
+      const c=chordOn(SC,o.at(-1)+seqShift,typeOf(o),lo,hi,sel);
+      if(c&&c.length===o.length){out.push(c);src.push(-1);prevMove=c.at(-1)-pos;pos=c.at(-1);continue;}}
+    if(n===N-1){out.push(iChord()||nearest(homeChords(tex.flatMap(options)),pos));src.push(-1);break;}
+    if(!plan||plan.ph!==ph)plan=newPlan(ph,bar);
+    if(plan.up&&(pos===plan.apex||bar+x.r/BAR>=plan.turn))plan.up=false;
+    let goal=plan.up?plan.apex:plan.back;
     // The last few notes head for a step above the ending's top note, so it ends with a step down, not a big leap.
-    if(n>=N-5){const c=iChord();if(c)target=c.at(-1)<hi?c.at(-1)+1:c.at(-1)-1;}
-    const dir=Math.sign(target-pos);
-    let move;
-    if(Math.random()<.05&&last!==0)move=0;                       // an occasional repeat
-    else if(Math.random()<.18)move=-dir*pickWeighted([[1,3],[2,2]]); // a little turn back
-    else move=dir*Math.min(Math.abs(target-pos),pickWeighted([[1,40],[2,28],[3,14],[4,9],[5,5],[7,4]]));
-    const want=Math.max(lo,Math.min(hi,pos+move));
-    // Use the wanted top note if that kind of chord works there, otherwise the closest one that does.
-    let pick=null;
-    for(const t of [type,...shuffle(tex.filter(x=>x!==type))]){
-      for(let d=0;d<=6&&!pick;d++)for(const s of d?[dir||1,-(dir||1)]:[0]){const c=chordOn(SC,want+s*d,t,lo,hi,sel);if(c){pick=c;break;}}
-      if(pick)break;
+    if(n>=N-5){const c=iChord();if(c)goal=c.at(-1)<hi?c.at(-1)+1:c.at(-1)-1;}
+    const dir=Math.sign(goal-pos)||(Math.random()<.5?1:-1),chord=tones(prog[bar]);
+    let want,pref=null;
+    if(CADENCE_BARS.includes(bar)&&bar<15&&x.lastInBar){want=near(cadTones(ph),pos,4,1)??near(cadTones(ph),pos,0)??pos;pref=ph%2?tones(0):tones(4);}   // a phrase's last note
+    else if(n>=N-4)want=pos===goal?pos+1:pos+Math.sign(goal-pos)*Math.min(Math.abs(goal-pos),2);   // (no note hammered over and over)
+    else if(x.strong){                                                            // a note of the bar's chord
+      // After a leap, it comes back the other way (by a step or a skip).
+      const back=Math.abs(prevMove)>=3?-Math.sign(prevMove):0;
+      const c=[];for(let i=Math.max(lo,pos-4);i<=Math.min(hi,pos+4);i++)if(chord.has(SC[i].letter)&&(!back||Math.sign(i-pos)===back&&Math.abs(i-pos)<=2)){
+        const d=Math.abs(i-pos),w=[1,4,5,3,2][d]*(i===pos||back?1:Math.sign(i-pos)===dir?3:.6);c.push([i,w]);}
+      want=c.length?pickWeighted(c):back?pos+back:pos+dir;pref=chord;
     }
-    if(!pick)pick=[want];
-    last=pick.at(-1)-pos;pos=pick.at(-1);out.push(pick);
-    if(Math.abs(target-pos)<closest){closest=Math.abs(target-pos);stall=0;}else if(++stall>=4)target=newTarget();
+    else if(Math.abs(prevMove)>=3)want=pos-Math.sign(prevMove);                   // after a leap, a step back
+    else want=pos+pickWeighted([[dir,62],[-dir,14],[2*dir,14],[0,4],[3*dir,6]]);   // passing and neighbour notes
+    want=Math.max(lo,Math.min(hi,want));
+    const pick=chordNear(want,anyType(),pref,dir);
+    prevMove=pick.at(-1)-pos;pos=pick.at(-1);out.push(pick);src.push(-1);
   }
   sounding.forEach((e,i)=>{e.keys=out[i].map(j=>SC[j].key);});
   // Accidentals: some single notes (never the first or last) become chromatic approach notes to the next one.
+  // A repeated note gets the same chance as the one it copies.
+  const coin=[];src.forEach((k,i)=>coin.push(k>=0?coin[k]:Math.random()));
   if(store.get('accidentals',false))for(let i=1;i<N-1;i++){
-    if(out[i].length!==1||out[i+1].length!==1||Math.random()>.22)continue;
+    if(out[i].length!==1||out[i+1].length!==1||coin[i]>.22)continue;
     const a=approach(SC,key,out[i+1][0],SC[out[i-1].at(-1)].midi,lo,hi,sel);
     if(a)sounding[i].keys=[a.key];
   }
@@ -1446,7 +1507,7 @@ Object.entries(custSecs()).forEach(([id,[,title]])=>{pickPops[id]=Popup(title,()
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v142';
+window.APP_VERSION = 'v143';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
