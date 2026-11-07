@@ -137,15 +137,28 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
 - Rhythms: whole/half/quarter/eighth/sixteenth + Dotted + Rests, built from beat "cells" (`CELLS`); two-beat
   cells start on beat 1 or 3; never two rests in a row.
 - Melodic exercises (2026-11-02, v143; David: "make the generated exercises more musical? More melodic?"; the
-  details are Claude's choices, not yet confirmed by David). Form: four 4-bar phrases, A A' B A'. Bars 5–6 and
-  13–14 repeat bars 1–2 exactly (rhythm, rests and notes: `COPY_BAR`); bar 11 has bar 9's rhythm and its notes a
-  step up or down, a sequence (`SEQ_BAR`). Cadence bars 4/8/12/16 end on their longest note (a whole bar, a half on
-  beat 3, or a quarter on beat 4, whichever the chosen rhythms allow). Harmony: one chord a bar from `PROGS` (four
-  16-bar progressions; bars 4 and 12 are V, 8 and 16 are I). Phrases 1 and 3 end on a V-chord note (half cadence),
-  2 and 4 on the home note. Each phrase rises to a high point and comes back down. Strong beats (beat 1 or 3, or a
-  half note or longer) land on a note of the bar's chord (double/triple stops prefer chords made of its notes);
-  weak beats mostly step (passing and neighbour notes); after a leap of a 4th or more, it steps back the other way.
-  The rest of the generator is as before (positions, textures, accidentals, start/end rules).
+  details are Claude's choices, not yet confirmed by David). Harmony: one chord a bar. Cadence bars end on their
+  longest note (a whole bar, a half on beat 3, or a quarter on beat 4, whichever the chosen rhythms allow); a half
+  cadence ends on a V-chord note, a full cadence on the home note. Each phrase rises to a high point (one phrase, the
+  climax, highest) and comes back down. Strong beats (beat 1 or 3, or a half note or longer) land on a note of the
+  bar's chord (double/triple stops prefer chords made of its notes); weak beats mostly step (passing and neighbour
+  notes); after a leap of a 4th or more, it steps back the other way. The rest of the generator is as before
+  (positions, textures, accidentals, start/end rules).
+- Forms (2026-11-06, v144; David liked the melodic exercises but "they all feel like the same formula… Still use that
+  formula sometimes but find some other techniques as well"). Each exercise picks one of five (`FORMS`), never the same
+  one twice in a row; the form choices are Claude's, not yet confirmed. A bar can borrow an earlier bar's rhythm (rests
+  too) and then its notes: copy, step (a step up/down), move (the shape moved with the chords, I→V = up a 5th or down
+  a 4th, same chord = a 3rd), invert (upside down, starting on a chord note), or rhythm only (new notes).
+  - Period (the v143 form): A A' B A'. Bars 5–6 and 13–14 copy bars 1–2; bar 11 is bar 9 a step away. `PROGS`.
+  - Sentence: two 8-bar sentences (half cadence bar 8, full bar 16): 2-bar idea, the idea moved with the chords,
+    a bar sequenced, cadence. The second sentence's idea has the first's rhythm, new notes. `SENT_A` + `SENT_B`.
+  - Motif: bar 1 comes back moved onto other chords (bars 3, 9, 13, sometimes 6) and chained by step in bars 9–11
+    over a stepwise bass (vi V IV, ii iii IV, IV iii ii). `MOTIF_PROGS`.
+  - Call and response: each phrase is a new 2-bar call; the answer's first bar is the call's first bar upside down
+    (about 2 in 3) or moved, then a cadence.
+  - Through-composed: no notes repeated; bar 1's rhythm often starts a later phrase; climax in phrase 3 or 4.
+  Phrases and cadences for every form but Sentence: four 4-bar phrases, half / full / half / full. The saved exercise
+  keeps its form id (`exercise.form`), which isn't shown on screen.
 - Double stops: intervals chosen in Customize (v71, David's request: 2nds 3rds 4ths 5ths 6ths 7ths octaves; default
   3rds and 5ths; `GEN.dints`), on neighboring strings or skipping one string (`stringSets()`). Triple stops (v72, David's
   call): no separate options; two of the chosen intervals stacked (3rds+3rds = triad, 3rds+4ths = inversion), on
