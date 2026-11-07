@@ -158,7 +158,7 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
     (about 2 in 3) or moved, then a cadence.
   - Through-composed: no notes repeated; bar 1's rhythm often starts a later phrase; climax in phrase 3 or 4.
   Phrases and cadences for every form but Sentence: four 4-bar phrases, half / full / half / full. The saved exercise
-  keeps its form id (`exercise.form`), which isn't shown on screen.
+  keeps its form id (`exercise.form`), which isn't shown on screen (David, 2026-11-06: keep it hidden).
 - Double stops: intervals chosen in Customize (v71, David's request: 2nds 3rds 4ths 5ths 6ths 7ths octaves; default
   3rds and 5ths; `GEN.dints`), on neighboring strings or skipping one string (`stringSets()`). Triple stops (v72, David's
   call): no separate options; two of the chosen intervals stacked (3rds+3rds = triad, 3rds+4ths = inversion), on
