@@ -681,6 +681,10 @@ const SENT_B=[[3,0,4,1, 2,1,4,0],[5,1,4,0, 3,2,4,0],[1,4,2,5, 3,2,4,0]];
 // Motif: bars 9–11 walk up or down by step (vi V IV, ii iii IV, IV iii ii) for the chain of the motif.
 const MOTIF_PROGS=[[0,5,3,4, 5,3,4,0, 5,4,3,4, 0,3,4,0],[0,3,1,4, 3,1,4,0, 1,2,3,4, 5,3,4,0],
   [0,4,5,4, 3,0,4,0, 3,2,1,4, 0,5,4,0],[0,0,3,4, 5,3,4,0, 1,2,3,4, 3,1,4,0]];
+// ABAC: bars 9–10 have bars 1–2's chords (the A comes back).
+const ABAC_PROGS=[[0,3,1,4, 5,1,4,0, 0,3,5,4, 3,1,4,0],[0,5,3,4, 3,0,4,0, 0,5,1,4, 5,3,4,0],[0,0,3,4, 2,5,4,0, 0,0,5,4, 3,1,4,0]];
+// Stairs: the opening 2 bars' chords climb a step each phrase (I IV, ii V, iii vi) and come home (I IV).
+const STAIRS_PROGS=[[0,3,5,4, 1,4,4,0, 2,5,1,4, 0,3,4,0],[0,3,1,4, 1,4,4,0, 2,5,3,4, 0,3,4,0]];
 /* Forms (2026-11-06, David: the A A' B A' form (v143) is great, but every exercise felt like the same formula; "still
    use that formula sometimes but find some other techniques as well"). Each exercise picks one, never the same one twice
    in a row. A form gives each bar its chord (prog), which bars borrow an earlier bar, and its phrases and cadences.
@@ -691,7 +695,7 @@ const MOTIF_PROGS=[[0,5,3,4, 5,3,4,0, 5,4,3,4, 0,3,4,0],[0,3,1,4, 3,1,4,0, 1,2,3
      invert  the shape upside down (where the first went up, this goes down), starting on a note of its chord
      rhythm  new notes
    Cadences: 'half' ends on a note of the V chord, 'full' on the home note. climax = the phrase that goes highest. */
-const BR=(how,from)=>({how,from}), oneOf=a=>a[Math.floor(Math.random()*a.length)];
+const BR=(how,from,more={})=>({how,from,...more}), oneOf=a=>a[Math.floor(Math.random()*a.length)];
 const STD_CAD={3:'half',7:'full',11:'half',15:'full'}, FOUR=[[0,3],[4,7],[8,11],[12,15]];
 const FORMS={
   // A A' B A': phrases 2 and 4 start with phrase 1's first two bars; phrase 3's third bar is its first, a step away.
@@ -712,10 +716,27 @@ const FORMS={
   // Through-composed: four new phrases, no notes repeated; bar 1's rhythm often starts a later phrase.
   free:()=>{const b={};for(const s of [4,8,12])if(Math.random()<.5)b[s]=BR('rhythm',0);
     return {prog:oneOf(PROGS),cad:STD_CAD,phrases:FOUR,climax:oneOf([2,3]),borrow:b};},
+  // (2026-11-06, David: "i love these 5. add 5 more to really keep it interesting.")
+  // ABAC (like many jazz standards): phrase 3 starts like phrase 1; phrases 2 and 4 are new.
+  abac:()=>({prog:oneOf(ABAC_PROGS),cad:STD_CAD,phrases:FOUR,climax:oneOf([1,3]),borrow:{8:BR('copy',0),9:BR('copy',1)}}),
+  // Short-short-long: every phrase is a new 1-bar idea, the idea again moved to the next chord, then a longer
+  // 2-bar run to the cadence.
+  ssl:()=>({prog:oneOf(PROGS),cad:STD_CAD,phrases:FOUR,climax:2,
+    borrow:{1:BR('move',0),5:BR('move',4),9:BR('move',8),13:BR('move',12)}}),
+  // Mirror: phrase 2 opens with phrase 1's first two bars upside down; phrase 4 does the same with phrase 3's.
+  mirror:()=>({prog:oneOf(PROGS),cad:STD_CAD,phrases:FOUR,climax:2,
+    borrow:{4:BR('invert',0),5:BR('invert',1),12:BR('invert',8),13:BR('invert',9)}}),
+  // Stairs: the opening two bars come back a step higher at the start of phrases 2 and 3, then home in phrase 4.
+  stairs:()=>({prog:oneOf(STAIRS_PROGS),cad:STD_CAD,phrases:FOUR,climax:2,
+    borrow:{4:BR('move',0,{rise:true}),5:BR('move',1),8:BR('move',4,{rise:true}),9:BR('move',5),12:BR('copy',0),13:BR('copy',1)}}),
+  // Arpeggios and steps: phrases 1 and 3 leap through the notes of each chord; phrases 2 and 4 answer mostly by step.
+  arps:()=>{const b={};if(Math.random()<.5)b[8]=BR('rhythm',0);
+    return {prog:oneOf(PROGS),cad:STD_CAD,phrases:FOUR,climax:2,arp:[0,2],borrow:b};},
 };
+// Never one of the last three forms used.
 function pickForm(){
-  const last=store.get('exercise',null)?.form, ids=Object.keys(FORMS).filter(f=>f!==last);
-  const id=oneOf(ids);return {id,...FORMS[id]()};
+  const recent=store.get('recentForms',[]), ids=Object.keys(FORMS).filter(f=>!recent.includes(f));
+  const id=oneOf(ids);store.set('recentForms',[id,...recent].slice(0,3));return {id,...FORMS[id]()};
 }
 const TEXTURES={single:'Single notes',double:'Double stops',triple:'Triple stops'};
 function pickWeighted(pairs){let t=Math.random()*pairs.reduce((s,p)=>s+p[1],0);for(const [v,w] of pairs){if((t-=w)<=0)return v;}return pairs[0][0];}
@@ -815,19 +836,23 @@ function generate(sel=store.get('positions',[]),tex=store.get('textures',['singl
   const place=(bar,b)=>{
     const T=tops(b.from),chord=tones(prog[bar]),a=firstIn.get(bar),strong=info.slice(a,a+T.length).map(x=>x.strong);
     const cands=[];   // [top notes, bonus]
-    if(b.how==='invert'){for(let s=pos-5;s<=pos+5;s++)if(s>=lo&&s<=hi&&chord.has(SC[s].letter))cands.push([T.map(t=>s-(t-T[0])),0]);}
+    if(b.how==='invert'){
+      // A 2-bar idea turns over as one: the second bar mirrors around the same line as the first.
+      const prev=F.borrow[bar-1];
+      if(prev?.how==='invert'&&prev.from===b.from-1&&placed[bar-1])cands.push([T.map(t=>placed[bar-1].sum-t),10]);
+      for(let s=pos-5;s<=pos+5;s++)if(s>=lo&&s<=hi&&chord.has(SC[s].letter))cands.push([T.map(t=>s-(t-T[0])),0]);}
     else{
       const d=(prog[bar]-prog[b.from]+7)%7, prev=F.borrow[bar-1];
       // A 2-bar idea moves as one: its second bar goes the same way as its first.
       if(prev?.how==='move'&&prev.from===b.from-1&&placed[bar-1]&&(prog[bar-1]-prog[prev.from]+7)%7===d)cands.push([T.map(t=>t+placed[bar-1].k),10]);
-      for(const k of d?[d,d-7]:[2,-2])cands.push([T.map(t=>t+k),0]);   // same chord: a 3rd up or down
+      for(const k of d?[d,d-7]:[2,-2])cands.push([T.map(t=>t+k),b.rise&&k>0?4:0]);   // same chord: a 3rd up or down
     }
     let best=null,bs=-Infinity;
     for(const [c,bonus] of cands){
       if(Math.min(...c)<lo||Math.max(...c)>hi)continue;
       const sc=bonus+c.reduce((v,t,j)=>v+(strong[j]&&chord.has(SC[t].letter)?2:0),0)-.3*Math.abs(c[0]-pos)+Math.random();
       if(sc>bs){bs=sc;best=c;}}
-    return best&&{tops:best,k:best[0]-T[0]};};
+    return best&&{tops:best,k:best[0]-T[0],sum:best[0]+T[0]};};
   for(let n=1;n<N;n++){
     const x=info[n],bar=x.bar,ph=phraseOf(bar),b=borrowOf(bar);
     // Bars that repeat an earlier bar: the same notes.
@@ -850,14 +875,14 @@ function generate(sel=store.get('positions',[]),tex=store.get('textures',['singl
     // The last few notes head for a step above the ending's top note, so it ends with a step down, not a big leap.
     if(n>=N-5){const c=iChord();if(c)goal=c.at(-1)<hi?c.at(-1)+1:c.at(-1)-1;}
     const dir=Math.sign(goal-pos)||(Math.random()<.5?1:-1),chord=tones(prog[bar]);
-    let want,pref=null;
+    let want,pref=null;const arp=F.arp?.includes(ph);
     if(F.cad[bar]&&bar<15&&x.lastInBar){want=near(cadTones(ph),pos,4,1)??near(cadTones(ph),pos,0)??pos;pref=isFull(ph)?tones(0):tones(4);}   // a phrase's last note
     else if(n>=N-4)want=pos===goal?pos+1:pos+Math.sign(goal-pos)*Math.min(Math.abs(goal-pos),2);   // (no note hammered over and over)
-    else if(x.strong){                                                            // a note of the bar's chord
-      // After a leap, it comes back the other way (by a step or a skip).
-      const back=Math.abs(prevMove)>=3?-Math.sign(prevMove):0;
-      const c=[];for(let i=Math.max(lo,pos-4);i<=Math.min(hi,pos+4);i++)if(chord.has(SC[i].letter)&&(!back||Math.sign(i-pos)===back&&Math.abs(i-pos)<=2)){
-        const d=Math.abs(i-pos),w=[1,4,5,3,2][d]*(i===pos||back?1:Math.sign(i-pos)===dir?3:.6);c.push([i,w]);}
+    else if(x.strong||arp){                                                       // a note of the bar's chord
+      // After a leap, it comes back the other way (by a step or a skip). Arpeggios keep leaping, up to a 6th.
+      const back=Math.abs(prevMove)>=(arp?5:3)?-Math.sign(prevMove):0;
+      const c=[];for(let i=Math.max(lo,pos-4);i<=Math.min(hi,pos+4);i++)if(chord.has(SC[i].letter)&&(!back||Math.sign(i-pos)===back&&Math.abs(i-pos)<=(arp?4:2))){
+        const d=Math.abs(i-pos),w=(arp?[.3,1,5,4,3]:[1,4,5,3,2])[d]*(i===pos||back?1:Math.sign(i-pos)===dir?3:.6);c.push([i,w]);}
       want=c.length?pickWeighted(c):back?pos+back:pos+dir;pref=chord;
     }
     else if(Math.abs(prevMove)>=3)want=pos-Math.sign(prevMove);                   // after a leap, a step back
@@ -1574,7 +1599,7 @@ Object.entries(custSecs()).forEach(([id,[,title]])=>{pickPops[id]=Popup(title,()
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v144';
+window.APP_VERSION = 'v145';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');

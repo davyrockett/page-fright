@@ -145,8 +145,9 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
   notes); after a leap of a 4th or more, it steps back the other way. The rest of the generator is as before
   (positions, textures, accidentals, start/end rules).
 - Forms (2026-11-06, v144; David liked the melodic exercises but "they all feel like the same formula… Still use that
-  formula sometimes but find some other techniques as well"). Each exercise picks one of five (`FORMS`), never the same
-  one twice in a row; the form choices are Claude's, not yet confirmed. A bar can borrow an earlier bar's rhythm (rests
+  formula sometimes but find some other techniques as well"). Each exercise picks one of ten (`FORMS`), never one of the
+  last three used (`sr.recentForms`). David loved the first five ("i love these 5. add 5 more"); the second five are
+  Claude's choices, not yet heard by David. A bar can borrow an earlier bar's rhythm (rests
   too) and then its notes: copy, step (a step up/down), move (the shape moved with the chords, I→V = up a 5th or down
   a 4th, same chord = a 3rd), invert (upside down, starting on a chord note), or rhythm only (new notes).
   - Period (the v143 form): A A' B A'. Bars 5–6 and 13–14 copy bars 1–2; bar 11 is bar 9 a step away. `PROGS`.
@@ -157,6 +158,14 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
   - Call and response: each phrase is a new 2-bar call; the answer's first bar is the call's first bar upside down
     (about 2 in 3) or moved, then a cadence.
   - Through-composed: no notes repeated; bar 1's rhythm often starts a later phrase; climax in phrase 3 or 4.
+  - ABAC (like many jazz standards): bars 9–10 copy bars 1–2; phrases 2 and 4 new. `ABAC_PROGS`.
+  - Short-short-long: every phrase is a new 1-bar idea, the idea moved to the next chord, then a 2-bar run to the
+    cadence.
+  - Mirror: bars 5–6 are bars 1–2 upside down, bars 13–14 are bars 9–10 upside down (both bars around one line).
+  - Stairs: bars 1–2 come back a step higher at the start of phrases 2 and 3 (I IV → ii V → iii vi), then copied
+    home in phrase 4. `STAIRS_PROGS`.
+  - Arpeggios and steps: phrases 1 and 3 leap through each bar's chord notes (up to a 6th before turning back);
+    phrases 2 and 4 move mostly by step (`arp` in the form).
   Phrases and cadences for every form but Sentence: four 4-bar phrases, half / full / half / full. The saved exercise
   keeps its form id (`exercise.form`), which isn't shown on screen (David, 2026-11-06: keep it hidden).
 - Double stops: intervals chosen in Customize (v71, David's request: 2nds 3rds 4ths 5ths 6ths 7ths octaves; default
