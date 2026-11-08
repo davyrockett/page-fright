@@ -173,6 +173,9 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
   call): no separate options; two of the chosen intervals stacked (3rds+3rds = triad, 3rds+4ths = inversion), on
   neighboring strings; a texture that can't be built (e.g. octaves only) is dropped. Checked by `playable()`; no
   tritone anywhere. The Intervals row shows only when double or triple stops are on.
+- Passing notes are single (2026-11-08, v146, David: "passing notes should be single notes… no double stops should
+  land on the ands"). Any note that starts between beats (an and, or a 16th's e / a) is a single note, its melody (top)
+  note, even with only double or triple stops chosen and in bars that copy or move an earlier bar. Not the last note.
 - Ending (2026-10-21, David): the last note/chord comes from the key's I chord, sized to the texture (`iChord()` in
   `generate()`; with several textures chosen, one of them at random): single = the home note; double = the nearest two
   notes of the triad (in C: C–E, E–G, G–C, also C–G, E–C); triple = the nearest triad in any order (any inversion).

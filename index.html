@@ -669,6 +669,7 @@ function rhythmFor(F,r=store.get('rhythms',['quarter']),dotted=store.get('dotted
    by step or a small leap; in between it moves mostly by step (passing and neighbour notes). A leap of a 4th or more
    is followed by a step back the other way. Bars that borrow an earlier bar get their notes from it (see FORMS).
    The melody is the top voice; double and triple stops add notes under it (chord notes first on strong beats).
+   Notes between beats (passing notes) are always single notes.
    With positions chosen, every note can be played without leaving them. Starts and ends on the key's home note. */
 // Chord progressions, as scale degrees from the home chord (0 = I, 1 = ii, 3 = IV, 4 = V, 5 = vi…).
 // PROGS: bars 1–2, 5–6 and 13–14 share their chords (the period repeats them); bars 4 and 12 are V, 8 and 16 are I.
@@ -802,7 +803,7 @@ function generate(sel=store.get('positions',[]),tex=store.get('textures',['singl
   // longer), and its number in the bar (so a
   // bar that repeats another can copy it note for note).
   const info=[];{let t=0;events.forEach(e=>{if(!e.rest){const bar=Math.floor(t/BAR),r=t%BAR;
-    info.push({bar,r,strong:r%8===0||e.d>=8});}t+=e.d;});}
+    info.push({bar,r,strong:r%8===0||e.d>=8,off:r%4!==0});}t+=e.d;});}
   info.forEach((x,i)=>{x.j=i&&info[i-1].bar===x.bar?info[i-1].j+1:0;x.lastInBar=info[i+1]?.bar!==x.bar;});
   const firstIn=new Map(),count=new Map();info.forEach((x,i)=>{if(!x.j)firstIn.set(x.bar,i);count.set(x.bar,(count.get(x.bar)||0)+1);});
   // A bar borrows another's notes only if they have the same number of notes (a rest can be dropped at a bar line).
@@ -888,9 +889,13 @@ function generate(sel=store.get('positions',[]),tex=store.get('textures',['singl
     else if(Math.abs(prevMove)>=3)want=pos-Math.sign(prevMove);                   // after a leap, a step back
     else want=pos+pickWeighted([[dir,62],[-dir,14],[2*dir,14],[0,4],[3*dir,6]]);   // passing and neighbour notes
     want=Math.max(lo,Math.min(hi,want));
-    const pick=chordNear(want,anyType(),pref,dir);
+    const pick=chordNear(want,x.off?'single':anyType(),pref,dir);
     prevMove=pick.at(-1)-pos;pos=pick.at(-1);out.push(pick);src.push(-1);
   }
+  // Passing notes are single notes (2026-11-08, David): a note that starts between beats (an "and", or a 16th's
+  // "e" or "a") keeps only its top note, the melody, even when a copied or moved bar had a double or triple stop there.
+  // Not the last note (the ending chord).
+  for(let i=1;i<N-1;i++)if(info[i].off&&out[i].length>1)out[i]=[out[i].at(-1)];
   sounding.forEach((e,i)=>{e.keys=out[i].map(j=>SC[j].key);});
   // Accidentals: some single notes (never the first or last) become chromatic approach notes to the next one.
   // A repeated note gets the same chance as the one it copies.
@@ -1599,7 +1604,7 @@ Object.entries(custSecs()).forEach(([id,[,title]])=>{pickPops[id]=Popup(title,()
 <script>
 // Offline support + updates. See sw.js.
 // The version shown in Settings. tools/bump.sh keeps this in step with VERSION in sw.js.
-window.APP_VERSION = 'v145';
+window.APP_VERSION = 'v146';
 (async () => {
   if (!('serviceWorker' in navigator)) return;
   const reg = await navigator.serviceWorker.register('sw.js');
