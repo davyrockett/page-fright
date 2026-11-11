@@ -112,7 +112,13 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
   too hard, so made more sensitive + mic autoGainControl on), median of 7 readings + eased needle, reading held ~2 s as the string fades, Auto switches
   string only after 3 agreeing readings, one-octave jumps folded back.
   Fading notes: only readings nearly as clear as the pluck's best (within .035) move the needle; weaker ones within
-  15 cents keep it alive; a jump in level (new pluck) resets that. First Frets has the same tuner: keep them in step. Tested with synthetic plucks (weak low-E
+  15 cents keep it alive; a jump in level (new pluck) resets that.
+  Real iPhone clips (2026-11-11, v147; David recorded 20 in First Frets' temporary `record.html`): a 120 Hz mains hum
+  (lights/fridge/charger) was as loud as the strings, so the mic chain has a 120 Hz notch (Q 5); a NEW note is only
+  taken up within 1.5 s of a pluck (hum and strings ringing in sympathy took over as notes faded); once settled, the
+  same note an octave off counts as the ringing note (fading G read half its readings an octave up); an octave jump
+  lasting 3+ readings is real (one octave-low reading used to lock the B string as a sharp A); the first note on Auto
+  needs 2 agreeing readings. First Frets has the same tuner: keep them in step. Tested with synthetic plucks (weak low-E
   fundamental, quiet mic, noise): ~90% of the ring shown, within 3 cents. Same needle and messages; Auto or a picked string; standard tuning. No Start button (David): opening the pop-up starts
   listening on Auto (a string picked last time is forgotten); it stops the Improv backing; closing the pop-up or
   leaving the app turns the mic off, coming back with it open turns it on again.
