@@ -118,7 +118,8 @@ Guitar sight-reading generator plus an improv practice section. Live: https://ww
   taken up within 1.5 s of a pluck (hum and strings ringing in sympathy took over as notes faded); once settled, the
   same note an octave off counts as the ringing note (fading G read half its readings an octave up); an octave jump
   lasting 3+ readings is real (one octave-low reading used to lock the B string as a sharp A); the first note on Auto
-  needs 2 agreeing readings. First Frets has the same tuner: keep them in step. Tested with synthetic plucks (weak low-E
+  needs 2 agreeing readings. The hum was David's air conditioner. North America only for now (David): no 100 Hz notch for
+  50 Hz countries. The 60 Hz low cut stays: the hum sits at 120 Hz, above the low E (82 Hz), so only a notch reaches it. First Frets has the same tuner: keep them in step. Tested with synthetic plucks (weak low-E
   fundamental, quiet mic, noise): ~90% of the ring shown, within 3 cents. Same needle and messages; Auto or a picked string; standard tuning. No Start button (David): opening the pop-up starts
   listening on Auto (a string picked last time is forgotten); it stops the Improv backing; closing the pop-up or
   leaving the app turns the mic off, coming back with it open turns it on again.
